@@ -4,8 +4,13 @@
 \alias{addScenarioToQCEscenarioList}
 \title{This  function is used to create or modify a QCEScenarioList}
 \usage{
-addScenarioToQCEscenarioList(QCEScenarioList, QCEframeList, QCEfeebackList,
-  QCEoutvariableList, setName)
+addScenarioToQCEscenarioList(
+  QCEScenarioList,
+  QCEframeList,
+  QCEfeebackList,
+  QCEoutvariableList,
+  setName
+)
 }
 \arguments{
 \item{QCEScenarioList}{A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEScenarioList that you are adding an effect to. DEFAULT = NULL}

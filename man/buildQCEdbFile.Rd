@@ -4,15 +4,26 @@
 \alias{buildQCEdbFile}
 \title{This  function is used to create a QCEB dbfile}
 \usage{
-buildQCEdbFile(expName = "defaultExpName", condName = "defaultCond",
-  keyMap = NULL, randomizeKeyMap = FALSE,
+buildQCEdbFile(
+  expName = "defaultExpName",
+  condName = "defaultCond",
+  keyMap = NULL,
+  randomizeKeyMap = FALSE,
   presentKeyMapAfterTrialNumbers = NULL,
-  defaultBackgroundColor = "#000000", restAfterEveryNTrials = NULL,
-  instructionFile = NULL, keyMapInstructionFile = NULL,
-  getUserNameFile = NULL, getConsentFile = NULL,
-  getDemographicsFile = NULL, getGenderFile = NULL,
-  welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL,
-  saveMsg = NULL)
+  addQualtricsCode = FALSE,
+  defaultBackgroundColor = "#000000",
+  restAfterEveryNTrials = NULL,
+  instructionFile = NULL,
+  keyMapInstructionFile = NULL,
+  getUserNameFile = NULL,
+  getConsentFile = NULL,
+  getDemographicsFile = NULL,
+  getGenderFile = NULL,
+  welcomeMsg = NULL,
+  restMsg = NULL,
+  endOfExpMsg = NULL,
+  saveMsg = NULL
+)
 }
 \arguments{
 \item{expName}{A string specifying the name of the experiment.  It will be output in a column in the datafile. DEFAULT = "defaultExpName"}
@@ -22,6 +33,10 @@ buildQCEdbFile(expName = "defaultExpName", condName = "defaultCond",
 \item{randomizeKeyMap}{a Boolean that specifies whether the maping of the keys to their meaning should be randomized everytime the experiment is run. This is useful if you want to randomize the key to meaning mapping for every subject on a single session experiment. DEFAULT = FALSE.}
 
 \item{presentKeyMapAfterTrialNumbers}{An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = NULL.  If NULL, then no reminder will be shown.}
+
+\item{addQualtricsCode}{a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.}
+
+\item{defaultBackgroundColor}{an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).}
 
 \item{restAfterEveryNTrials}{An integer that specifies the number of trials to run between each break (e.g., 50). DEFAULT = NULL.  If NULL, then no break will be shown.}
 
@@ -47,8 +62,6 @@ buildQCEdbFile(expName = "defaultExpName", condName = "defaultCond",
 '}
 
 \item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment. DEFAULT = NULL}
-
-\item{condName}{A string specifying the condition of that this dbfile represents. It is really just a placeholder that you can use to code anything that you want. It will be output in a column in the datafile. DEFAULT = "defaultCond"}
 }
 \value{
 the QCEBdbfileList
@@ -57,7 +70,7 @@ the QCEBdbfileList
 Function that create a QCEB dbfile.
 }
 \examples{
-buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = 50, instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = 50, instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 }
 \keyword{QCE}
 \keyword{QCEBdbfileList}

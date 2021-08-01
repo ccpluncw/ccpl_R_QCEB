@@ -4,9 +4,13 @@
 \alias{addSetToQCEsetInfoList}
 \title{This  function is used to create or modify a QCEframeList}
 \usage{
-addSetToQCEsetInfoList(QCEsetInfoList = NULL, QCEScenarioList = NULL,
-  setName = NULL, numberOfTrialsPerSet = 1,
-  selectionType = "randomWithoutReplacement")
+addSetToQCEsetInfoList(
+  QCEsetInfoList = NULL,
+  QCEScenarioList = NULL,
+  setName = NULL,
+  numberOfTrialsPerSet = 1,
+  selectionType = "randomWithoutReplacement"
+)
 }
 \arguments{
 \item{QCEsetInfoList}{A list that specifies the the setInfo information.  This includes, for each setName, : N (the number of trials per set) and selection (the method of selecting the scenarios from the QCEScenarioList).  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEsetInfoList that you are adding an effect to. DEFAULT = NULL}

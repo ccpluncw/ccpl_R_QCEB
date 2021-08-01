@@ -4,10 +4,17 @@
 \alias{addFixationToQCEframeList}
 \title{This  function is used to add a fixation frameto a QCEframeList}
 \usage{
-addFixationToQCEframeList(QCEframeList = NULL, frameSymbol = "+",
-  fixationFontSize = "50px", fixationColor = "#FF6464",
-  stimulus_duration = 500, post_trial_gap = 500,
-  stimTableWidth = 100, background = "#000000", output = FALSE)
+addFixationToQCEframeList(
+  QCEframeList = NULL,
+  frameSymbol = "+",
+  fixationFontSize = "50px",
+  fixationColor = "#FF6464",
+  stimulus_duration = 500,
+  post_trial_gap = 500,
+  stimTableWidth = 100,
+  background = "#000000",
+  output = FALSE
+)
 }
 \arguments{
 \item{QCEframeList}{A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEframeList that you are adding an effect to. DEFAULT = NULL}

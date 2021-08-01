@@ -4,10 +4,17 @@
 \alias{addFrameToQCEframeList}
 \title{This  function is used to create or modify a QCEframeList}
 \usage{
-addFrameToQCEframeList(QCEframeList = NULL, trialType = "key",
-  frameName = NULL, stimulus = NULL, stimulus_duration = NULL,
-  post_trial_gap = NULL, choices = NULL, background = "#000000",
-  output = TRUE)
+addFrameToQCEframeList(
+  QCEframeList = NULL,
+  trialType = "key",
+  frameName = NULL,
+  stimulus = NULL,
+  stimulus_duration = NULL,
+  post_trial_gap = NULL,
+  choices = NULL,
+  background = "#000000",
+  output = TRUE
+)
 }
 \arguments{
 \item{QCEframeList}{A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEframeList that you are adding an effect to. DEFAULT = NULL}

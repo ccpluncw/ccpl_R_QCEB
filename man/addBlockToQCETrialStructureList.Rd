@@ -4,8 +4,11 @@
 \alias{addBlockToQCETrialStructureList}
 \title{This  function is used to create or modify a QCEframeList}
 \usage{
-addBlockToQCETrialStructureList(QCETrialStructureList = NULL,
-  QCEsetInfoList, QCEblockIteratorList)
+addBlockToQCETrialStructureList(
+  QCETrialStructureList = NULL,
+  QCEsetInfoList,
+  QCEblockIteratorList
+)
 }
 \arguments{
 \item{QCETrialStructureList}{A list that specifies how the trials will be presented in the experiment.  This list specifies the selection of stimuli from stimFile.json, the ordering of stimuli, the blocking structure, etc.  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCETrialStructureList that you are adding an effect to. DEFAULT = NULL}

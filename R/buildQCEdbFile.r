@@ -7,6 +7,8 @@
 #' @param condName A string specifying the condition of that this dbfile represents. It is really just a placeholder that you can use to code anything that you want. It will be output in a column in the datafile. DEFAULT = "defaultCond"
 #' @param randomizeKeyMap a Boolean that specifies whether the maping of the keys to their meaning should be randomized everytime the experiment is run. This is useful if you want to randomize the key to meaning mapping for every subject on a single session experiment. DEFAULT = FALSE.
 #' @param presentKeyMapAfterTrialNumbers An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = NULL.  If NULL, then no reminder will be shown.
+#' @param addQualtricsCode a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.
+#' @param defaultBackgroundColor an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).
 #' @param restAfterEveryNTrials An integer that specifies the number of trials to run between each break (e.g., 50). DEFAULT = NULL.  If NULL, then no break will be shown.
 #' @param instructionFile A string that specifies the name of the html file that contains the instructions.  It will be shown at the begining of the experiment.  If this is NULL, then no instructions will be shown. DEFAULT = NULL.
 #' @param keyMapInstructionFile  A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = NULL.
@@ -22,9 +24,9 @@
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
-#' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = 50, instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+#' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = 50, instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
-buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = NULL, defaultBackgroundColor = "#000000", restAfterEveryNTrials = NULL, instructionFile = NULL, keyMapInstructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL) {
+buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = NULL, addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = NULL, instructionFile = NULL, keyMapInstructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL) {
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
@@ -79,7 +81,7 @@ buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", 
   }
 
   if(is.null(endOfExpMsg)) {
-    endOfExpMsg <- "<p style=\"color:white\">Thank you for taking part in the experiment. You can close this browser window now</p>"
+    endOfExpMsg <- "<p style=\"color:white\">Thank you for taking part in the experiment.</p>"
   } else {
     if(!isSingleString(endOfExpMsg)) {
       stop("endOfExpMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the endOfExpMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
@@ -99,7 +101,7 @@ buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", 
     stop("restAfterEveryNTrials option must be a single integer or NULL.")
   }
 
-  tmpList <- list (expName = expName, condName= condName, keyMap = keyMap, randomizeKeyMap = randomizeKeyMap, presentKeyMapAfterTrialNumbers=presentKeyMapAfterTrialNumbers, defaultBackgroundColor = defaultBackgroundColor, restAfterEveryNTrials = restAfterEveryNTrials, instructionFile = instructionFile, keyMapInstructionFile = keyMapInstructionFile, getUserNameFile = getUserNameFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, restMsg = restMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg)
+  tmpList <- list (expName = expName, condName= condName, keyMap = keyMap, randomizeKeyMap = randomizeKeyMap, presentKeyMapAfterTrialNumbers=presentKeyMapAfterTrialNumbers, addQualtricsCode = addQualtricsCode, defaultBackgroundColor = defaultBackgroundColor, restAfterEveryNTrials = restAfterEveryNTrials, instructionFile = instructionFile, keyMapInstructionFile = keyMapInstructionFile, getUserNameFile = getUserNameFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, restMsg = restMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg)
 
   return(tmpList)
 

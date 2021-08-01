@@ -4,9 +4,12 @@
 \alias{createBlockIteratorList}
 \title{This  function creates a QCEblockIteratorList}
 \usage{
-createBlockIteratorList(numberOfIterations = 1,
-  randomizeTrialInSetOrder = TRUE, randomizeSetOrder = "randomAll",
-  randomizeAllTrials = FALSE)
+createBlockIteratorList(
+  numberOfIterations = 1,
+  randomizeTrialInSetOrder = TRUE,
+  randomizeSetOrder = "randomAll",
+  randomizeAllTrials = FALSE
+)
 }
 \arguments{
 \item{numberOfIterations}{An integer specifying how many times the current block should be repeated. DEFAULT = 1}

@@ -4,8 +4,12 @@
 \alias{addKeyToFeedbackKeyList}
 \title{This  function adds feedback information for a key in QCEkeyMap to a feedback_key list}
 \usage{
-addKeyToFeedbackKeyList(feedback_key = NULL, QCEkeyMapKey = NULL,
-  displayText = NULL, outputText = NULL)
+addKeyToFeedbackKeyList(
+  feedback_key = NULL,
+  QCEkeyMapKey = NULL,
+  displayText = NULL,
+  outputText = NULL
+)
 }
 \arguments{
 \item{feedback_key}{A list that specifies the maping of the keys to their feedback text to display to the subject and the feedback text to print in the data file. If you are building a new list, then this should be NULL. If you are adding a new key to an old list, then this should be the feedback_key that you are adding the feedback key information to. DEFAULT = NULL}

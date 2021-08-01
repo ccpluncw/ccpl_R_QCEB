@@ -15,7 +15,7 @@ getSetnamesFromScenarioList <- function (QCEScenarioList = NULL) {
     stop("QCEScenarioList must not be NULL")
   }
   setNameVector <- sapply(QCEScenarioList, `[[`, "set", simplify = "array", USE.NAMES = T)
-  namesOfSets <- unique(setNameVector)
+  namesOfSets <- as.character(unique(setNameVector))
 
   return(namesOfSets)
 }

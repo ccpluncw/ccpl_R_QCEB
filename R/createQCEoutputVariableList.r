@@ -13,8 +13,7 @@ createQCEoutputVariableList <- function (dfVars) {
 
   outList <- NULL
 
-  i <- sapply(dfVars, is.factor)
-  outList <- lapply(dfVars[i], as.character)
+  outList <- lapply(dfVars, as.character)
 
   return(outList)
 }

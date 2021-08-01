@@ -4,8 +4,12 @@
 \alias{createFeedbackList}
 \title{This  function creates a QCEfeebackList}
 \usage{
-createFeedbackList(feedback_key = NULL, showFeedback = FALSE,
-  stimulus_duration = 500, post_trial_gap = 500)
+createFeedbackList(
+  feedback_key = NULL,
+  showFeedback = FALSE,
+  stimulus_duration = 500,
+  post_trial_gap = 500
+)
 }
 \arguments{
 \item{feedback_key}{A list that specifies the maping of the keys to their feedback text to display to the subject and the feedback text to print in the data file. If feedback_key = NULL, then showFeedback will be set to FALSE. DEFAULT = NULL}
