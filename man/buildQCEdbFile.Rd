@@ -9,12 +9,13 @@ buildQCEdbFile(
   condName = "defaultCond",
   keyMap = NULL,
   randomizeKeyMap = FALSE,
-  presentKeyMapAfterTrialNumbers = NULL,
+  presentKeyMapAfterTrialNumbers = -1,
   addQualtricsCode = FALSE,
   defaultBackgroundColor = "#000000",
-  restAfterEveryNTrials = NULL,
+  restAfterEveryNTrials = -1,
+  speedFeedbackParams = NULL,
   instructionFile = NULL,
-  keyMapInstructionFile = NULL,
+  keyMapInstructionFile = "default",
   getUserNameFile = NULL,
   getConsentFile = NULL,
   getDemographicsFile = NULL,
@@ -32,17 +33,19 @@ buildQCEdbFile(
 
 \item{randomizeKeyMap}{a Boolean that specifies whether the maping of the keys to their meaning should be randomized everytime the experiment is run. This is useful if you want to randomize the key to meaning mapping for every subject on a single session experiment. DEFAULT = FALSE.}
 
-\item{presentKeyMapAfterTrialNumbers}{An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = NULL.  If NULL, then no reminder will be shown.}
+\item{presentKeyMapAfterTrialNumbers}{An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = -1.  If -1, then no reminder will be shown.}
 
 \item{addQualtricsCode}{a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.}
 
 \item{defaultBackgroundColor}{an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).}
 
-\item{restAfterEveryNTrials}{An integer that specifies the number of trials to run between each break (e.g., 50). DEFAULT = NULL.  If NULL, then no break will be shown.}
+\item{restAfterEveryNTrials}{An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown.}
+
+\item{speedFeedbackParams}{A speedFeedbackList that specifies the parameters of the speed Feedback. Create this list using the buildSpeedFeedbackList() function.  DEFAULT = NULL.  If NULL, no speed feedback will be provided.}
 
 \item{instructionFile}{A string that specifies the name of the html file that contains the instructions.  It will be shown at the begining of the experiment.  If this is NULL, then no instructions will be shown. DEFAULT = NULL.}
 
-\item{keyMapInstructionFile}{A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = NULL.}
+\item{keyMapInstructionFile}{A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = "default". if "default" then the program will build a key map instruction file automatically.}
 
 \item{getUserNameFile}{A string that specifies the name of the html file that collects the users identifying information (e.g., a random number).  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.}
 
@@ -61,7 +64,7 @@ buildQCEdbFile(
 \item{saveMsg}{A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."
 '}
 
-\item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment. DEFAULT = NULL}
+\item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL}
 }
 \value{
 the QCEBdbfileList
@@ -70,7 +73,7 @@ the QCEBdbfileList
 Function that create a QCEB dbfile.
 }
 \examples{
-buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = 50, instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 }
 \keyword{QCE}
 \keyword{QCEBdbfileList}

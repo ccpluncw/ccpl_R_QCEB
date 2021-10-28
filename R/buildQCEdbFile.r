@@ -3,15 +3,16 @@
 #' Function that create a QCEB dbfile.
 #' @param expName A string specifying the name of the experiment.  It will be output in a column in the datafile. DEFAULT = "defaultExpName"
 #' @param condName A string specifying the condition of that this dbfile represents. It is really just a placeholder that you can use to code anything that you want. It will be output in a column in the datafile. DEFAULT = "defaultCond"
-#' @param QCEkeyMap A list that specifies the maping of the keys to their meaning for the experiment. DEFAULT = NULL
+#' @param QCEkeyMap A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL
 #' @param condName A string specifying the condition of that this dbfile represents. It is really just a placeholder that you can use to code anything that you want. It will be output in a column in the datafile. DEFAULT = "defaultCond"
 #' @param randomizeKeyMap a Boolean that specifies whether the maping of the keys to their meaning should be randomized everytime the experiment is run. This is useful if you want to randomize the key to meaning mapping for every subject on a single session experiment. DEFAULT = FALSE.
-#' @param presentKeyMapAfterTrialNumbers An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = NULL.  If NULL, then no reminder will be shown.
+#' @param presentKeyMapAfterTrialNumbers An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = -1.  If -1, then no reminder will be shown.
 #' @param addQualtricsCode a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.
 #' @param defaultBackgroundColor an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).
-#' @param restAfterEveryNTrials An integer that specifies the number of trials to run between each break (e.g., 50). DEFAULT = NULL.  If NULL, then no break will be shown.
+#' @param restAfterEveryNTrials An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown.
+#' @param speedFeedbackParams A speedFeedbackList that specifies the parameters of the speed Feedback. Create this list using the buildSpeedFeedbackList() function.  DEFAULT = NULL.  If NULL, no speed feedback will be provided.
 #' @param instructionFile A string that specifies the name of the html file that contains the instructions.  It will be shown at the begining of the experiment.  If this is NULL, then no instructions will be shown. DEFAULT = NULL.
-#' @param keyMapInstructionFile  A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = NULL.
+#' @param keyMapInstructionFile  A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = "default". if "default" then the program will build a key map instruction file automatically.
 #' @param getUserNameFile  A string that specifies the name of the html file that collects the users identifying information (e.g., a random number).  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.
 #' @param getConsentFile  A string that specifies the name of the html file that collects the users consent for participating.  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.
 #' @param getDemographicsFile  A string that specifies the name of the html file that collects the users demongraphic information (e.g., age).  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.
@@ -24,9 +25,9 @@
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
-#' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = 50, instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+#' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
-buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = NULL, addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = NULL, instructionFile = NULL, keyMapInstructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL) {
+buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL) {
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
@@ -40,8 +41,10 @@ buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", 
       stop("instructionFile option must be a single filename that ends in '.html' or NULL.  Yours, apparently, is not.")
   }
 
-  if(!isValidFilename(keyMapInstructionFile, "html") & !is.null(keyMapInstructionFile) & keyMapInstructionFile != "default") {
-      stop("keyMapInstructionFile option must be a single filename that ends in '.html' or NULL or be 'default'.  Yours, apparently, is not.")
+  if(keyMapInstructionFile != "default") {
+    if(!isValidFilename(keyMapInstructionFile, "html")) {
+        stop("keyMapInstructionFile option must be a single filename that ends in '.html' or be 'default'.  Yours, apparently, is not.")
+    }
   }
 
   if(!isColor(defaultBackgroundColor)) {
@@ -97,11 +100,14 @@ buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", 
   }
 
 
-  if(!isSingleNumeric(restAfterEveryNTrials) & !is.null(restAfterEveryNTrials)) {
-    stop("restAfterEveryNTrials option must be a single integer or NULL.")
+  if(!is.null(restAfterEveryNTrials)) {
+    restAfterEveryNTrials <- as.integer(restAfterEveryNTrials)
+    if(any(is.na(restAfterEveryNTrials))) {
+      stop("restAfterEveryNTrials option must an integer, a vector of integers, or NULL.")
+    }
   }
 
-  tmpList <- list (expName = expName, condName= condName, keyMap = keyMap, randomizeKeyMap = randomizeKeyMap, presentKeyMapAfterTrialNumbers=presentKeyMapAfterTrialNumbers, addQualtricsCode = addQualtricsCode, defaultBackgroundColor = defaultBackgroundColor, restAfterEveryNTrials = restAfterEveryNTrials, instructionFile = instructionFile, keyMapInstructionFile = keyMapInstructionFile, getUserNameFile = getUserNameFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, restMsg = restMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg)
+  tmpList <- list (expName = expName, condName= condName, keyMap = keyMap, randomizeKeyMap = randomizeKeyMap, presentKeyMapAfterTrialNumbers=presentKeyMapAfterTrialNumbers, addQualtricsCode = addQualtricsCode, defaultBackgroundColor = defaultBackgroundColor, restAfterEveryNTrials = restAfterEveryNTrials, speedFeedbackParams = speedFeedbackParams, instructionFile = instructionFile, keyMapInstructionFile = keyMapInstructionFile, getUserNameFile = getUserNameFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, restMsg = restMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg)
 
   return(tmpList)
 
