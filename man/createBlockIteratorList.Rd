@@ -16,6 +16,8 @@ createBlockIteratorList(
 
 \item{randomizeTrialInSetOrder}{A boolean that specifies whether the order of the trials in each set will be randomized on every iteration. TRUE = Randomize the order.  FALSE = Present the trials in the order they were selected in the first iteration. DEFAULT = TRUE.}
 
+\item{randomizeSetOrder}{A string that specifies how the sets shoud be randomized. "randomFirst" = the order of the sets in first iteration will be randomized, and the remaining iterations will be fixed to this order.  "randomAll" = the order of the sets will be randomized. "fixed" = the order of the sets will be presented in the order they appear in setInfo.  DEFAULT = "randomAll"}
+
 \item{randomizeAllTrials}{A boolean that specifies whether all the trials from all the sets are placed in a large vector and are randomized. TRUE = Randomize all the trials.  FALSE = the randomization will follow the rules set out above in “randomizeSetOrder” and “randomPresentation” DEFAULT = FALSE
 '}
 }
