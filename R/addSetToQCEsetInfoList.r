@@ -26,7 +26,7 @@ addSetToQCEsetInfoList <- function (QCEsetInfoList = NULL, QCEScenarioList = NUL
   validSetNames <- getSetnamesFromScenarioList(QCEScenarioList)
   if(!is.null(setName)) {
     #create in order of setName
-    if(!(setName %in% validSetNames)) {
+    if(any((setNames %in% validSetNames) == FALSE)) {
       stop(paste("setName option must take on one of the following values: ", paste(validSetNames, sep="", collapse=" ")))
     }
     if( length(numberOfTrialsPerSet) == 1 ) {

@@ -11,6 +11,7 @@ addFrameToQCEframeList(
   stimulus = NULL,
   stimulus_duration = NULL,
   post_trial_gap = NULL,
+  response_ends_trial = TRUE,
   choices = NULL,
   background = "#000000",
   output = TRUE
@@ -26,6 +27,8 @@ addFrameToQCEframeList(
 \item{stimulus_duration}{An integer that specifies how long to present the frame in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = NULL}
 
 \item{post_trial_gap}{An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)}
+
+\item{response_ends_trial}{A boolean that specifies whether the key response ends the trial.  If set to FALSE, then stimulus_duration must not be NULL. DEFAULT = TRUE}
 
 \item{choices}{A vector of characters or keyCodes that specifies the allowable keys to be accepted as a response.  If “choices” is NULL, then all keys are allowed.  “choices” should be NULL if trialType = textbox.  choices does not control the keys that can be pressed to input a value into the textbox.  That is controlled by the html input code used to create the textbox.  DEFAULT = NULL.}
 

@@ -7,6 +7,7 @@
 #' @param stimulis A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of anykind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and 	<input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.
 #' @param stimulus_duration  An integer that specifies how long to present the frame in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = NULL
 #' @param post_trial_gap  An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)
+#' @param response_ends_trial  A boolean that specifies whether the key response ends the trial.  If set to FALSE, then stimulus_duration must not be NULL. DEFAULT = TRUE
 #' @param choices A vector of characters or keyCodes that specifies the allowable keys to be accepted as a response.  If “choices” is NULL, then all keys are allowed.  “choices” should be NULL if trialType = textbox.  choices does not control the keys that can be pressed to input a value into the textbox.  That is controlled by the html input code used to create the textbox.  DEFAULT = NULL.
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
 #' @param outut a boolean that specifies whether to output the data from the frame into the dataset. Manytimes frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.
@@ -16,7 +17,7 @@
 #' @export
 #' @examples addFrameToQCEframeList (frameList, trialType = "key", frameName = "mask2", stimulus = myStimString,	stimulus_duration = 1000, post_trial_gap = 0, choices = NULL, background = "#000000")
 
-addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, choices = NULL, background = "#000000", output = TRUE) {
+addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = NULL, background = "#000000", output = TRUE) {
 
   validTrialTypes <- c("key", "textbox")
 
@@ -47,6 +48,10 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
     stop("post_trial_gap option must be a single integer.")
   }
 
+  if(response_ends_trial == FALSE & is.null(stimulus_duration)) {
+    stop("response_ends_trial option must be TRUE if stimulus_duration is NULL.  stimulus_duration specifies how long the trial will last when there is no response.")
+  }
+
   if(!is.character(choices) & !is.null(choices)) {
     stop("choices option must be a vector of charactors representing allowable keys or NULL.")
   }
@@ -69,7 +74,7 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
   }
 
 
-  tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, choices = choices, background = background, output = output)
+  tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, background = background, output = output)
 
   if(is.null(QCEframeList)) {
     QCEframeList[[as.name(1)]] <- tmpList
