@@ -43,7 +43,7 @@ buildQCEdbFile(
 
 \item{speedFeedbackParams}{A speedFeedbackList that specifies the parameters of the speed Feedback. Create this list using the buildSpeedFeedbackList() function.  DEFAULT = NULL.  If NULL, no speed feedback will be provided.}
 
-\item{instructionFile}{A string that specifies the name of the html file that contains the instructions.  It will be shown at the begining of the experiment.  If this is NULL, then no instructions will be shown. DEFAULT = NULL.}
+\item{instructionFile}{A string or vector of strings that specifies the name of the html file(s) that contains the instructions.  It will be shown at the begining of the experiment.  If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.}
 
 \item{keyMapInstructionFile}{A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = "default". if "default" then the program will build a key map instruction file automatically.}
 

@@ -11,7 +11,7 @@
 #' @param defaultBackgroundColor an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).
 #' @param restAfterEveryNTrials An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown.
 #' @param speedFeedbackParams A speedFeedbackList that specifies the parameters of the speed Feedback. Create this list using the buildSpeedFeedbackList() function.  DEFAULT = NULL.  If NULL, no speed feedback will be provided.
-#' @param instructionFile A string that specifies the name of the html file that contains the instructions.  It will be shown at the begining of the experiment.  If this is NULL, then no instructions will be shown. DEFAULT = NULL.
+#' @param instructionFile A string or vector of strings that specifies the name of the html file(s) that contains the instructions.  It will be shown at the begining of the experiment.  If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.
 #' @param keyMapInstructionFile  A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = "default". if "default" then the program will build a key map instruction file automatically.
 #' @param getUserNameFile  A string that specifies the name of the html file that collects the users identifying information (e.g., a random number).  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.
 #' @param getConsentFile  A string that specifies the name of the html file that collects the users consent for participating.  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.
@@ -37,8 +37,12 @@ buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", 
     stop("condName option must be a single string.  Yours, apparently, is not a single string.")
   }
 
-  if(!isValidFilename(instructionFile, "html") & !is.null(instructionFile)) {
-      stop("instructionFile option must be a single filename that ends in '.html' or NULL.  Yours, apparently, is not.")
+  if(!is.null(instructionFile)) {
+    for(iFile in instructionFile) {
+      if(!isValidFilename(iFile, "html")) {
+          stop("instructionFile option must be a single filename that ends in '.html' or NULL.  Yours, apparently, is not.")
+      }
+    }
   }
 
   if(keyMapInstructionFile != "default") {
