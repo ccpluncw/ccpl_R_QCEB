@@ -5,15 +5,16 @@
 #' @param QCEsetInfoList A list that specifies the the setInfo information.  This includes, for each setName, : N (the number of trials per set) and selection (the method of selecting the scenarios from the QCEScenarioList).
 #' @param QCEblockIteratorList A list that specifies the the block iteration information.  This includes, for each block, the number of times to repeat each block, and the presentation order of the sets and trials.
 #' @param blockNumber An integer specifying the ordinal position of this block relative to all the other blocks.  If this is set to -1, then it will be randomly placed in the one of the non-specified positions. DEFAULT = -1.
+#' @param blockName A string specifying the name of this block. It is used for the experimenter to identify block condition names. DEFAULT = "blockName".
 #''
 #' @return the updated QCETrialStructureList
 #' @keywords QCE QCETrialStructureList update add block
 #' @export
 #' @examples addBlockToQCETrialStructureList (TSlist, mySetInfoList, myBlockIteratorList)
 
-addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEsetInfoList, QCEblockIteratorList, blockNumber = -1) {
+addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEsetInfoList, QCEblockIteratorList, blockNumber = -1, blockName = "blockName") {
 
-  tmpList <- list(blockNumber = blockNumber, setInfo = QCEsetInfoList, blockIterator = QCEblockIteratorList)
+  tmpList <- list(blockNumber = blockNumber, setInfo = QCEsetInfoList, blockIterator = QCEblockIteratorList, blockName = blockName)
 
   if(is.null(QCETrialStructureList)) {
     QCETrialStructureList[[as.name(1)]] <- tmpList

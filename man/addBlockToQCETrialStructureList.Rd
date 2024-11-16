@@ -8,7 +8,8 @@ addBlockToQCETrialStructureList(
   QCETrialStructureList = NULL,
   QCEsetInfoList,
   QCEblockIteratorList,
-  blockNumber = -1
+  blockNumber = -1,
+  blockName = "blockName"
 )
 }
 \arguments{
@@ -18,7 +19,9 @@ addBlockToQCETrialStructureList(
 
 \item{QCEblockIteratorList}{A list that specifies the the block iteration information.  This includes, for each block, the number of times to repeat each block, and the presentation order of the sets and trials.}
 
-\item{blockNumber}{An integer specifying the ordinal position of this block relative to all the other blocks.  If this is set to -1, then it will be randomly placed in the one of the non-specified positions. DEFAULT = -1.
+\item{blockNumber}{An integer specifying the ordinal position of this block relative to all the other blocks.  If this is set to -1, then it will be randomly placed in the one of the non-specified positions. DEFAULT = -1.}
+
+\item{blockName}{A string specifying the name of this block. It is used for the experimenter to identify block condition names. DEFAULT = "blockName".
 '}
 }
 \value{
