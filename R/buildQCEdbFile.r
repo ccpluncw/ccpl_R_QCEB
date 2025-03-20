@@ -21,13 +21,19 @@
 #' @param restMsg A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please take a self-timed break. Press any key to resume the experiment."
 #' @param endOfExpMsg A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Thank you for taking part in the experiment."
 #' @param saveMsg A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."
+#' @param friendlyReminderMsg A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "This is a friendly reminder."
+#' @param remindMsg A string that specifies a message that the keymap reminder might be shown again. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "We may present this screen again during the experiment to remind you of the keys."
+#' @param proceedMsg A string that specifies a message to hit any key to proceed. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit any key to proceed."
+#' @param fullscreenMsg A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "The experiment will switch to full screen mode when you press the button below."
+#' @param fullscreenBtn A string that specifies a the text to put on the button in full screen mode.  DEFAULT = "Continue".
+#' @param completionRedirect A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, then this should be an empty string. DEFAULT = "".
 #''
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
 #' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
-buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL) {
+buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL) {
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
@@ -103,6 +109,37 @@ buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", 
     }
   }
 
+  if(is.null(friendlyReminderMsg)) {
+    friendlyReminderMsg <- "This is a friendly reminder:<br><br>"
+  } else {
+    if(!isSingleString(friendlyReminderMsg)) {
+      stop("friendlyReminderMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the friendlyReminderMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
+    }
+  }
+
+  if(is.null(remindMsg)) {
+    remindMsg <- "<br>We may present this screen again during the experiment to remind you of the keys."
+  } else {
+    if(!isSingleString(remindMsg)) {
+      stop("remindMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the remindMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
+    }
+  }
+
+  if(is.null(proceedMsg)) {
+    proceedMsg <- "<br><br>Please hit any key to proceed</center>"
+  } else {
+    if(!isSingleString(proceedMsg)) {
+      stop("proceedMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the proceedMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
+    }
+  }
+
+  if(is.null(fullscreenMsg)) {
+    fullscreenMsg <- "<p>The experiment will switch to full screen mode when you press the button below</p>"
+  } else {
+    if(!isSingleString(fullscreenMsg)) {
+      stop("fullscreenMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the fullscreenMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
+    }
+  }
 
   if(!is.null(restAfterEveryNTrials)) {
     restAfterEveryNTrials <- as.integer(restAfterEveryNTrials)
@@ -111,7 +148,8 @@ buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", 
     }
   }
 
-  tmpList <- list (expName = expName, condName= condName, keyMap = keyMap, randomizeKeyMap = randomizeKeyMap, presentKeyMapAfterTrialNumbers=presentKeyMapAfterTrialNumbers, addQualtricsCode = addQualtricsCode, defaultBackgroundColor = defaultBackgroundColor, restAfterEveryNTrials = restAfterEveryNTrials, speedFeedbackParams = speedFeedbackParams, instructionFile = instructionFile, keyMapInstructionFile = keyMapInstructionFile, getUserNameFile = getUserNameFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, restMsg = restMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg)
+
+  tmpList <- list (expName = expName, condName= condName, keyMap = keyMap, randomizeKeyMap = randomizeKeyMap, presentKeyMapAfterTrialNumbers=presentKeyMapAfterTrialNumbers, addQualtricsCode = addQualtricsCode, defaultBackgroundColor = defaultBackgroundColor, restAfterEveryNTrials = restAfterEveryNTrials, speedFeedbackParams = speedFeedbackParams, instructionFile = instructionFile, keyMapInstructionFile = keyMapInstructionFile, getUserNameFile = getUserNameFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, restMsg = restMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg, friendlyReminderMsg = friendlyReminderMsg, remindMsg = remindMsg, proceedMsg = proceedMsg, fullscreenMsg = fullscreenMsg, fullscreenBtn = fullscreenBtn, completionRedirect = completionRedirect)
 
   return(tmpList)
 

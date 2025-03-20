@@ -21,7 +21,7 @@
 
 addFrameToQCEframeList_7 <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", output = TRUE) {
 
-  validTrialTypes <- c("key", "textbox")
+  validTrialTypes <- c("key", "textbox", "numberline")
 
   if(!(trialType %in% validTrialTypes)) {
     stop(paste("trialType option must take on one of the following values: ", paste(validTrialTypes, sep="", collapse=" ")))
@@ -36,10 +36,6 @@ addFrameToQCEframeList_7 <- function (QCEframeList = NULL, trialType = "key", fr
     }
   } else {
     frameName <- as.character(frameName)
-  }
-
-  if(!isSingleString(stimulus) & !is.null(stimulus)) {
-    stop("stimulus option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the stimulus option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
   }
 
   if(!isSingleNumeric(stimulus_duration) & !is.null(stimulus_duration)) {

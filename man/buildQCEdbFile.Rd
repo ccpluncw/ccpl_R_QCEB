@@ -23,7 +23,13 @@ buildQCEdbFile(
   welcomeMsg = NULL,
   restMsg = NULL,
   endOfExpMsg = NULL,
-  saveMsg = NULL
+  saveMsg = NULL,
+  friendlyReminderMsg = NULL,
+  remindMsg = NULL,
+  proceedMsg = NULL,
+  fullscreenMsg = NULL,
+  fullscreenBtn = "Continue",
+  completionRedirect = NULL
 )
 }
 \arguments{
@@ -61,7 +67,19 @@ buildQCEdbFile(
 
 \item{endOfExpMsg}{A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Thank you for taking part in the experiment."}
 
-\item{saveMsg}{A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."
+\item{saveMsg}{A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."}
+
+\item{friendlyReminderMsg}{A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "This is a friendly reminder."}
+
+\item{remindMsg}{A string that specifies a message that the keymap reminder might be shown again. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "We may present this screen again during the experiment to remind you of the keys."}
+
+\item{proceedMsg}{A string that specifies a message to hit any key to proceed. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit any key to proceed."}
+
+\item{fullscreenMsg}{A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "The experiment will switch to full screen mode when you press the button below."}
+
+\item{fullscreenBtn}{A string that specifies a the text to put on the button in full screen mode.  DEFAULT = "Continue".}
+
+\item{completionRedirect}{A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, then this should be an empty string. DEFAULT = "".
 '}
 
 \item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL}
