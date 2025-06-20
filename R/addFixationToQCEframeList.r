@@ -48,7 +48,7 @@ addFixationToQCEframeList <- function (QCEframeList = NULL, frameSymbol = '+', f
   trialType <- "key"
   frameName <- "fixation"
 
-  tmpList <- list(trialType = trialType, frameName = frameName, stimulus = stimulus, post_trial_gap = post_trial_gap, choices= choices, stimulus_duration = stimulus_duration, background = background, output = output)
+  tmpList <- list(trialType = trialType, frameName = frameName, stimulus = stimulus, post_trial_gap = post_trial_gap, choices= choices, stimulus_duration = stimulus_duration, background = background, cursorVisible = FALSE, output = output)
 
   if(is.null(QCEframeList)) {
     QCEframeList[[as.name(1)]] <- tmpList

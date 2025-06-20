@@ -12,6 +12,7 @@
 #' @param choices A vector of characters that specify the allowable keys to be accepted as a response.  “choices” should be "ALL_KEYS" if trialType = textbox.  choices does not control the keys that can be pressed to input a value into the textbox.  That is controlled by the html input code used to create the textbox.  DEFAULT = "ALL_KEYS".
 #' @param kind A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". DEFAULT = "string".
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
+#' @param cursorVisible  A boolean that specifies whether the cursor is visible during the frame.  If set to FALSE, then the cursor will not be visible. DEFAULT = TRUE
 #' @param outut a boolean that specifies whether to output the data from the frame into the dataset. Manytimes frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.
 #''
 #' @return the updated QCEframeList
@@ -19,9 +20,9 @@
 #' @export
 #' @examples addFrameToQCEframeList (frameList, trialType = "key", frameName = "mask2", stimulus = myStimString,	stimulus_duration = 1000, post_trial_gap = 0, choices = NULL, background = "#000000")
 
-addFrameToQCEframeList_7 <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", output = TRUE) {
+addFrameToQCEframeList_7 <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = TRUE, output = TRUE) {
 
-  validTrialTypes <- c("key", "textbox", "numberline")
+  validTrialTypes <- c("key", "textbox", "numberline", "angleline")
 
   if(!(trialType %in% validTrialTypes)) {
     stop(paste("trialType option must take on one of the following values: ", paste(validTrialTypes, sep="", collapse=" ")))
@@ -72,7 +73,7 @@ addFrameToQCEframeList_7 <- function (QCEframeList = NULL, trialType = "key", fr
   }
 
 
-  tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, kind = kind, background = background, output = output)
+  tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, kind = kind, background = background, cursorVisible = cursorVisible, output = output)
 
   if(is.null(QCEframeList)) {
     QCEframeList[[as.name(1)]] <- tmpList

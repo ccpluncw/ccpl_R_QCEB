@@ -19,7 +19,7 @@
 
 addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = NULL, background = "#000000", output = TRUE) {
 
-  validTrialTypes <- c("key", "textbox", "numberline")
+  validTrialTypes <- c("key", "textbox", "numberline", "angleline")
 
   if(!(trialType %in% validTrialTypes)) {
     stop(paste("trialType option must take on one of the following values: ", paste(validTrialTypes, sep="", collapse=" ")))

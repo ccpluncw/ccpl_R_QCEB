@@ -15,6 +15,7 @@ addFrameToQCEframeList_7(
   choices = "ALL_KEYS",
   kind = "string",
   background = "#000000",
+  cursorVisible = TRUE,
   output = TRUE
 )
 }
@@ -36,6 +37,8 @@ addFrameToQCEframeList_7(
 \item{kind}{A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". DEFAULT = "string".}
 
 \item{background}{an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).}
+
+\item{cursorVisible}{A boolean that specifies whether the cursor is visible during the frame.  If set to FALSE, then the cursor will not be visible. DEFAULT = TRUE}
 
 \item{stimulis}{A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of anykind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and     <input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.}
 
