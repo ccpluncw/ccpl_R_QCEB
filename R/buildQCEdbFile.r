@@ -1,6 +1,11 @@
-#' This  function is used to create a QCEB dbfile
+#' DEPRECATED — use buildQCEgroupDbFile() instead
 #'
-#' Function that create a QCEB dbfile.
+#' This function is retained for backward compatibility only. The dbfile
+#' structure has been reorganized into two levels: experiment-level (via
+#' buildQCEexpDbFile) and group-level (via buildQCEgroupDbFile). The
+#' group-level dbfile is what the engine reads per-session at runtime,
+#' and is where fNIRS trigger configuration lives (enableTriggers,
+#' triggerRelayPort) — see buildQCEgroupDbFile for details.
 #' @param expName A string specifying the name of the experiment.  It will be output in a column in the datafile. DEFAULT = "defaultExpName"
 #' @param condName A string specifying the condition of that this dbfile represents. It is really just a placeholder that you can use to code anything that you want. It will be output in a column in the datafile. DEFAULT = "defaultCond"
 #' @param QCEkeyMap A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL
@@ -30,11 +35,14 @@
 #' @param completionRedirect A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, then this should be an empty string. DEFAULT = "".
 #''
 #' @return the QCEBdbfileList
-#' @keywords QCE QCEBdbfileList dbfile
+#' @keywords QCE QCEBdbfileList dbfile deprecated
 #' @export
-#' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+#' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap)
 
 buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL) {
+
+  .Deprecated("buildQCEgroupDbFile",
+              msg = "buildQCEdbFile() is deprecated. The dbfile structure has been split into experiment-level (buildQCEexpDbFile) and group-level (buildQCEgroupDbFile). fNIRS trigger configuration (enableTriggers, triggerRelayPort) lives on buildQCEgroupDbFile.")
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")

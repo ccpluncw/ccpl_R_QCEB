@@ -17,7 +17,9 @@ buildQCEgroupDbFile(
   restMsg = NULL,
   friendlyReminderMsg = NULL,
   remindMsg = NULL,
-  proceedMsg = NULL
+  proceedMsg = NULL,
+  enableTriggers = FALSE,
+  triggerRelayPort = 5678
 )
 }
 \arguments{
@@ -43,7 +45,11 @@ buildQCEgroupDbFile(
 
 \item{remindMsg}{A string that specifies a message that the keymap reminder might be shown again. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "We may present this screen again during the experiment to remind you of the keys."}
 
-\item{proceedMsg}{A string that specifies a message to hit any key to proceed. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit any key to proceed."
+\item{proceedMsg}{A string that specifies a message to hit any key to proceed. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit any key to proceed."}
+
+\item{enableTriggers}{A boolean that enables fNIRS trigger support for this group (session). When TRUE, the engine connects to a local Python relay (tools/fnirsRelay.py) at session start, forwards trigger codes declared at block/set/trial/frame levels to an LSL stream, and writes a separate `_triggers.finalDat` event log alongside the main behavioral data. Silent fallback if the relay is not running (experiment proceeds normally with no triggers sent). DEFAULT = FALSE — no overhead and identical behavior to pre-Phase-1.5 experiments.}
+
+\item{triggerRelayPort}{An integer specifying the port the local Python relay listens on. Only meaningful when enableTriggers = TRUE. Must match the `--port` the relay was started with. DEFAULT = 5678.
 '}
 
 \item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL}
@@ -55,7 +61,14 @@ the QCEBdbfileList
 Function that create a QCEB dbfile.
 }
 \examples{
-buildQCEdbFile ( condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, defaultBackgroundColor = "#000000", instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html")
+# Standard (no fNIRS)
+buildQCEgroupDbFile (condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE,
+  defaultBackgroundColor = "#000000", instructionFile = "instructions.html",
+  keyMapInstructionFile = "kmInst.html")
+
+# fNIRS-enabled
+buildQCEgroupDbFile (condName="fNIRS_session", keyMap = myQCEBkeymap,
+  enableTriggers = TRUE, triggerRelayPort = 5678)
 }
 \keyword{QCE}
 \keyword{QCEBdbfileList}

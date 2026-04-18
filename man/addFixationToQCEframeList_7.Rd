@@ -2,53 +2,27 @@
 % Please edit documentation in R/addFixationToQCEframeList_7.r
 \name{addFixationToQCEframeList_7}
 \alias{addFixationToQCEframeList_7}
-\title{This  function is used to add a fixation frameto a QCEframeList}
+\title{DEPRECATED — use addFixationToQCEframeList() instead}
 \usage{
-addFixationToQCEframeList_7(
-  QCEframeList = NULL,
-  frameSymbol = "+",
-  fixationFontSize = "50px",
-  fixationColor = "#FF6464",
-  stimulus_duration = 500,
-  post_trial_gap = 500,
-  stimTableWidth = 100,
-  background = "#000000",
-  output = FALSE
-)
+addFixationToQCEframeList_7(...)
 }
 \arguments{
-\item{QCEframeList}{A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEframeList that you are adding an effect to. DEFAULT = NULL}
-
-\item{fixationFontSize}{A string that specifies the font size of the fixation. Font size is specified by an integer followed by px. For example, "50px" DEFAULT = "50px"}
-
-\item{fixationColor}{an RGB color, specified in hexadecimal, that controls the color of the fixation symbol. DEFAULT = "#FF6464" (reddish).}
-
-\item{stimulus_duration}{An integer that specifies how long to present the fixation in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = 500}
-
-\item{post_trial_gap}{An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = 500}
-
-\item{stimTableWidth}{An integer specifying the width of the stimuli in the other frames.  This is generally not necessary. Rather, the fixation will be centered on the screen.  DEFAULT = 100.}
-
-\item{background}{an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).}
-
-\item{fixationSymbol}{A string that specifies the character symbol to use for the fixation. DEFAULT = "+"}
-
-\item{stimulis}{A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of anykind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and     <input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.}
-
-\item{outut}{a boolean that specifies whether to output the data from the frame into the dataset. Often fixation frames do not need to be output. DEFAULT = FALSE.
-'}
+\item{...}{All arguments are forwarded verbatim to addFixationToQCEframeList().
+See ?addFixationToQCEframeList for the full parameter list, which is a
+superset (adds the `trigger` param for fNIRS support).}
 }
 \value{
-the updated QCEframeList
+the updated QCEframeList (from addFixationToQCEframeList)
 }
 \description{
-Function that creates or modifys an QCEframeList by adding a fixation frame.
-}
-\examples{
-addFixationToQCEframeList (frameList, fixationFontSize = "20px", fixationColor = "#FF6464", stimulus_duration = 1000, post_trial_gap = 250, stimTableWidth = 800, background = "#000000")
+Thin wrapper that issues a .Deprecated() warning and delegates to
+addFixationToQCEframeList(). The v7-suffixed name was dropped because the
+jsPsych 7 vs. 8 distinction no longer matters at the JSON schema level;
+the unsuffixed function works for both. All existing callers of
+addFixationToQCEframeList_7() keep working (with a one-time deprecation
+warning per R session).
 }
 \keyword{QCE}
 \keyword{QCEframeList}
-\keyword{add}
-\keyword{effect}
+\keyword{deprecated}
 \keyword{fixation}

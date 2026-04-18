@@ -2,7 +2,7 @@
 % Please edit documentation in R/buildQCEdbFile.r
 \name{buildQCEdbFile}
 \alias{buildQCEdbFile}
-\title{This  function is used to create a QCEB dbfile}
+\title{DEPRECATED — use buildQCEgroupDbFile() instead}
 \usage{
 buildQCEdbFile(
   expName = "defaultExpName",
@@ -91,11 +91,17 @@ buildQCEdbFile(
 the QCEBdbfileList
 }
 \description{
-Function that create a QCEB dbfile.
+This function is retained for backward compatibility only. The dbfile
+structure has been reorganized into two levels: experiment-level (via
+buildQCEexpDbFile) and group-level (via buildQCEgroupDbFile). The
+group-level dbfile is what the engine reads per-session at runtime,
+and is where fNIRS trigger configuration lives (enableTriggers,
+triggerRelayPort) — see buildQCEgroupDbFile for details.
 }
 \examples{
-buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap)
 }
 \keyword{QCE}
 \keyword{QCEBdbfileList}
 \keyword{dbfile}
+\keyword{deprecated}

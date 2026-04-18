@@ -9,26 +9,17 @@
 #' @param post_trial_gap  An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)
 #' @param response_ends_trial  A boolean that specifies whether the key response ends the trial.  If set to FALSE, then stimulus_duration must not be NULL. DEFAULT = TRUE
 #' @param choices A vector of characters or keyCodes that specifies the allowable keys to be accepted as a response.  If “choices” is NULL, then all keys are allowed.  “choices” should be NULL if trialType = textbox.  choices does not control the keys that can be pressed to input a value into the textbox.  That is controlled by the html input code used to create the textbox.  DEFAULT = NULL.
-#' @param choices A vector of characters that specify the allowable keys to be accepted as a response.  “choices” should be "ALL_KEYS" if trialType = textbox.  choices does not control the keys that can be pressed to input a value into the textbox.  That is controlled by the html input code used to create the textbox.  DEFAULT = "ALL_KEYS".
-#' @param kind A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". DEFAULT = "string".
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
-#' @param cursorVisible  A boolean that specifies whether the cursor is visible during the frame.  If set to FALSE, then the cursor will not be visible. DEFAULT = TRUE
 #' @param outut a boolean that specifies whether to output the data from the frame into the dataset. Manytimes frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.
-#' @param trigger Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this frame's boundaries — onset fires in the frame's on_start, offset fires in the frame's on_finish (even for non-response frames like fixation). NULL means no frame-level triggers. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.
 #''
-#' @return the updated QCEframeList
-#' @keywords QCE QCEframeList update add effect
-#' @export
-#' @examples
-#' # Basic
-#' addFrameToQCEframeList (frameList, trialType = "key", frameName = "mask2", stimulus = myStimString, stimulus_duration = 1000, post_trial_gap = 0, choices = NULL, background = "#000000")
+#' (DEPRECATED — pre-v7) Use addFrameToQCEframeList() instead. This name is preserved for archival reference only; the active canonical is addFrameToQCEframeList() (unsuffixed), which has a superset of this signature.
 #'
-#' # With fNIRS frame-level trigger (typical event-related design: marker on stimulus frame)
-#' addFrameToQCEframeList (frameList, trialType = "key", frameName = "stimulus",
-#'   stimulus = myStimString, stimulus_duration = 1000, post_trial_gap = 0,
-#'   trigger = buildQCETriggerList(onset = 10000, offset = 10001))
+#' @return the updated QCEframeList
+#' @keywords QCE QCEframeList deprecated
+#' @export
+#' @examples addFrameToQCEframeListOldDep (frameList, trialType = "key", frameName = "mask2", stimulus = myStimString, stimulus_duration = 1000, post_trial_gap = 0, choices = NULL, background = "#000000")
 
-addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = TRUE, output = TRUE, trigger = NULL) {
+addFrameToQCEframeListOldDep <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = NULL, background = "#000000", output = TRUE) {
 
   validTrialTypes <- c("key", "textbox", "numberline", "angleline")
 
@@ -81,10 +72,7 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
   }
 
 
-  tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, kind = kind, background = background, cursorVisible = cursorVisible, output = output)
-  if (!is.null(trigger)) {
-    tmpList$trigger <- trigger
-  }
+  tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, background = background, output = output)
 
   if(is.null(QCEframeList)) {
     QCEframeList[[as.name(1)]] <- tmpList

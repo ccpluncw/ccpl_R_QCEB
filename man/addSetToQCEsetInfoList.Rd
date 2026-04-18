@@ -9,7 +9,8 @@ addSetToQCEsetInfoList(
   QCEScenarioList = NULL,
   setName = NULL,
   numberOfTrialsPerSet = 1,
-  selectionType = "randomWithoutReplacement"
+  selectionType = "randomWithoutReplacement",
+  trigger = NULL
 )
 }
 \arguments{
@@ -21,7 +22,9 @@ addSetToQCEsetInfoList(
 
 \item{numberOfTrialsPerSet}{A vector of integers (one for each setName) to indicate the number of stimuli to select for each set. DEFAULT = 1.}
 
-\item{selectionType}{A string to indicate the selection method: "randomWithReplacement" indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile randomly with replacement. "randomWithoutReplacement" indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile randomly without replacement. "fixed indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile starting with the first stimulus of that type and moving successively until the total needed is selected. The nect block will start where the previous block left off.  DEFAULT = "randomWithoutReplacement"
+\item{selectionType}{A string to indicate the selection method: "randomWithReplacement" indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile randomly with replacement. "randomWithoutReplacement" indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile randomly without replacement. "fixed indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile starting with the first stimulus of that type and moving successively until the total needed is selected. The nect block will start where the previous block left off.  DEFAULT = "randomWithoutReplacement"}
+
+\item{trigger}{Optional named list of trigger objects (each produced by buildQCETriggerList()), keyed by setName. Sets not named in this list get no trigger. Sets named with a NULL value also get no trigger. Recommended code range: 100-999 (3 digits). DEFAULT = NULL (no triggers on any set).
 '}
 }
 \value{
@@ -31,7 +34,18 @@ the updated QCEsetInfoList
 Function that creates or modifys an QCEframeList by adding frames to the list one at a time.
 }
 \examples{
-addSetToQCEsetInfoList (QCEsetInfoList, QCEScenarioList = "key", set = c("type1", "type2"), numberOfTrialsPerSet = c(10, 20),	selectionType = "randomWithReplacement")
+# Basic: no triggers
+addSetToQCEsetInfoList (QCEsetInfoList, QCEScenarioList, setName = c("type1", "type2"),
+  numberOfTrialsPerSet = c(10, 20), selectionType = "randomWithReplacement")
+
+# With fNIRS triggers on select sets (named list keyed by setName)
+addSetToQCEsetInfoList (QCEsetInfoList, QCEScenarioList,
+  setName = c("baseline", "task"),
+  numberOfTrialsPerSet = c(10, 20),
+  trigger = list(
+    baseline = buildQCETriggerList(onset = 100, offset = 101),
+    task     = buildQCETriggerList(onset = 200, offset = 201)
+  ))
 }
 \keyword{QCE}
 \keyword{QCEsetInfoList}

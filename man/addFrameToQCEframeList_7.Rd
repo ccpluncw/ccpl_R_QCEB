@@ -2,60 +2,26 @@
 % Please edit documentation in R/addFrameToQCEframeList_7.r
 \name{addFrameToQCEframeList_7}
 \alias{addFrameToQCEframeList_7}
-\title{This  function is used to create or modify a QCEframeList}
+\title{DEPRECATED — use addFrameToQCEframeList() instead}
 \usage{
-addFrameToQCEframeList_7(
-  QCEframeList = NULL,
-  trialType = "key",
-  frameName = NULL,
-  stimulus = NULL,
-  stimulus_duration = NULL,
-  post_trial_gap = NULL,
-  response_ends_trial = TRUE,
-  choices = "ALL_KEYS",
-  kind = "string",
-  background = "#000000",
-  cursorVisible = TRUE,
-  output = TRUE
-)
+addFrameToQCEframeList_7(...)
 }
 \arguments{
-\item{QCEframeList}{A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEframeList that you are adding an effect to. DEFAULT = NULL}
-
-\item{trialType}{A string that specifies the response type that you will be collecting.  It can take on one of the following values: "key" or "textbox".  "key" indicates a key press or no input to move on to next frame. "textbox" indicates that a textbox will be presented for participants to input their text response. DEFAULT = "key"}
-
-\item{frameName}{A string that specifies the name of the frame that will be output in the datafile, to indicate the data collected for this particular frame. One row is output in the datafile for each frame, so the frameName helps you keep track of the frame.  DEFAULT = NULL.  A NULL will force the frameName to equal "frame#" where # is the frame number.}
-
-\item{stimulus_duration}{An integer that specifies how long to present the frame in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = NULL}
-
-\item{post_trial_gap}{An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)}
-
-\item{response_ends_trial}{A boolean that specifies whether the key response ends the trial.  If set to FALSE, then stimulus_duration must not be NULL. DEFAULT = TRUE}
-
-\item{choices}{A vector of characters that specify the allowable keys to be accepted as a response.  “choices” should be "ALL_KEYS" if trialType = textbox.  choices does not control the keys that can be pressed to input a value into the textbox.  That is controlled by the html input code used to create the textbox.  DEFAULT = "ALL_KEYS".}
-
-\item{kind}{A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". DEFAULT = "string".}
-
-\item{background}{an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).}
-
-\item{cursorVisible}{A boolean that specifies whether the cursor is visible during the frame.  If set to FALSE, then the cursor will not be visible. DEFAULT = TRUE}
-
-\item{stimulis}{A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of anykind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and     <input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.}
-
-\item{outut}{a boolean that specifies whether to output the data from the frame into the dataset. Manytimes frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.
-'}
+\item{...}{All arguments are forwarded verbatim to addFrameToQCEframeList().
+See ?addFrameToQCEframeList for the full parameter list, which is a
+superset (adds the `trigger` param for fNIRS support).}
 }
 \value{
-the updated QCEframeList
+the updated QCEframeList (from addFrameToQCEframeList)
 }
 \description{
-Function that creates or modifys an QCEframeList by adding frames to the list one at a time.
-}
-\examples{
-addFrameToQCEframeList (frameList, trialType = "key", frameName = "mask2", stimulus = myStimString,	stimulus_duration = 1000, post_trial_gap = 0, choices = NULL, background = "#000000")
+Thin wrapper that issues a .Deprecated() warning and delegates to
+addFrameToQCEframeList(). The v7-suffixed name was dropped because the
+jsPsych 7 vs. 8 distinction no longer matters at the JSON schema level;
+the unsuffixed function works for both. All existing callers of
+addFrameToQCEframeList_7() keep working (with a one-time deprecation
+warning per R session).
 }
 \keyword{QCE}
 \keyword{QCEframeList}
-\keyword{add}
-\keyword{effect}
-\keyword{update}
+\keyword{deprecated}

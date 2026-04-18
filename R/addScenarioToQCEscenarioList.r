@@ -5,16 +5,27 @@
 #' @param QCEframeList A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.
 #' @param QCEoutvariableList A list of variable names and their contents that will be output in the datafile for this trial.  DEFAULT = NULL.
 #' @param setName A string that specifies the name of the set that this scenario belongs to.  Set names are used for selecting scenarios to show participants.  The rules are set in trialStructure.json.
+#' @param trigger Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this trial's boundaries — onset fires on the scenario's first frame; offset fires on the response frame. NULL means no trial-level triggers. Recommended code range: 1000-9999 (4 digits). DEFAULT = NULL.
 #''
 #' @return the updated QCEScenarioList
 #' @keywords QCE QCEScenarioList update add scenario
 #' @export
-#' @examples addScenarioToQCEscenarioList (QCEScenarioList, myFrameList, myFeebackList, MyOutputVariables, "ponys")
+#' @examples
+#' # Basic
+#' addScenarioToQCEscenarioList (QCEScenarioList, myFrameList, myFeebackList, MyOutputVariables, "ponys")
+#'
+#' # With fNIRS trial-level trigger
+#' addScenarioToQCEscenarioList (QCEScenarioList, myFrameList, myFeebackList, MyOutputVariables,
+#'   setName = "ponys",
+#'   trigger = buildQCETriggerList(onset = 1000, offset = 1001))
 
 
-addScenarioToQCEscenarioList <- function(QCEScenarioList, QCEframeList, QCEfeebackList, QCEoutvariableList, setName) {
+addScenarioToQCEscenarioList <- function(QCEScenarioList, QCEframeList, QCEfeebackList, QCEoutvariableList, setName, trigger = NULL) {
 
   tmpList <- list(frame = QCEframeList, feedback = QCEfeebackList, outputVariables = QCEoutvariableList, set = setName)
+  if (!is.null(trigger)) {
+    tmpList$trigger <- trigger
+  }
 
   if(is.null(QCEScenarioList)) {
     numList <- 0

@@ -11,16 +11,15 @@
 #' @param stimTableWidth An integer specifying the width of the stimuli in the other frames.  This is generally not necessary. Rather, the fixation will be centered on the screen.  DEFAULT = 100.
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
 #' @param outut a boolean that specifies whether to output the data from the frame into the dataset. Often fixation frames do not need to be output. DEFAULT = FALSE.
-#' @param trigger Optional list produced by buildQCETriggerList() specifying fNIRS trigger codes that fire at the fixation frame's boundaries — onset in on_start, offset in on_finish. Rarely used at this level for fNIRS (analysts usually mark the stimulus frame, not fixation), but provided for parity with addFrameToQCEframeList. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.
 #''
+#' (DEPRECATED — pre-v7) Use addFixationToQCEframeList() instead. This name is preserved for archival reference only; the active canonical is addFixationToQCEframeList() (unsuffixed), which has a superset of this signature.
+#'
 #' @return the updated QCEframeList
-#' @keywords QCE QCEframeList fixation add effect
+#' @keywords QCE QCEframeList fixation deprecated
 #' @export
-#' @examples
-#' # Basic
-#' addFixationToQCEframeList (frameList, fixationFontSize = "20px", fixationColor = "#FF6464", stimulus_duration = 1000, post_trial_gap = 250, stimTableWidth = 800, background = "#000000")
+#' @examples addFixationToQCEframeListOldDep (frameList, fixationFontSize = "20px", fixationColor = "#FF6464", stimulus_duration = 1000, post_trial_gap = 250, stimTableWidth = 800, background = "#000000")
 
-addFixationToQCEframeList <- function (QCEframeList = NULL, frameSymbol = '+', fixationFontSize = "50px", fixationColor = "#FF6464", stimulus_duration = 500,  post_trial_gap = 500, stimTableWidth = 100, background = "#000000", output = FALSE, trigger = NULL) {
+addFixationToQCEframeListOldDep <- function (QCEframeList = NULL, frameSymbol = '+', fixationFontSize = "50px", fixationColor = "#FF6464", stimulus_duration = 500,  post_trial_gap = 500, stimTableWidth = 100, background = "#000000", output = FALSE) {
 
   if(!isSingleString(frameSymbol)) {
     stop("frameSymbol option must be a single string.")
@@ -47,14 +46,11 @@ addFixationToQCEframeList <- function (QCEframeList = NULL, frameSymbol = '+', f
 
   stimulus <- paste("<table style = \"font-family:Courier, monospace; width:", stimTableWidth, "; text-align: center\"><tr><td style=\"font-size: ", fixationFontSize, "; color: ", fixationColor, "\">", frameSymbol,"</td></tr></table>", sep="")
 
-  choices <- "ALL_KEYS"
+  choices <- character()
   trialType <- "key"
   frameName <- "fixation"
 
-  tmpList <- list(trialType = trialType, frameName = frameName, stimulus = stimulus, post_trial_gap = post_trial_gap, choices= choices, stimulus_duration = stimulus_duration, background = background, output = output)
-  if (!is.null(trigger)) {
-    tmpList$trigger <- trigger
-  }
+  tmpList <- list(trialType = trialType, frameName = frameName, stimulus = stimulus, post_trial_gap = post_trial_gap, choices= choices, stimulus_duration = stimulus_duration, background = background, cursorVisible = FALSE, output = output)
 
   if(is.null(QCEframeList)) {
     QCEframeList[[as.name(1)]] <- tmpList

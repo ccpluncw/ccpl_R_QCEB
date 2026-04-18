@@ -15,8 +15,8 @@ savePreloadFiles <- function (imageFileArray = NULL, videoFileArray = NULL, audi
   #convert the list to a json file and write it out.
   prFiles <- list(images = imageFileArray, video = videoFileArray, audio = audioFileArray)
   jsonData <- jsonlite::toJSON(prFiles, pretty=T)
-  write("var preloadFiles =", "preloadFile.json")
-  write(jsonData, "preloadFile.json", append = T)
+#  write("var preloadFiles =", "preloadFile.json")
+  write(jsonData, "preloadFile.json", append = F)
 
   return(jsonData)
 }

@@ -9,7 +9,8 @@ addScenarioToQCEscenarioList(
   QCEframeList,
   QCEfeebackList,
   QCEoutvariableList,
-  setName
+  setName,
+  trigger = NULL
 )
 }
 \arguments{
@@ -19,7 +20,9 @@ addScenarioToQCEscenarioList(
 
 \item{QCEoutvariableList}{A list of variable names and their contents that will be output in the datafile for this trial.  DEFAULT = NULL.}
 
-\item{setName}{A string that specifies the name of the set that this scenario belongs to.  Set names are used for selecting scenarios to show participants.  The rules are set in trialStructure.json.
+\item{setName}{A string that specifies the name of the set that this scenario belongs to.  Set names are used for selecting scenarios to show participants.  The rules are set in trialStructure.json.}
+
+\item{trigger}{Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this trial's boundaries — onset fires on the scenario's first frame; offset fires on the response frame. NULL means no trial-level triggers. Recommended code range: 1000-9999 (4 digits). DEFAULT = NULL.
 '}
 }
 \value{
@@ -29,7 +32,13 @@ the updated QCEScenarioList
 Function that creates or modifys an QCEScenarioList by adding frames to the list one at a time.
 }
 \examples{
+# Basic
 addScenarioToQCEscenarioList (QCEScenarioList, myFrameList, myFeebackList, MyOutputVariables, "ponys")
+
+# With fNIRS trial-level trigger
+addScenarioToQCEscenarioList (QCEScenarioList, myFrameList, myFeebackList, MyOutputVariables,
+  setName = "ponys",
+  trigger = buildQCETriggerList(onset = 1000, offset = 1001))
 }
 \keyword{QCE}
 \keyword{QCEScenarioList}
