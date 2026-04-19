@@ -2,7 +2,7 @@
 % Please edit documentation in R/addFrameToQCEframeList.r
 \name{addFrameToQCEframeList}
 \alias{addFrameToQCEframeList}
-\title{This  function is used to create or modify a QCEframeList}
+\title{This function is used to create or modify a QCEframeList}
 \usage{
 addFrameToQCEframeList(
   QCEframeList = NULL,
@@ -17,42 +17,49 @@ addFrameToQCEframeList(
   background = "#000000",
   cursorVisible = TRUE,
   output = TRUE,
-  trigger = NULL
+  trigger = NULL,
+  pluginParams = NULL
 )
 }
 \arguments{
 \item{QCEframeList}{A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEframeList that you are adding an effect to. DEFAULT = NULL}
 
-\item{trialType}{A string that specifies the response type that you will be collecting.  It can take on one of the following values: "key" or "textbox".  "key" indicates a key press or no input to move on to next frame. "textbox" indicates that a textbox will be presented for participants to input their text response. DEFAULT = "key"}
+\item{trialType}{A string that specifies the response type that you will be collecting.  It can take on one of the following values: "key", "textbox", "numberline", or "angleline".  "key" indicates a key press (or no input) to move on to the next frame. "textbox" presents a textbox for participants to input text. "numberline" presents a draggable number-line response plugin. "angleline" presents a draggable angle-line response plugin. DEFAULT = "key".}
 
 \item{frameName}{A string that specifies the name of the frame that will be output in the datafile, to indicate the data collected for this particular frame. One row is output in the datafile for each frame, so the frameName helps you keep track of the frame.  DEFAULT = NULL.  A NULL will force the frameName to equal "frame#" where # is the frame number.}
 
-\item{stimulus_duration}{An integer that specifies how long to present the frame in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = NULL}
+\item{stimulus}{A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of any kind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and     <input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.}
+
+\item{stimulus_duration}{An integer that specifies how long to present the frame in milliseconds. A NULL will present the stimulus until there is a user input. DEFAULT = NULL}
 
 \item{post_trial_gap}{An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)}
 
 \item{response_ends_trial}{A boolean that specifies whether the key response ends the trial.  If set to FALSE, then stimulus_duration must not be NULL. DEFAULT = TRUE}
 
-\item{choices}{A vector of characters that specify the allowable keys to be accepted as a response.  “choices” should be "ALL_KEYS" if trialType = textbox.  choices does not control the keys that can be pressed to input a value into the textbox.  That is controlled by the html input code used to create the textbox.  DEFAULT = "ALL_KEYS".}
+\item{choices}{Specifies the keyboard keys accepted as a response. Interpretation depends on trialType.
+For trialType = "key": a character vector of allowed key names (e.g., c("a", "b", " ", "Enter")), or the sentinel "ALL_KEYS" to accept any key. NULL or an empty vector disables the keyboard response path entirely — the trial then advances on stimulus_duration only.
+For trialType = "textbox" with kind = "string" or "number": the default "ALL_KEYS" is appropriate (the plugin handles character filtering internally via the kind argument).
+For trialType = "textbox" with kind = "other": you MUST provide a character vector of specific allowed keys (e.g., c("y", "n")). The sentinel "ALL_KEYS" will NOT work in this case — the plugin tests membership against the vector, so "ALL_KEYS" would match nothing.
+For trialType = "numberline" or "angleline": ignored (these plugins handle their own interaction model).
+choices does not control what can be typed into an html textbox input field — that is controlled by the html input code plus the kind argument. DEFAULT = "ALL_KEYS".}
 
-\item{kind}{A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". DEFAULT = "string".}
+\item{kind}{A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". Only meaningful when trialType = "textbox"; silently ignored (not emitted to JSON) for other trial types. DEFAULT = "string".}
 
 \item{background}{an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).}
 
 \item{cursorVisible}{A boolean that specifies whether the cursor is visible during the frame.  If set to FALSE, then the cursor will not be visible. DEFAULT = TRUE}
 
-\item{trigger}{Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this frame's boundaries — onset fires in the frame's on_start, offset fires in the frame's on_finish (even for non-response frames like fixation). NULL means no frame-level triggers. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.
-'}
+\item{output}{A boolean that specifies whether to output the data from the frame into the dataset. Many times frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.}
 
-\item{stimulis}{A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of anykind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and     <input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.}
+\item{trigger}{Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this frame's boundaries — onset fires in the frame's on_start, offset fires in the frame's on_finish (even for non-response frames like fixation). NULL means no frame-level triggers. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.}
 
-\item{outut}{a boolean that specifies whether to output the data from the frame into the dataset. Manytimes frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.}
+\item{pluginParams}{A named list of plugin-specific parameters passed through to the jsPsych plugin for this frame. For textbox trials, the 'kind' argument (above) is automatically merged into this list — passing 'kind' both as a named argument AND inside pluginParams is an error. For future custom plugins (Cyberball etc.), pass their specific parameters here. DEFAULT = NULL.}
 }
 \value{
 the updated QCEframeList
 }
 \description{
-Function that creates or modifys an QCEframeList by adding frames to the list one at a time.
+Function that creates or modifies a QCEframeList by adding frames to the list one at a time.
 }
 \examples{
 # Basic
