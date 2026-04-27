@@ -2,53 +2,56 @@
 % Please edit documentation in R/addSetToQCEsetInfoList.r
 \name{addSetToQCEsetInfoList}
 \alias{addSetToQCEsetInfoList}
-\title{This  function is used to create or modify a QCEframeList}
+\title{Add a single set's configuration to a QCEsetInfoList}
 \usage{
 addSetToQCEsetInfoList(
   QCEsetInfoList = NULL,
   QCEScenarioList = NULL,
-  setName = NULL,
+  setName,
   numberOfTrialsPerSet = 1,
   selectionType = "randomWithoutReplacement",
-  trigger = NULL
+  trigger = NULL,
+  showIf = NULL
 )
 }
 \arguments{
-\item{QCEsetInfoList}{A list that specifies the the setInfo information.  This includes, for each setName, : N (the number of trials per set) and selection (the method of selecting the scenarios from the QCEScenarioList).  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEsetInfoList that you are adding an effect to. DEFAULT = NULL}
+\item{QCEsetInfoList}{Existing QCEsetInfoList to append to. Pass NULL to start a new one. DEFAULT = NULL.}
 
-\item{QCEScenarioList}{A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules.}
+\item{QCEScenarioList}{The QCEScenarioList that declares which setNames are valid.}
 
-\item{setName}{A vector of strings that specify the name of the sets that you will be adding to the setInfo. The order of the strings is the order that they will be entered into the QCEsetInfoList.  It is that order that the sets will be presented in if randomizeSetOrder is set to "fixed" in the trialStructure file. DEFAULT = NULL.  If setName is NULL, then the function will create a setInfo list that is equivelent for all sets in order of validSetNames.}
+\item{setName}{A single string -- the name of the set being added. Must match a setName declared on at least one scenario in QCEScenarioList.}
 
-\item{numberOfTrialsPerSet}{A vector of integers (one for each setName) to indicate the number of stimuli to select for each set. DEFAULT = 1.}
+\item{numberOfTrialsPerSet}{Single integer -- number of stimuli to select for this set. DEFAULT = 1.}
 
-\item{selectionType}{A string to indicate the selection method: "randomWithReplacement" indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile randomly with replacement. "randomWithoutReplacement" indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile randomly without replacement. "fixed indicates the stimuli  will be selected from all the stimuli with that setName in the stimFile starting with the first stimulus of that type and moving successively until the total needed is selected. The nect block will start where the previous block left off.  DEFAULT = "randomWithoutReplacement"}
+\item{selectionType}{String -- "randomWithoutReplacement" (default), "randomWithReplacement", or "fixed". See documentation for semantics.}
 
-\item{trigger}{Optional named list of trigger objects (each produced by buildQCETriggerList()), keyed by setName. Sets not named in this list get no trigger. Sets named with a NULL value also get no trigger. Recommended code range: 100-999 (3 digits). DEFAULT = NULL (no triggers on any set).
+\item{trigger}{Optional list produced by buildQCETriggerList() specifying fNIRS trigger codes for this set's onset/offset. NULL means no triggers on this set. DEFAULT = NULL.}
+
+\item{showIf}{Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this set runs. Evaluated at set entry -- if FALSE, the entire set is skipped. NULL means always run. DEFAULT = NULL.
 '}
 }
 \value{
-the updated QCEsetInfoList
+The updated QCEsetInfoList, with the new set appended.
 }
 \description{
-Function that creates or modifys an QCEframeList by adding frames to the list one at a time.
+Adds one set entry to a QCEsetInfoList. Call this function once per set
+you want in the trial structure.
+}
+\details{
+Note: prior to Phase 2 this function accepted a vector of setNames in
+a single call. That multi-set form is now deprecated -- see
+addSetToQCEsetInfoListOldDep for the legacy behavior.
 }
 \examples{
-# Basic: no triggers
-addSetToQCEsetInfoList (QCEsetInfoList, QCEScenarioList, setName = c("type1", "type2"),
-  numberOfTrialsPerSet = c(10, 20), selectionType = "randomWithReplacement")
-
-# With fNIRS triggers on select sets (named list keyed by setName)
-addSetToQCEsetInfoList (QCEsetInfoList, QCEScenarioList,
-  setName = c("baseline", "task"),
-  numberOfTrialsPerSet = c(10, 20),
-  trigger = list(
-    baseline = buildQCETriggerList(onset = 100, offset = 101),
-    task     = buildQCETriggerList(onset = 200, offset = 201)
-  ))
+# Build a setInfo with two sets, one trigger-gated and one showIf-gated.
+sl <- addSetToQCEsetInfoList(NULL, scenarios, "baseline", 10)
+sl <- addSetToQCEsetInfoList(sl, scenarios, "task", 20,
+  trigger = buildQCETriggerList(onset = 200, offset = 201))
+sl <- addSetToQCEsetInfoList(sl, scenarios, "smokingFollowUp", 15,
+  showIf = buildQCEshowIfCondition("smoker", "equals", "Yes", "Response"))
 }
 \keyword{QCE}
 \keyword{QCEsetInfoList}
 \keyword{add}
-\keyword{effect}
+\keyword{set}
 \keyword{update}
