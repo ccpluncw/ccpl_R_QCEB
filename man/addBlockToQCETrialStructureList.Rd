@@ -10,7 +10,8 @@ addBlockToQCETrialStructureList(
   QCEblockIteratorList,
   blockNumber = -1,
   blockName = "blockName",
-  trigger = NULL
+  trigger = NULL,
+  showIf = NULL
 )
 }
 \arguments{
@@ -24,7 +25,9 @@ addBlockToQCETrialStructureList(
 
 \item{blockName}{A string specifying the name of this block. It is used for the experimenter to identify block condition names. DEFAULT = "blockName".}
 
-\item{trigger}{Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this block's boundaries (onset before the first trial, offset after the last). NULL means no block-level triggers. Recommended code range: 1-99 (1-2 digits). DEFAULT = NULL.
+\item{trigger}{Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this block's boundaries (onset before the first trial, offset after the last). NULL means no block-level triggers. Recommended code range: 1-99 (1-2 digits). DEFAULT = NULL.}
+
+\item{showIf}{Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this block runs. Evaluated at block entry -- if FALSE, the entire block is skipped. NULL means always run. DEFAULT = NULL.
 '}
 }
 \value{
@@ -41,6 +44,11 @@ addBlockToQCETrialStructureList (TSlist, mySetInfoList, myBlockIteratorList)
 addBlockToQCETrialStructureList (TSlist, mySetInfoList, myBlockIteratorList,
   blockName = "Familiarization",
   trigger = buildQCETriggerList(onset = 10, offset = 11))
+
+# With showIf -- block only runs if a previous tagged scenario answered "Yes"
+addBlockToQCETrialStructureList (TSlist, mySetInfoList, myBlockIteratorList,
+  blockName = "smokerFollowUpBlock",
+  showIf = buildQCEshowIfCondition("smoker", "equals", "Yes", "Response"))
 }
 \keyword{QCE}
 \keyword{QCETrialStructureList}
