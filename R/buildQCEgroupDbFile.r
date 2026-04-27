@@ -14,8 +14,10 @@
 #' @param friendlyReminderMsg A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "This is a friendly reminder."
 #' @param remindMsg A string that specifies a message that the keymap reminder might be shown again. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "We may present this screen again during the experiment to remind you of the keys."
 #' @param proceedMsg A string that specifies a message to hit any key to proceed. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit any key to proceed."
-#' @param enableTriggers A boolean that enables fNIRS trigger support for this group (session). When TRUE, the engine connects to a local Python relay (tools/fnirsRelay.py) at session start, forwards trigger codes declared at block/set/trial/frame levels to an LSL stream, and writes a separate `_triggers.finalDat` event log alongside the main behavioral data. Silent fallback if the relay is not running (experiment proceeds normally with no triggers sent). DEFAULT = FALSE — no overhead and identical behavior to pre-Phase-1.5 experiments.
+#' @param enableTriggers A boolean that enables fNIRS trigger support for this group (session). When TRUE, the engine connects to a local Python relay (tools/fnirsRelay.py) at session start, forwards trigger codes declared at block/set/trial/frame levels to an LSL stream, and writes a separate `_triggers.finalDat` event log alongside the main behavioral data. Silent fallback if the relay is not running (experiment proceeds normally with no triggers sent). DEFAULT = FALSE -- no overhead and identical behavior to pre-Phase-1.5 experiments.
 #' @param triggerRelayPort An integer specifying the port the local Python relay listens on. Only meaningful when enableTriggers = TRUE. Must match the `--port` the relay was started with. DEFAULT = 5678.
+#' @param restEveryNMinutes Optional positive numeric -- fire a rest break every N minutes of elapsed task time, in addition to any thresholds in `restTrials`. The engine measures elapsed time from the most recent rest (or first trial completion). NULL means no time-based rests. DEFAULT = NULL.
+#' @param restMaxTrial Optional positive integer -- suppress all rest breaks once `trialsShown` reaches this number. Useful for experiments where late-stage rests would disrupt a flow state. NULL means no trial-count cap. DEFAULT = NULL.
 #''
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
@@ -29,8 +31,13 @@
 #' # fNIRS-enabled
 #' buildQCEgroupDbFile (condName="fNIRS_session", keyMap = myQCEBkeymap,
 #'   enableTriggers = TRUE, triggerRelayPort = 5678)
+#'
+#' # With time-based rests every 10 minutes, suppressed past trial 200
+#' buildQCEgroupDbFile (condName="LongSession", keyMap = myQCEBkeymap,
+#'   restTrials = c(50, 100, 150),
+#'   restEveryNMinutes = 10, restMaxTrial = 200)
 
-buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, defaultBackgroundColor = "#000000", restTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", restMsg = NULL,  friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, enableTriggers = FALSE, triggerRelayPort = 5678 ) {
+buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, defaultBackgroundColor = "#000000", restTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", restMsg = NULL,  friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, enableTriggers = FALSE, triggerRelayPort = 5678, restEveryNMinutes = NULL, restMaxTrial = NULL ) {
 
   if(!isSingleString(condName)) {
     stop("condName option must be a single string.  Yours, apparently, is not a single string.")
@@ -89,14 +96,36 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
     }
   }
 
+  if (!is.null(restEveryNMinutes)) {
+    if (!isSingleNumeric(restEveryNMinutes) || restEveryNMinutes <= 0) {
+      stop("restEveryNMinutes option must be a single positive number (minutes between rest breaks) or NULL.")
+    }
+  }
+
+  if (!is.null(restMaxTrial)) {
+    if (!isSingleNumeric(restMaxTrial) || restMaxTrial <= 0) {
+      stop("restMaxTrial option must be a single positive integer (trial number after which rests are suppressed) or NULL.")
+    }
+  }
+
   tmpList <- list (condName= condName, keyMap = keyMap, randomizeKeyMap = randomizeKeyMap, presentKeyMapAfterTrialNumbers=presentKeyMapAfterTrialNumbers, defaultBackgroundColor = defaultBackgroundColor, restTrials = restTrials, speedFeedbackParams = speedFeedbackParams, instructionFile = instructionFile, keyMapInstructionFile = keyMapInstructionFile, restMsg = restMsg, friendlyReminderMsg = friendlyReminderMsg, remindMsg = remindMsg, proceedMsg = proceedMsg)
 
-  # Phase 1.5 — emit the `triggers` block only when enabled, so non-fNIRS
+  # Phase 1.5 -- emit the `triggers` block only when enabled, so non-fNIRS
   # experiments produce byte-identical JSON to pre-Phase-1.5 output. The
   # engine reads mydB.triggers in do_a_session.runSession() from the JSON
   # this function produces.
   if (isTRUE(enableTriggers)) {
     tmpList$triggers <- list(enabled = TRUE, relayPort = as.integer(triggerRelayPort))
+  }
+
+  # Phase 2 C.5 -- emit rest extension fields only when set, so non-using
+  # experiments produce byte-identical JSON. The engine reads these in
+  # dynamicEngine.js::shouldFireRest at runtime.
+  if (!is.null(restEveryNMinutes)) {
+    tmpList$restEveryNMinutes <- restEveryNMinutes
+  }
+  if (!is.null(restMaxTrial)) {
+    tmpList$restMaxTrial <- as.integer(restMaxTrial)
   }
 
   return(tmpList)
