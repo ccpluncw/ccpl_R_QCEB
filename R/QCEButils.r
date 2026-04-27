@@ -76,3 +76,22 @@ isValidFilename <- function (filename, extension) {
   return (out)
 
 }
+
+
+# Internal helper (not exported): shape-validate a showIf condition.
+# Used by addScenarioToQCEscenarioList, addSetToQCEsetInfoList, and
+# addBlockToQCETrialStructureList to reject malformed hand-rolled lists.
+# Same shape rule buildQCEshowIfCompound applies to its children.
+validateShowIfShape <- function(x, paramName = "showIf") {
+  if (!is.list(x)) {
+    stop(paramName, " must be a list (output of buildQCEshowIfCondition or buildQCEshowIfCompound).")
+  }
+  isSingle   <- !is.null(x$stimRef) && !is.null(x$operator)
+  isCompound <- !is.null(x$all) || !is.null(x$any)
+  if (!isSingle && !isCompound) {
+    stop(paramName, " is not a valid showIf condition: ",
+         "expected stimRef+operator (single) or all/any (compound). ",
+         "Did you forget to wrap with buildQCEshowIfCondition or buildQCEshowIfCompound?")
+  }
+  invisible(TRUE)
+}
