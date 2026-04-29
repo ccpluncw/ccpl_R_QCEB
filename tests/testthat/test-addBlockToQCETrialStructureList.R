@@ -103,3 +103,126 @@ test_that("JSON round-trip preserves showIf on a block", {
     expect_equal(entry$showIf$stimRef[[1]], "smoker")
     expect_equal(entry$showIf$operator[[1]], "equals")
 })
+
+# --- Phase 3 Chunk G: switchRules ---
+
+# Helper: a well-formed single rule (countResponse sugar form)
+.makeSwitchRule <- function(toSet = "setA") {
+    buildQCEswitchRule(
+        countResponse = "Yes",
+        threshold     = buildQCEswitchThreshold(values = 5, rule = "fixed"),
+        switchToSet   = toSet
+    )
+}
+
+test_that("regression: block without switchRules omits the field", {
+    inp <- .makeBlockInputs()
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
+    expect_null(tsl[[1]]$switchRules)
+})
+
+test_that("block with single switchRule emits switchRules array", {
+    inp <- .makeBlockInputs()
+    tsl <- addBlockToQCETrialStructureList(
+        NULL, inp$setInfo, inp$blockIter,
+        blockName   = "PrefBlock",
+        switchRules = list(.makeSwitchRule())
+    )
+    expect_length(tsl[[1]]$switchRules, 1)
+    expect_equal(tsl[[1]]$switchRules[[1]]$countResponse, "Yes")
+})
+
+test_that("block with two sequential switchRules preserves order", {
+    inp <- .makeBlockInputs()
+    r1 <- .makeSwitchRule("setA")
+    r2 <- buildQCEswitchRule(
+        countResponse = "No",
+        threshold     = buildQCEswitchThreshold(values = 3, rule = "fixed")
+    )  # early-stop rule (no switchToSet)
+    tsl <- addBlockToQCETrialStructureList(
+        NULL, inp$setInfo, inp$blockIter,
+        switchRules = list(r1, r2)
+    )
+    expect_length(tsl[[1]]$switchRules, 2)
+    expect_equal(tsl[[1]]$switchRules[[1]]$countResponse, "Yes")
+    expect_equal(tsl[[1]]$switchRules[[2]]$countResponse, "No")
+    expect_null(tsl[[1]]$switchRules[[2]]$switchToSet)
+})
+
+test_that("non-list switchRules throws", {
+    inp <- .makeBlockInputs()
+    expect_error(
+        addBlockToQCETrialStructureList(
+            NULL, inp$setInfo, inp$blockIter,
+            switchRules = "not a list"
+        ),
+        "switchRules must be a list"
+    )
+})
+
+test_that("empty list switchRules throws", {
+    inp <- .makeBlockInputs()
+    expect_error(
+        addBlockToQCETrialStructureList(
+            NULL, inp$setInfo, inp$blockIter,
+            switchRules = list()
+        ),
+        "switchRules must contain at least one rule"
+    )
+})
+
+test_that("hand-rolled rule missing both countResponse and countWhen throws", {
+    inp <- .makeBlockInputs()
+    badRule <- list(threshold = buildQCEswitchThreshold(5))  # no count condition
+    expect_error(
+        addBlockToQCETrialStructureList(
+            NULL, inp$setInfo, inp$blockIter,
+            switchRules = list(badRule)
+        ),
+        "missing both countResponse and countWhen"
+    )
+})
+
+test_that("hand-rolled rule missing threshold throws", {
+    inp <- .makeBlockInputs()
+    badRule <- list(countResponse = "Yes")  # no threshold
+    expect_error(
+        addBlockToQCETrialStructureList(
+            NULL, inp$setInfo, inp$blockIter,
+            switchRules = list(badRule)
+        ),
+        "missing threshold"
+    )
+})
+
+test_that("hand-rolled rule with both countResponse and countWhen throws", {
+    inp <- .makeBlockInputs()
+    badRule <- list(
+        countResponse = "Yes",
+        countWhen     = list(field = "Key", operator = "equals", value = "Yes"),
+        threshold     = buildQCEswitchThreshold(5)
+    )
+    expect_error(
+        addBlockToQCETrialStructureList(
+            NULL, inp$setInfo, inp$blockIter,
+            switchRules = list(badRule)
+        ),
+        "has both countResponse and countWhen"
+    )
+})
+
+test_that("JSON round-trip preserves switchRules shape", {
+    inp <- .makeBlockInputs()
+    tsl <- addBlockToQCETrialStructureList(
+        NULL, inp$setInfo, inp$blockIter,
+        switchRules = list(.makeSwitchRule("setA"))
+    )
+    json <- jsonlite::toJSON(tsl, auto_unbox = FALSE)
+    parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
+    rules <- parsed[[1]]$switchRules
+    expect_length(rules, 1)
+    expect_equal(rules[[1]]$countResponse[[1]], "Yes")
+    expect_equal(rules[[1]]$switchToSet[[1]], "setA")
+    expect_equal(unlist(rules[[1]]$threshold$values), 5)
+    expect_equal(rules[[1]]$threshold$rule[[1]], "fixed")
+})

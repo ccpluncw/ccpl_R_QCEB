@@ -178,3 +178,66 @@ test_that("JSON round-trip preserves single-set with showIf", {
     expect_equal(parsed$setA$showIf$stimRef[[1]], "smoker")
     expect_equal(parsed$setA$showIf$operator[[1]], "equals")
 })
+
+# --- Phase 3 Chunk G: excludePreviouslyPresented (set-level / Semantic C) ---
+
+test_that("regression: excludePreviouslyPresented absent → field omitted", {
+    sil <- addSetToQCEsetInfoList(NULL, .makeScenariosTwoSets(), "setA", 10)
+    expect_null(sil$setA$excludePreviouslyPresented)
+})
+
+test_that("excludePreviouslyPresented=TRUE is emitted", {
+    sil <- addSetToQCEsetInfoList(
+        NULL, .makeScenariosTwoSets(), "setA", 10,
+        excludePreviouslyPresented = TRUE
+    )
+    expect_true(sil$setA$excludePreviouslyPresented)
+})
+
+test_that("excludePreviouslyPresented=FALSE is emitted (explicit opt-out)", {
+    sil <- addSetToQCEsetInfoList(
+        NULL, .makeScenariosTwoSets(), "setA", 10,
+        excludePreviouslyPresented = FALSE
+    )
+    expect_false(sil$setA$excludePreviouslyPresented)
+})
+
+test_that("non-boolean excludePreviouslyPresented throws", {
+    expect_error(
+        addSetToQCEsetInfoList(
+            NULL, .makeScenariosTwoSets(), "setA", 10,
+            excludePreviouslyPresented = "yes"
+        ),
+        "must be a single boolean"
+    )
+})
+
+test_that("multi-element excludePreviouslyPresented throws", {
+    expect_error(
+        addSetToQCEsetInfoList(
+            NULL, .makeScenariosTwoSets(), "setA", 10,
+            excludePreviouslyPresented = c(TRUE, FALSE)
+        ),
+        "must be a single boolean"
+    )
+})
+
+test_that("NA excludePreviouslyPresented throws", {
+    expect_error(
+        addSetToQCEsetInfoList(
+            NULL, .makeScenariosTwoSets(), "setA", 10,
+            excludePreviouslyPresented = NA
+        ),
+        "must be a single boolean"
+    )
+})
+
+test_that("JSON round-trip preserves excludePreviouslyPresented", {
+    sil <- addSetToQCEsetInfoList(
+        NULL, .makeScenariosTwoSets(), "setA", 10,
+        excludePreviouslyPresented = TRUE
+    )
+    json <- jsonlite::toJSON(sil, auto_unbox = FALSE)
+    parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
+    expect_true(parsed$setA$excludePreviouslyPresented[[1]])
+})

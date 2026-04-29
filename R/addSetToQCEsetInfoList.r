@@ -14,6 +14,7 @@
 #' @param selectionType String -- "randomWithoutReplacement" (default), "randomWithReplacement", or "fixed". See documentation for semantics.
 #' @param trigger Optional list produced by buildQCETriggerList() specifying fNIRS trigger codes for this set's onset/offset. NULL means no triggers on this set. DEFAULT = NULL.
 #' @param showIf Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this set runs. Evaluated at set entry -- if FALSE, the entire set is skipped. NULL means always run. DEFAULT = NULL.
+#' @param excludePreviouslyPresented Optional single boolean. When TRUE, this set's pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Honored for sets built inside switchRules blocks (engine path goes through buildSetNode); silently ignored in regular blocks. Phase 3 Decision 6 (Semantic C) -- the flag is a property of the destination set's pool, not of the firing rule, so any path that builds the set (rule firing, natural fallthrough, recursive next-natural) honors it consistently. NULL means do not filter. DEFAULT = NULL.
 #''
 #' @return The updated QCEsetInfoList, with the new set appended.
 #' @keywords QCE QCEsetInfoList update add set
@@ -25,9 +26,13 @@
 #'   trigger = buildQCETriggerList(onset = 200, offset = 201))
 #' sl <- addSetToQCEsetInfoList(sl, scenarios, "smokingFollowUp", 15,
 #'   showIf = buildQCEshowIfCondition("smoker", "equals", "Yes", "Response"))
+#'
+#' # SetB is the post-switch destination -- exclude previously-presented items
+#' sl <- addSetToQCEsetInfoList(sl, scenarios, "SetB", 10,
+#'   excludePreviouslyPresented = TRUE)
 
 
-addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL, setName, numberOfTrialsPerSet = 1, selectionType = "randomWithoutReplacement", trigger = NULL, showIf = NULL) {
+addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL, setName, numberOfTrialsPerSet = 1, selectionType = "randomWithoutReplacement", trigger = NULL, showIf = NULL, excludePreviouslyPresented = NULL) {
 
   # Hard error with migration guidance if researcher passes the old vector form
   if (missing(setName) || is.null(setName) || length(setName) != 1 || !is.character(setName)) {
@@ -61,6 +66,13 @@ addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL
     validateShowIfShape(showIf, "showIf")
   }
 
+  # Validate excludePreviouslyPresented (Phase 3 Decision 6 / Semantic C)
+  if (!is.null(excludePreviouslyPresented)) {
+    if (!is.logical(excludePreviouslyPresented) || length(excludePreviouslyPresented) != 1 || is.na(excludePreviouslyPresented)) {
+      stop("excludePreviouslyPresented option must be a single boolean (TRUE or FALSE) when provided.")
+    }
+  }
+
   # Build the entry
   entry <- list(N = numberOfTrialsPerSet, selection = selectionType)
   if (!is.null(trigger)) {
@@ -68,6 +80,9 @@ addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL
   }
   if (!is.null(showIf)) {
     entry$showIf <- showIf
+  }
+  if (!is.null(excludePreviouslyPresented)) {
+    entry$excludePreviouslyPresented <- excludePreviouslyPresented
   }
 
   # Append to QCEsetInfoList

@@ -95,3 +95,106 @@ validateShowIfShape <- function(x, paramName = "showIf") {
   }
   invisible(TRUE)
 }
+
+
+# Internal helper (not exported): shape-validate a switch-rule countWhen
+# condition. Mirrors the engine's countWhen validation in
+# dynamicEngine.js::validateSwitchRules. wasShown / wasNotShown are excluded
+# (countWhen evaluates against a single just-completed trial's data row,
+# whereas wasShown/wasNotShown is a state check across the dataIndex).
+validateSwitchCountWhenShape <- function(x, paramName = "countWhen") {
+  validOps <- c("equals", "notEquals", "greaterThan", "lessThan",
+                "greaterThanOrEqual", "lessThanOrEqual", "contains")
+  if (!is.list(x)) {
+    stop(paramName, " must be a list of {field, operator, value}.")
+  }
+  if (is.null(x$field) || !isSingleString(x$field) || nchar(x$field) == 0) {
+    stop(paramName, ".field must be a non-empty single string.")
+  }
+  if (is.null(x$operator) || !isSingleString(x$operator) || !(x$operator %in% validOps)) {
+    stop(paramName, ".operator must be one of: ", paste(validOps, collapse = ", "), ".")
+  }
+  if (is.null(x$value)) {
+    stop(paramName, ".value is required.")
+  }
+  invisible(TRUE)
+}
+
+
+# Internal helper (not exported): shape-validate a switch-rule threshold spec.
+# Mirrors resolveThreshold + validateSwitchRules in dynamicEngine.js.
+validateSwitchThresholdShape <- function(x, paramName = "threshold") {
+  validRules <- c("fixed", "randomFromList", "randomIntBetween")
+  if (!is.list(x)) {
+    stop(paramName, " must be a list of {values, rule}.")
+  }
+  if (is.null(x$values)) {
+    stop(paramName, ".values is required.")
+  }
+  if (!is.numeric(x$values) || length(x$values) < 1) {
+    stop(paramName, ".values must be a numeric vector with at least one element.")
+  }
+  if (is.null(x$rule) || !isSingleString(x$rule) || !(x$rule %in% validRules)) {
+    stop(paramName, ".rule must be one of: ", paste(validRules, collapse = ", "), ".")
+  }
+  if (x$rule == "randomIntBetween" && length(x$values) != 2) {
+    stop(paramName, ".rule='randomIntBetween' requires exactly 2 values [lo, hi]; got ",
+         length(x$values), ".")
+  }
+  invisible(TRUE)
+}
+
+
+# Internal helper (not exported): shape-validate a list of switch rules
+# attached to a block. Reused by addBlockToQCETrialStructureList. Each rule
+# must look like a buildQCEswitchRule output: XOR on countResponse vs
+# countWhen, threshold present and well-shaped.
+validateSwitchRulesShape <- function(rules, paramName = "switchRules") {
+  if (!is.list(rules)) {
+    stop(paramName, " must be a list of switch-rule lists (each from buildQCEswitchRule).")
+  }
+  if (length(rules) < 1) {
+    stop(paramName, " must contain at least one rule.")
+  }
+  for (i in seq_along(rules)) {
+    rule  <- rules[[i]]
+    label <- paste0(paramName, "[[", i, "]]")
+    if (!is.list(rule)) {
+      stop(label, " must be a list (output of buildQCEswitchRule).")
+    }
+    hasResp <- !is.null(rule$countResponse)
+    hasWhen <- !is.null(rule$countWhen)
+    if (!hasResp && !hasWhen) {
+      stop(label, " missing both countResponse and countWhen. ",
+           "Did you forget to wrap with buildQCEswitchRule?")
+    }
+    if (hasResp && hasWhen) {
+      stop(label, " has both countResponse and countWhen -- pick one ",
+           "(countResponse is sugar for countWhen=list(field='Key', operator='equals', value=<x>)).")
+    }
+    if (hasResp) {
+      if (!isSingleString(rule$countResponse) || nchar(rule$countResponse) == 0) {
+        stop(label, ".countResponse must be a non-empty single string.")
+      }
+    }
+    if (hasWhen) {
+      validateSwitchCountWhenShape(rule$countWhen, paste0(label, ".countWhen"))
+    }
+    if (is.null(rule$threshold)) {
+      stop(label, " missing threshold. Did you forget to wrap with buildQCEswitchRule?")
+    }
+    validateSwitchThresholdShape(rule$threshold, paste0(label, ".threshold"))
+    if (!is.null(rule$switchToSet)) {
+      if (!isSingleString(rule$switchToSet) || nchar(rule$switchToSet) == 0) {
+        stop(label, ".switchToSet must be a non-empty single string when present ",
+             "(omit for early-stop without redirect).")
+      }
+    }
+    if (!is.null(rule$switchInstruction)) {
+      if (!isSingleString(rule$switchInstruction) || nchar(rule$switchInstruction) == 0) {
+        stop(label, ".switchInstruction must be a non-empty single string when present.")
+      }
+    }
+  }
+  invisible(TRUE)
+}

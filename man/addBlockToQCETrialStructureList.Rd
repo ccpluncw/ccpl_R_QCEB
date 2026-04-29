@@ -11,7 +11,8 @@ addBlockToQCETrialStructureList(
   blockNumber = -1,
   blockName = "blockName",
   trigger = NULL,
-  showIf = NULL
+  showIf = NULL,
+  switchRules = NULL
 )
 }
 \arguments{
@@ -27,7 +28,9 @@ addBlockToQCETrialStructureList(
 
 \item{trigger}{Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this block's boundaries (onset before the first trial, offset after the last). NULL means no block-level triggers. Recommended code range: 1-99 (1-2 digits). DEFAULT = NULL.}
 
-\item{showIf}{Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this block runs. Evaluated at block entry -- if FALSE, the entire block is skipped. NULL means always run. DEFAULT = NULL.
+\item{showIf}{Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this block runs. Evaluated at block entry -- if FALSE, the entire block is skipped. NULL means always run. DEFAULT = NULL.}
+
+\item{switchRules}{Optional list of switch-rule lists (each from buildQCEswitchRule). Rules are sequential -- they fire in array order, advancing activeRuleIndex on each fire. Switch rules govern intra-block flow (set switching at threshold); they are scoped per-block (Phase 3 Decision 4). NULL means no switching. DEFAULT = NULL.
 '}
 }
 \value{
@@ -49,6 +52,16 @@ addBlockToQCETrialStructureList (TSlist, mySetInfoList, myBlockIteratorList,
 addBlockToQCETrialStructureList (TSlist, mySetInfoList, myBlockIteratorList,
   blockName = "smokerFollowUpBlock",
   showIf = buildQCEshowIfCondition("smoker", "equals", "Yes", "Response"))
+
+# With switchRules -- after 5 "Yes" responses in current set, jump to SetB
+rule <- buildQCEswitchRule(
+  countResponse = "Yes",
+  threshold     = buildQCEswitchThreshold(values = 5, rule = "fixed"),
+  switchToSet   = "SetB"
+)
+addBlockToQCETrialStructureList (TSlist, mySetInfoList, myBlockIteratorList,
+  blockName   = "PreferenceSwitching",
+  switchRules = list(rule))
 }
 \keyword{QCE}
 \keyword{QCETrialStructureList}
