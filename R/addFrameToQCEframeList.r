@@ -79,6 +79,12 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
 
   if(is.null(choices)) {
     choices <- character()
+  } else if(length(choices) == 1 && choices %in% c("ALL_KEYS", "NO_KEYS")) {
+    # jsPsych v8 expects "ALL_KEYS"/"NO_KEYS" as JSON scalar strings, not as
+    # 1-element arrays. R wraps length-1 vectors as `["ALL_KEYS"]` by default,
+    # which jsPsych interprets as a literal one-key list. Box explicitly so
+    # the magic strings round-trip correctly. Real key vectors are unaffected.
+    choices <- jsonlite::unbox(choices)
   }
   if(is.null(stimulus)) {
     stimulus <- character()

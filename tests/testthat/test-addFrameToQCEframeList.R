@@ -125,3 +125,58 @@ test_that("JSON round-trip: pluginParams.kind survives serialization", {
     # the engine's unwrap() strips one level of wrapping.
     expect_equal(frame$pluginParams$kind[[1]], "number")
 })
+
+# --- choices serialization (jsPsych v8 compatibility) ----------------------
+
+test_that("default choices='ALL_KEYS' serializes as JSON scalar string", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f",
+        stimulus = "x", stimulus_duration = 0, post_trial_gap = 0
+    )
+    json <- jsonlite::toJSON(fl, auto_unbox = FALSE)
+    # Scalar emits as "ALL_KEYS"; broken old behavior would emit ["ALL_KEYS"].
+    expect_match(as.character(json), '"choices":"ALL_KEYS"', fixed = TRUE)
+    expect_no_match(as.character(json), '"choices":\\["ALL_KEYS"\\]')
+})
+
+test_that("explicit choices='NO_KEYS' serializes as JSON scalar string", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f",
+        stimulus = "x", stimulus_duration = 1000, post_trial_gap = 0,
+        choices = "NO_KEYS"
+    )
+    json <- jsonlite::toJSON(fl, auto_unbox = FALSE)
+    expect_match(as.character(json), '"choices":"NO_KEYS"', fixed = TRUE)
+})
+
+test_that("multi-key vector serializes as JSON array (unchanged)", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f",
+        stimulus = "x", stimulus_duration = 0, post_trial_gap = 0,
+        choices = c("d", "D", "k", "K")
+    )
+    json <- jsonlite::toJSON(fl, auto_unbox = FALSE)
+    expect_match(as.character(json), '"choices":\\["d","D","k","K"\\]')
+})
+
+test_that("single non-magic key serializes as 1-element array", {
+    # jsPsych v8 accepts a 1-element array of literal keys; only the magic
+    # ALL_KEYS / NO_KEYS strings need scalar form.
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f",
+        stimulus = "x", stimulus_duration = 0, post_trial_gap = 0,
+        choices = "d"
+    )
+    json <- jsonlite::toJSON(fl, auto_unbox = FALSE)
+    expect_match(as.character(json), '"choices":\\["d"\\]')
+})
+
+test_that("choices=NULL serializes as empty array", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f",
+        stimulus = "x", stimulus_duration = 1000, post_trial_gap = 0,
+        choices = NULL
+    )
+    json <- jsonlite::toJSON(fl, auto_unbox = FALSE)
+    expect_match(as.character(json), '"choices":\\[\\]')
+})

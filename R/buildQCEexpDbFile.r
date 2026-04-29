@@ -60,7 +60,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   }
 
   if(is.null(welcomeMsg)) {
-    welcomeMsg <- "<p style=\"color:white\">Welcome to the experiment. Press any key to begin.</p>"
+    welcomeMsg <- "<p>Welcome to the experiment. Press any key to begin.</p>"
   } else {
     if(!isSingleString(welcomeMsg)) {
       stop("welcomeMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the welcomeMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
@@ -68,7 +68,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   }
 
   if(is.null(restMsg)) {
-    restMsg <- "<p style=\"color:white\">Please take a self-timed break. Press any key to resume the experiment.</p>"
+    restMsg <- "<p>Please take a self-timed break. Press any key to resume the experiment.</p>"
   } else {
     if(!isSingleString(restMsg)) {
       stop("restMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the restMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
@@ -76,7 +76,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   }
 
   if(is.null(endOfExpMsg)) {
-    endOfExpMsg <- "<p style=\"color:white\">Thank you for taking part in the experiment.</p>"
+    endOfExpMsg <- "<p>Thank you for taking part in the experiment.</p>"
   } else {
     if(!isSingleString(endOfExpMsg)) {
       stop("endOfExpMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the endOfExpMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
@@ -92,7 +92,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   }
 
   if(is.null(saveMsg)) {
-    saveMsg <- "<p style=\"color:white\">Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue</p>"
+    saveMsg <- "<p>Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue</p>"
   } else {
     if(!isSingleString(saveMsg)) {
       stop("saveMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the saveMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
@@ -108,10 +108,10 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   }
 
   if(is.null(closeBrowserMsg)) {
-    fullscreenMsg <- "Please hit the ENTER key and then you may close this browser window"
+    closeBrowserMsg <- "Please hit the ENTER key and then you may close this browser window"
   } else {
-    if(!isSingleString(fullscreenMsg)) {
-      stop("fullscreenMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the fullscreenMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
+    if(!isSingleString(closeBrowserMsg)) {
+      stop("closeBrowserMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the closeBrowserMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
     }
   }
 

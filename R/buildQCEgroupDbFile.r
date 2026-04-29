@@ -64,7 +64,7 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
   }
 
   if(is.null(restMsg)) {
-    restMsg <- "<p style=\"color:white\">Please take a self-timed break. Press any key to resume the experiment.</p>"
+    restMsg <- "<p>Please take a self-timed break. Press any key to resume the experiment.</p>"
   } else {
     if(!isSingleString(restMsg)) {
       stop("restMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the restMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
