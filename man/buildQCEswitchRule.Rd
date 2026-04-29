@@ -74,6 +74,17 @@ Decision 3 — terminal behavior:
 Decision 6 (Semantic C) — `excludePreviouslyPresented` is NOT a switch-rule
 parameter; it is a property of the destination set's pool, declared on
 the set via `addSetToQCEsetInfoList(..., excludePreviouslyPresented = TRUE)`.
+
+Rule sequencing (Decision 3 amendment, Bug Fix #20): Rules are sequential.
+The order rules appear in `switchRules` is the order in which they watch
+the natural set sequence: rule[1] watches the first set, rule[2] watches
+the second, etc. A rule expires when its watched set ends -- either
+because the rule fired (and switched), or because the set ended naturally
+without the count threshold being reached. Once expired, a rule cannot
+fire again, and counting in subsequent sets is governed by the next rule
+(if any). If there are fewer rules than sets, sets past the last rule
+run with no switching. Counting is per-rule -- each rule's counter
+starts at 0 when it becomes active and is reset on rule expiration.
 }
 \examples{
 # 2AFC sugar: switch to SetB after 5 "Yes" responses
