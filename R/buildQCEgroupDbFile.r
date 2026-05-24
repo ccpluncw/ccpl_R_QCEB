@@ -18,6 +18,7 @@
 #' @param triggerRelayPort An integer specifying the port the local Python relay listens on. Only meaningful when enableTriggers = TRUE. Must match the `--port` the relay was started with. DEFAULT = 5678.
 #' @param restEveryNMinutes Optional positive numeric -- fire a rest break every N minutes of elapsed task time, in addition to any thresholds in `restTrials`. The engine measures elapsed time from the most recent rest (or first trial completion). NULL means no time-based rests. DEFAULT = NULL.
 #' @param restMaxTrial Optional positive integer -- suppress all rest breaks once `trialsShown` reaches this number. Useful for experiments where late-stage rests would disrupt a flow state. NULL means no trial-count cap. DEFAULT = NULL.
+#' @param keyMaps Optional named list of keyMap entries (each from buildQCEkeyMapEntry). Phase 3.5 named-keyMap registry -- blocks reference these entries by name via the `keyMapName` arg of addBlockToQCETrialStructureList. NULL means no named keyMaps (legacy single-keyMap experiments work unchanged via the `keyMap` arg). For incremental construction, use addKeyMapToDbfile after this function returns. DEFAULT = NULL.
 #''
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
@@ -37,7 +38,7 @@
 #'   restTrials = c(50, 100, 150),
 #'   restEveryNMinutes = 10, restMaxTrial = 200)
 
-buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, defaultBackgroundColor = "#000000", restTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", restMsg = NULL,  friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, enableTriggers = FALSE, triggerRelayPort = 5678, restEveryNMinutes = NULL, restMaxTrial = NULL ) {
+buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, defaultBackgroundColor = "#000000", restTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", restMsg = NULL,  friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, enableTriggers = FALSE, triggerRelayPort = 5678, restEveryNMinutes = NULL, restMaxTrial = NULL, keyMaps = NULL ) {
 
   if(!isSingleString(condName)) {
     stop("condName option must be a single string.  Yours, apparently, is not a single string.")
@@ -126,6 +127,22 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
   }
   if (!is.null(restMaxTrial)) {
     tmpList$restMaxTrial <- as.integer(restMaxTrial)
+  }
+
+  # Phase 3.5 -- emit `keyMaps` only when at least one named keyMap is
+  # supplied, so legacy experiments produce byte-identical JSON. The engine
+  # reads mydB.keyMaps in do_a_session.runSession() at session init.
+  # Delegates per-entry to addKeyMapToDbfile so validation + duplicate-name
+  # handling are consistent with the incremental path.
+  if (!is.null(keyMaps)) {
+    if (!is.list(keyMaps) || is.null(names(keyMaps)) || any(names(keyMaps) == "")) {
+      stop("keyMaps option must be a named list of keyMap entries when present ",
+           "(each entry from buildQCEkeyMapEntry, with the list name being the ",
+           "name blocks use to reference it).")
+    }
+    for (kmName in names(keyMaps)) {
+      tmpList <- addKeyMapToDbfile(tmpList, kmName, keyMaps[[kmName]])
+    }
   }
 
   return(tmpList)

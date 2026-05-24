@@ -57,10 +57,16 @@
 #'   set name. Must reference a setName declared in the same block's
 #'   setInfo (the engine validates this at session start). NULL means
 #'   "early-stop without redirect" (Decision 3). DEFAULT = NULL.
-#' @param switchInstruction Optional single non-empty string -- HTML
-#'   filename of an instruction page to display between source and
-#'   destination sets when this rule fires. NULL means no instruction.
-#'   DEFAULT = NULL.
+#' @param switchInstruction DEPRECATED 2026-05-24 (Phase 3.5 Chunk F /
+#'   Decision 7 close-out). The QCEP engine no longer reads
+#'   rule.switchInstruction; the field has been removed from the runtime
+#'   path (rule.fire no longer pushes an instruction trial). The
+#'   replacement is to declare entryInstruction on the DESTINATION SET via
+#'   addSetToQCEsetInfoList(..., entryInstruction = c("file.html")). That
+#'   declaration covers both rule-fire and natural-fallthrough paths
+#'   uniformly via buildSetNode. If passed, this argument now emits a
+#'   .Deprecated() warning and is dropped from the output rule (not
+#'   serialized to JSON). DEFAULT = NULL.
 #''
 #' @return A list of the form list(threshold, countResponse, switchToSet, ...)
 #'   with only the supplied fields included (NULL defaults are omitted).
@@ -80,12 +86,14 @@
 #'   threshold = buildQCEswitchThreshold(values = 10, rule = "fixed")
 #' )
 #'
-#' # With instruction page between sets
+#' # With transition screen between sets (Phase 3.5 Chunk F replacement):
+#' # declare entryInstruction on the destination set, not on the rule.
+#' setInfo <- addSetToQCEsetInfoList(setInfo, scenarios, "SetB", 10,
+#'   entryInstruction = c("switch_instruct.html"))
 #' r3 <- buildQCEswitchRule(
 #'   countResponse     = "Prefer Left",
 #'   threshold         = buildQCEswitchThreshold(values = 3, rule = "fixed"),
-#'   switchToSet       = "SetB",
-#'   switchInstruction = "switch_instruct.html"
+#'   switchToSet       = "SetB"
 #' )
 
 buildQCEswitchRule <- function(threshold,
@@ -133,20 +141,34 @@ buildQCEswitchRule <- function(threshold,
     }
   }
 
-  # switchInstruction optional non-empty string
+  # switchInstruction: DEPRECATED 2026-05-24 (Phase 3.5 Chunk F).
+  # Engine no longer reads rule.switchInstruction; emit .Deprecated() and
+  # drop the value from the output rule. Researcher should migrate to
+  # destination-set entryInstruction.
   if (!is.null(switchInstruction)) {
-    if (!isSingleString(switchInstruction) || nchar(switchInstruction) == 0) {
-      stop("switchInstruction option must be a non-empty single string when present.")
-    }
+    .Deprecated(
+      new = "addSetToQCEsetInfoList(..., entryInstruction = ...)",
+      old = "buildQCEswitchRule(switchInstruction)",
+      msg = paste0(
+        "The 'switchInstruction' argument to buildQCEswitchRule was removed ",
+        "from the QCEP engine in Phase 3.5 Chunk F (2026-05-24). ",
+        "Migrate to: addSetToQCEsetInfoList(..., entryInstruction = c('your_file.html')) ",
+        "on the destination set declared in setInfo. That covers both ",
+        "rule-fire and natural-fallthrough paths uniformly via the engine's ",
+        "buildSetNode path. The argument value you passed is being dropped ",
+        "from the output rule (the engine would silently ignore it anyway)."
+      )
+    )
+    # Drop the value -- do NOT include it in the output rule.
   }
 
   # Build the rule list -- only include supplied fields so the JSON shape
   # exactly matches what the engine expects (NULL defaults omitted).
+  # switchInstruction intentionally NOT serialized post-Chunk-F.
   rule <- list(threshold = threshold)
   if (hasResp) rule$countResponse <- countResponse
   if (hasWhen) rule$countWhen     <- countWhen
-  if (!is.null(switchToSet))       rule$switchToSet       <- switchToSet
-  if (!is.null(switchInstruction)) rule$switchInstruction <- switchInstruction
+  if (!is.null(switchToSet)) rule$switchToSet <- switchToSet
 
   return(rule)
 }

@@ -92,3 +92,42 @@ test_that("JSON round-trip preserves rest extension params", {
     expect_equal(parsed$restEveryNMinutes[[1]], 10)
     expect_equal(parsed$restMaxTrial[[1]], 200)
 })
+
+
+# --- Phase 3.5 Chunk G: keyMaps arg (one-shot construction) ---
+
+test_that("regression: dbfile without keyMaps arg has no $keyMaps field", {
+    db <- buildQCEgroupDbFile(condName = "x",
+                               keyMap = buildKeyMap(data.frame(Yes = "y")))
+    expect_null(db$keyMaps)
+})
+
+test_that("keyMaps arg: named list registers each entry", {
+    km1 <- buildQCEkeyMapEntry(map = buildKeyMap(data.frame(Yes = "y", No = "n")))
+    km2 <- buildQCEkeyMapEntry(map = buildKeyMap(data.frame(Left = "j", Right = "k")),
+                                randomize = TRUE)
+    db <- buildQCEgroupDbFile(condName = "x",
+                               keyMap = buildKeyMap(data.frame(Yes = "y")),
+                               keyMaps = list(yesNo = km1, directional = km2))
+    expect_equal(names(db$keyMaps), c("yesNo", "directional"))
+    expect_equal(db$keyMaps$yesNo$map$Yes, "y")
+    expect_equal(db$keyMaps$directional$randomize, TRUE)
+})
+
+test_that("keyMaps arg: unnamed list throws", {
+    km1 <- buildQCEkeyMapEntry(map = buildKeyMap(data.frame(Yes = "y")))
+    expect_error(buildQCEgroupDbFile(condName = "x",
+                                      keyMap = buildKeyMap(data.frame(Yes = "y")),
+                                      keyMaps = list(km1)),
+                 "named list")
+})
+
+test_that("incremental + one-shot interop: keyMaps from arg + addKeyMapToDbfile coexist", {
+    km1 <- buildQCEkeyMapEntry(map = buildKeyMap(data.frame(Yes = "y")))
+    km2 <- buildQCEkeyMapEntry(map = buildKeyMap(data.frame(Left = "j")))
+    db <- buildQCEgroupDbFile(condName = "x",
+                               keyMap = buildKeyMap(data.frame(Yes = "y")),
+                               keyMaps = list(km1 = km1))
+    db <- addKeyMapToDbfile(db, "km2", km2)
+    expect_equal(names(db$keyMaps), c("km1", "km2"))
+})

@@ -12,7 +12,10 @@ addBlockToQCETrialStructureList(
   blockName = "blockName",
   trigger = NULL,
   showIf = NULL,
-  switchRules = NULL
+  switchRules = NULL,
+  keyMapName = NULL,
+  entryInstruction = NULL,
+  excludePreviouslyPresented = NULL
 )
 }
 \arguments{
@@ -30,7 +33,13 @@ addBlockToQCETrialStructureList(
 
 \item{showIf}{Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this block runs. Evaluated at block entry -- if FALSE, the entire block is skipped. NULL means always run. DEFAULT = NULL.}
 
-\item{switchRules}{Optional list of switch-rule lists (each from buildQCEswitchRule). Rules are sequential -- they fire in array order, advancing activeRuleIndex on each fire. Switch rules govern intra-block flow (set switching at threshold); they are scoped per-block (Phase 3 Decision 4). NULL means no switching. DEFAULT = NULL.
+\item{switchRules}{Optional list of switch-rule lists (each from buildQCEswitchRule). Rules are sequential -- they fire in array order, advancing activeRuleIndex on each fire. Switch rules govern intra-block flow (set switching at threshold); they are scoped per-block (Phase 3 Decision 4). NULL means no switching. DEFAULT = NULL.}
+
+\item{keyMapName}{Optional single string -- the name of a named keyMap (declared on the dbfile via addKeyMapToDbfile or the dbfile's `keyMaps` arg) that this block uses for its key-response trials. When NULL, the block falls back to the dbfile's legacy single keyMap (`mydB.keyMap`). Phase 3.5 (Decision A/B): cascade resolves at IsBlockItFirst -- `mydB.keyMaps[name]` if name set, else `mydB.keyMap` default. DEFAULT = NULL.}
+
+\item{entryInstruction}{Optional character vector of HTML filenames. Each fires as a jsPsychExternalHtml trial at block entry (one screen per file, in order). Phase 3.5 Decision D -- use for per-task framing screens ("Welcome to Part 2") that should display before the keymap-instruction screen and the first trial. Each HTML file must contain a button with id="Go" (current engine convention; Phase 5.5 forms refactor will harmonize). NULL means no block-level entry screens. DEFAULT = NULL.}
+
+\item{excludePreviouslyPresented}{Optional single boolean. When TRUE, this block's trial pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Phase 3.5 Decision H -- extends the set-level flag (already on addSetToQCEsetInfoList) to apply uniformly across ALL sets in the block. Honored in both switchRules blocks (via buildSetNode cascade) and regular non-switchRules blocks (runtime trial-list filter at IsBlockItFirst). NULL means do not filter at block level. DEFAULT = NULL.
 '}
 }
 \value{

@@ -12,7 +12,8 @@ addSetToQCEsetInfoList(
   selectionType = "randomWithoutReplacement",
   trigger = NULL,
   showIf = NULL,
-  excludePreviouslyPresented = NULL
+  excludePreviouslyPresented = NULL,
+  entryInstruction = NULL
 )
 }
 \arguments{
@@ -30,7 +31,9 @@ addSetToQCEsetInfoList(
 
 \item{showIf}{Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this set runs. Evaluated at set entry -- if FALSE, the entire set is skipped. NULL means always run. DEFAULT = NULL.}
 
-\item{excludePreviouslyPresented}{Optional single boolean. When TRUE, this set's pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Honored for sets built inside switchRules blocks (engine path goes through buildSetNode); silently ignored in regular blocks. Phase 3 Decision 6 (Semantic C) -- the flag is a property of the destination set's pool, not of the firing rule, so any path that builds the set (rule firing, natural fallthrough, recursive next-natural) honors it consistently. NULL means do not filter. DEFAULT = NULL.
+\item{excludePreviouslyPresented}{Optional single boolean. When TRUE, this set's pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Honored for sets built inside switchRules blocks (engine path goes through buildSetNode); silently ignored in regular blocks. Phase 3 Decision 6 (Semantic C) -- the flag is a property of the destination set's pool, not of the firing rule, so any path that builds the set (rule firing, natural fallthrough, recursive next-natural) honors it consistently. NULL means do not filter. DEFAULT = NULL.}
+
+\item{entryInstruction}{Optional character vector of HTML filenames. Each fires as a jsPsychExternalHtml trial at set entry (one screen per file, in order). Phase 3.5 Decision D / Decision 7 close-out -- use for per-set transition screens that should display before the set's first trial. The same screens fire whether the set is reached by rule-fire (executeSwitch path), natural fallthrough (on_timeline_finish path), or as the first set in a switchRules block, OR as a regular set in a non-switchRules block (IsSetFirst hook). Each HTML file must contain a button with id="Go" (current engine convention; Phase 5.5 forms refactor will harmonize). NULL means no set-level entry screens. DEFAULT = NULL.
 '}
 }
 \value{

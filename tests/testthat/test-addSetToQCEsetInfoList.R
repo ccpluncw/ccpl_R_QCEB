@@ -241,3 +241,41 @@ test_that("JSON round-trip preserves excludePreviouslyPresented", {
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     expect_true(parsed$setA$excludePreviouslyPresented[[1]])
 })
+
+
+# --- Phase 3.5 Chunk G: entryInstruction (set-level) ---
+
+.makeSetScenarios <- function() {
+    fr <- addFrameToQCEframeList(
+        trialType = "key", frameName = "fix", stimulus = "+",
+        stimulus_duration = 500, post_trial_gap = 0
+    )
+    addScenarioToQCEscenarioList(NULL, fr, NULL, list(out = "x"), "setA")
+}
+
+test_that("regression: set without entryInstruction byte-identical (no field)", {
+    sc <- .makeSetScenarios()
+    sil <- addSetToQCEsetInfoList(NULL, sc, "setA", 3)
+    expect_null(sil$setA$entryInstruction)
+})
+
+test_that("entryInstruction: vector of .html files included on set entry", {
+    sc <- .makeSetScenarios()
+    sil <- addSetToQCEsetInfoList(NULL, sc, "setA", 3,
+                                   entryInstruction = c("welcome.html"))
+    expect_equal(sil$setA$entryInstruction, "welcome.html")
+})
+
+test_that("entryInstruction: non-.html filename throws", {
+    sc <- .makeSetScenarios()
+    expect_error(addSetToQCEsetInfoList(NULL, sc, "setA", 3,
+                                         entryInstruction = c("welcome.txt")),
+                 "must each end in '.html'")
+})
+
+test_that("entryInstruction: non-character throws", {
+    sc <- .makeSetScenarios()
+    expect_error(addSetToQCEsetInfoList(NULL, sc, "setA", 3,
+                                         entryInstruction = 42),
+                 "character vector of .html")
+})

@@ -21,7 +21,8 @@ buildQCEgroupDbFile(
   enableTriggers = FALSE,
   triggerRelayPort = 5678,
   restEveryNMinutes = NULL,
-  restMaxTrial = NULL
+  restMaxTrial = NULL,
+  keyMaps = NULL
 )
 }
 \arguments{
@@ -55,7 +56,9 @@ buildQCEgroupDbFile(
 
 \item{restEveryNMinutes}{Optional positive numeric -- fire a rest break every N minutes of elapsed task time, in addition to any thresholds in `restTrials`. The engine measures elapsed time from the most recent rest (or first trial completion). NULL means no time-based rests. DEFAULT = NULL.}
 
-\item{restMaxTrial}{Optional positive integer -- suppress all rest breaks once `trialsShown` reaches this number. Useful for experiments where late-stage rests would disrupt a flow state. NULL means no trial-count cap. DEFAULT = NULL.
+\item{restMaxTrial}{Optional positive integer -- suppress all rest breaks once `trialsShown` reaches this number. Useful for experiments where late-stage rests would disrupt a flow state. NULL means no trial-count cap. DEFAULT = NULL.}
+
+\item{keyMaps}{Optional named list of keyMap entries (each from buildQCEkeyMapEntry). Phase 3.5 named-keyMap registry -- blocks reference these entries by name via the `keyMapName` arg of addBlockToQCETrialStructureList. NULL means no named keyMaps (legacy single-keyMap experiments work unchanged via the `keyMap` arg). For incremental construction, use addKeyMapToDbfile after this function returns. DEFAULT = NULL.
 '}
 
 \item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL}

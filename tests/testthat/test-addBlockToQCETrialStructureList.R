@@ -226,3 +226,72 @@ test_that("JSON round-trip preserves switchRules shape", {
     expect_equal(unlist(rules[[1]]$threshold$values), 5)
     expect_equal(rules[[1]]$threshold$rule[[1]], "fixed")
 })
+
+
+# --- Phase 3.5 Chunk G: keyMapName / entryInstruction / excludePreviouslyPresented ---
+
+test_that("regression: legacy block (no new args) byte-identical -- no new fields appear", {
+    inp <- .makeBlockInputs()
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
+    entry <- tsl[[1]]
+    expect_null(entry$keyMapName)
+    expect_null(entry$entryInstruction)
+    expect_null(entry$excludePreviouslyPresented)
+})
+
+test_that("keyMapName: valid string is included on block entry", {
+    inp <- .makeBlockInputs()
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                            keyMapName = "yesNo")
+    expect_equal(tsl[[1]]$keyMapName, "yesNo")
+})
+
+test_that("keyMapName: empty string throws", {
+    inp <- .makeBlockInputs()
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                  keyMapName = ""),
+                 "non-empty single string")
+})
+
+test_that("keyMapName: vector throws", {
+    inp <- .makeBlockInputs()
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                  keyMapName = c("a", "b")),
+                 "non-empty single string")
+})
+
+test_that("entryInstruction: vector of .html files included on block entry", {
+    inp <- .makeBlockInputs()
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                            entryInstruction = c("part2.html", "rules.html"))
+    expect_equal(tsl[[1]]$entryInstruction, c("part2.html", "rules.html"))
+})
+
+test_that("entryInstruction: non-.html filename throws", {
+    inp <- .makeBlockInputs()
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                  entryInstruction = c("welcome.txt")),
+                 "must each end in '.html'")
+})
+
+test_that("excludePreviouslyPresented TRUE: included on block entry", {
+    inp <- .makeBlockInputs()
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                            excludePreviouslyPresented = TRUE)
+    expect_true(tsl[[1]]$excludePreviouslyPresented)
+})
+
+test_that("excludePreviouslyPresented non-boolean throws", {
+    inp <- .makeBlockInputs()
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                  excludePreviouslyPresented = "yes"),
+                 "single boolean")
+})
+
+test_that("showIf accepts blockRef leaf (Phase 3.5 Decision G)", {
+    inp <- .makeBlockInputs()
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                            showIf = buildQCEblockSwitchedCondition("Block_T2", "switchFired"))
+    expect_equal(tsl[[1]]$showIf$blockRef, "Block_T2")
+    expect_equal(tsl[[1]]$showIf$operator, "switchFired")
+})

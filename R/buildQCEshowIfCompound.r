@@ -50,21 +50,16 @@ buildQCEshowIfCompound <- function(kind, conditions) {
     stop("conditions option must contain at least one condition.")
   }
 
-  # Shape-validate each child: must be a list with either
-  # (a) stimRef + operator (single condition), or
-  # (b) all or any (nested compound).
+  # Shape-validate each child via the canonical validateShowIfShape helper
+  # in QCEButils.r. Phase 3.5 Chunk G (2026-05-24) updated that helper to
+  # accept blockRef leaves alongside stimRef leaves; delegating here keeps
+  # the compound builder in lockstep with whatever the validator accepts.
   for (i in seq_along(conditions)) {
     child <- conditions[[i]]
     if (!is.list(child)) {
-      stop(paste0("conditions[[", i, "]] must be a list (output of buildQCEshowIfCondition or buildQCEshowIfCompound)."))
+      stop(paste0("conditions[[", i, "]] must be a list (output of buildQCEshowIfCondition, buildQCEblockSwitchedCondition, or buildQCEshowIfCompound)."))
     }
-    isSingle   <- !is.null(child$stimRef) && !is.null(child$operator)
-    isCompound <- !is.null(child$all) || !is.null(child$any)
-    if (!isSingle && !isCompound) {
-      stop(paste0("conditions[[", i, "]] is not a valid showIf condition: ",
-                  "expected stimRef+operator (single) or all/any (compound). ",
-                  "Did you forget to wrap with buildQCEshowIfCondition or buildQCEshowIfCompound?"))
-    }
+    validateShowIfShape(child, paramName = paste0("conditions[[", i, "]]"))
   }
 
   out <- list()

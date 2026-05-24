@@ -35,15 +35,9 @@ test_that("countWhen full form produces threshold + countWhen", {
     expect_null(r$switchToSet)
 })
 
-test_that("switchInstruction is included when provided", {
-    r <- buildQCEswitchRule(
-        countResponse     = "Prefer Left",
-        threshold         = makeFixedThreshold(3),
-        switchToSet       = "SetB",
-        switchInstruction = "switch_instruct.html"
-    )
-    expect_equal(r$switchInstruction, "switch_instruct.html")
-})
+# test removed 2026-05-24 -- Phase 3.5 Chunk F removed switchInstruction
+# from engine, Chunk G deprecated the arg on this builder. New deprecation
+# tests appended at the bottom of the file.
 
 test_that("switchToSet=NULL → early-stop without redirect", {
     r <- buildQCEswitchRule(
@@ -217,27 +211,10 @@ test_that("empty switchToSet throws", {
     )
 })
 
-test_that("non-string switchInstruction throws", {
-    expect_error(
-        buildQCEswitchRule(
-            countResponse     = "Yes",
-            threshold         = makeFixedThreshold(),
-            switchInstruction = c("a.html", "b.html")
-        ),
-        "switchInstruction option must be a non-empty single string"
-    )
-})
-
-test_that("empty switchInstruction throws", {
-    expect_error(
-        buildQCEswitchRule(
-            countResponse     = "Yes",
-            threshold         = makeFixedThreshold(),
-            switchInstruction = ""
-        ),
-        "switchInstruction option must be a non-empty single string"
-    )
-})
+# 2026-05-24 (Phase 3.5 Chunk G): tests for "non-string switchInstruction
+# throws" and "empty switchInstruction throws" were removed. The arg is now
+# deprecated -- it no longer validates shape, just warns and drops. New
+# deprecation tests are appended at the bottom of the file.
 
 # ---- JSON round-trip -----------------------------------------------------
 
@@ -270,4 +247,36 @@ test_that("JSON round-trip preserves countWhen-form rule shape", {
     expect_equal(unlist(parsed$countWhen$value), 500)
     expect_null(parsed$countResponse)
     expect_null(parsed$switchToSet)
+})
+
+
+# --- Phase 3.5 Chunk F: switchInstruction deprecation ---
+
+test_that("switchInstruction: passing it emits .Deprecated warning", {
+    expect_warning(
+        buildQCEswitchRule(countResponse = "Yes",
+                            threshold = buildQCEswitchThreshold(values = 5, rule = "fixed"),
+                            switchToSet = "SetB",
+                            switchInstruction = "switch_instruct.html"),
+        "Phase 3.5 Chunk F"
+    )
+})
+
+test_that("switchInstruction: deprecated arg is DROPPED from output rule", {
+    suppressWarnings({
+        rule <- buildQCEswitchRule(countResponse = "Yes",
+                                    threshold = buildQCEswitchThreshold(values = 5, rule = "fixed"),
+                                    switchToSet = "SetB",
+                                    switchInstruction = "switch_instruct.html")
+    })
+    expect_null(rule$switchInstruction)
+})
+
+test_that("regression: rule without switchInstruction still has all other fields", {
+    rule <- buildQCEswitchRule(countResponse = "Yes",
+                                threshold = buildQCEswitchThreshold(values = 5, rule = "fixed"),
+                                switchToSet = "SetB")
+    expect_equal(rule$countResponse, "Yes")
+    expect_equal(rule$switchToSet, "SetB")
+    expect_null(rule$switchInstruction)
 })

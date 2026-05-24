@@ -28,10 +28,16 @@ set name. Must reference a setName declared in the same block's
 setInfo (the engine validates this at session start). NULL means
 "early-stop without redirect" (Decision 3). DEFAULT = NULL.}
 
-\item{switchInstruction}{Optional single non-empty string -- HTML
-  filename of an instruction page to display between source and
-  destination sets when this rule fires. NULL means no instruction.
-  DEFAULT = NULL.
+\item{switchInstruction}{DEPRECATED 2026-05-24 (Phase 3.5 Chunk F /
+  Decision 7 close-out). The QCEP engine no longer reads
+  rule.switchInstruction; the field has been removed from the runtime
+  path (rule.fire no longer pushes an instruction trial). The
+  replacement is to declare entryInstruction on the DESTINATION SET via
+  addSetToQCEsetInfoList(..., entryInstruction = c("file.html")). That
+  declaration covers both rule-fire and natural-fallthrough paths
+  uniformly via buildSetNode. If passed, this argument now emits a
+  .Deprecated() warning and is dropped from the output rule (not
+  serialized to JSON). DEFAULT = NULL.
 '}
 }
 \value{
@@ -100,12 +106,14 @@ r2 <- buildQCEswitchRule(
   threshold = buildQCEswitchThreshold(values = 10, rule = "fixed")
 )
 
-# With instruction page between sets
+# With transition screen between sets (Phase 3.5 Chunk F replacement):
+# declare entryInstruction on the destination set, not on the rule.
+setInfo <- addSetToQCEsetInfoList(setInfo, scenarios, "SetB", 10,
+  entryInstruction = c("switch_instruct.html"))
 r3 <- buildQCEswitchRule(
   countResponse     = "Prefer Left",
   threshold         = buildQCEswitchThreshold(values = 3, rule = "fixed"),
-  switchToSet       = "SetB",
-  switchInstruction = "switch_instruct.html"
+  switchToSet       = "SetB"
 )
 }
 \keyword{QCE}

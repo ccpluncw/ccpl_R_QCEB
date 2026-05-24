@@ -82,16 +82,25 @@ isValidFilename <- function (filename, extension) {
 # Used by addScenarioToQCEscenarioList, addSetToQCEsetInfoList, and
 # addBlockToQCETrialStructureList to reject malformed hand-rolled lists.
 # Same shape rule buildQCEshowIfCompound applies to its children.
+#
+# Phase 3.5 Decision G (2026-05-24): blockRef+operator leaf added as a
+# second valid single-condition shape, alongside the original stimRef+
+# operator leaf. A leaf is one OR the other, never both. Compound (all/any)
+# groups can contain a mix.
 validateShowIfShape <- function(x, paramName = "showIf") {
   if (!is.list(x)) {
-    stop(paramName, " must be a list (output of buildQCEshowIfCondition or buildQCEshowIfCompound).")
+    stop(paramName, " must be a list (output of buildQCEshowIfCondition, ",
+         "buildQCEblockSwitchedCondition, or buildQCEshowIfCompound).")
   }
-  isSingle   <- !is.null(x$stimRef) && !is.null(x$operator)
-  isCompound <- !is.null(x$all) || !is.null(x$any)
-  if (!isSingle && !isCompound) {
+  isStimLeaf  <- !is.null(x$stimRef)  && !is.null(x$operator)
+  isBlockLeaf <- !is.null(x$blockRef) && !is.null(x$operator)
+  isCompound  <- !is.null(x$all) || !is.null(x$any)
+  if (!isStimLeaf && !isBlockLeaf && !isCompound) {
     stop(paramName, " is not a valid showIf condition: ",
-         "expected stimRef+operator (single) or all/any (compound). ",
-         "Did you forget to wrap with buildQCEshowIfCondition or buildQCEshowIfCompound?")
+         "expected stimRef+operator (single), blockRef+operator (single, ",
+         "Phase 3.5), or all/any (compound). Did you forget to wrap with ",
+         "buildQCEshowIfCondition, buildQCEblockSwitchedCondition, or ",
+         "buildQCEshowIfCompound?")
   }
   invisible(TRUE)
 }

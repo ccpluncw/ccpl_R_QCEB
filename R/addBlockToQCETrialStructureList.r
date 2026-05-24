@@ -9,6 +9,9 @@
 #' @param trigger Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this block's boundaries (onset before the first trial, offset after the last). NULL means no block-level triggers. Recommended code range: 1-99 (1-2 digits). DEFAULT = NULL.
 #' @param showIf Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this block runs. Evaluated at block entry -- if FALSE, the entire block is skipped. NULL means always run. DEFAULT = NULL.
 #' @param switchRules Optional list of switch-rule lists (each from buildQCEswitchRule). Rules are sequential -- they fire in array order, advancing activeRuleIndex on each fire. Switch rules govern intra-block flow (set switching at threshold); they are scoped per-block (Phase 3 Decision 4). NULL means no switching. DEFAULT = NULL.
+#' @param keyMapName Optional single string -- the name of a named keyMap (declared on the dbfile via addKeyMapToDbfile or the dbfile's `keyMaps` arg) that this block uses for its key-response trials. When NULL, the block falls back to the dbfile's legacy single keyMap (`mydB.keyMap`). Phase 3.5 (Decision A/B): cascade resolves at IsBlockItFirst -- `mydB.keyMaps[name]` if name set, else `mydB.keyMap` default. DEFAULT = NULL.
+#' @param entryInstruction Optional character vector of HTML filenames. Each fires as a jsPsychExternalHtml trial at block entry (one screen per file, in order). Phase 3.5 Decision D -- use for per-task framing screens ("Welcome to Part 2") that should display before the keymap-instruction screen and the first trial. Each HTML file must contain a button with id="Go" (current engine convention; Phase 5.5 forms refactor will harmonize). NULL means no block-level entry screens. DEFAULT = NULL.
+#' @param excludePreviouslyPresented Optional single boolean. When TRUE, this block's trial pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Phase 3.5 Decision H -- extends the set-level flag (already on addSetToQCEsetInfoList) to apply uniformly across ALL sets in the block. Honored in both switchRules blocks (via buildSetNode cascade) and regular non-switchRules blocks (runtime trial-list filter at IsBlockItFirst). NULL means do not filter at block level. DEFAULT = NULL.
 #''
 #' @return the updated QCETrialStructureList
 #' @keywords QCE QCETrialStructureList update add block
@@ -37,7 +40,7 @@
 #'   blockName   = "PreferenceSwitching",
 #'   switchRules = list(rule))
 
-addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEsetInfoList, QCEblockIteratorList, blockNumber = -1, blockName = "blockName", trigger = NULL, showIf = NULL, switchRules = NULL) {
+addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEsetInfoList, QCEblockIteratorList, blockNumber = -1, blockName = "blockName", trigger = NULL, showIf = NULL, switchRules = NULL, keyMapName = NULL, entryInstruction = NULL, excludePreviouslyPresented = NULL) {
 
   if (!is.null(showIf)) {
     validateShowIfShape(showIf, "showIf")
@@ -45,6 +48,34 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
 
   if (!is.null(switchRules)) {
     validateSwitchRulesShape(switchRules, "switchRules")
+  }
+
+  # Phase 3.5 -- new optional block-level fields. Validate shape; the engine
+  # cross-references keyMapName against mydB.keyMaps at session start, and
+  # the validator catches malformed entryInstruction filenames.
+  if (!is.null(keyMapName)) {
+    if (!isSingleString(keyMapName) || nchar(keyMapName) == 0) {
+      stop("keyMapName option must be a non-empty single string when present ",
+           "(the name of an entry registered on the dbfile via addKeyMapToDbfile ",
+           "or the dbfile's keyMaps argument).")
+    }
+  }
+  if (!is.null(entryInstruction)) {
+    if (!is.character(entryInstruction) || length(entryInstruction) == 0) {
+      stop("entryInstruction option must be a character vector of .html ",
+           "filenames when present (each file is pushed as a separate ",
+           "externalHtml screen at block entry).")
+    }
+    for (eFile in entryInstruction) {
+      if (!isValidFilename(eFile, "html")) {
+        stop("entryInstruction filenames must each end in '.html'.")
+      }
+    }
+  }
+  if (!is.null(excludePreviouslyPresented)) {
+    if (!is.logical(excludePreviouslyPresented) || length(excludePreviouslyPresented) != 1 || is.na(excludePreviouslyPresented)) {
+      stop("excludePreviouslyPresented option must be a single boolean (TRUE or FALSE) when provided.")
+    }
   }
 
   tmpList <- list(blockNumber = blockNumber, setInfo = QCEsetInfoList, blockIterator = QCEblockIteratorList, blockName = blockName)
@@ -56,6 +87,17 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
   }
   if (!is.null(switchRules)) {
     tmpList$switchRules <- switchRules
+  }
+  # Phase 3.5 -- emit new fields only when set, so legacy callers produce
+  # byte-identical JSON (no field = no key in JSON output).
+  if (!is.null(keyMapName)) {
+    tmpList$keyMapName <- keyMapName
+  }
+  if (!is.null(entryInstruction)) {
+    tmpList$entryInstruction <- entryInstruction
+  }
+  if (!is.null(excludePreviouslyPresented)) {
+    tmpList$excludePreviouslyPresented <- excludePreviouslyPresented
   }
 
   if(is.null(QCETrialStructureList)) {

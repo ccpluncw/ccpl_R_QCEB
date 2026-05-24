@@ -15,6 +15,7 @@
 #' @param trigger Optional list produced by buildQCETriggerList() specifying fNIRS trigger codes for this set's onset/offset. NULL means no triggers on this set. DEFAULT = NULL.
 #' @param showIf Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this set runs. Evaluated at set entry -- if FALSE, the entire set is skipped. NULL means always run. DEFAULT = NULL.
 #' @param excludePreviouslyPresented Optional single boolean. When TRUE, this set's pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Honored for sets built inside switchRules blocks (engine path goes through buildSetNode); silently ignored in regular blocks. Phase 3 Decision 6 (Semantic C) -- the flag is a property of the destination set's pool, not of the firing rule, so any path that builds the set (rule firing, natural fallthrough, recursive next-natural) honors it consistently. NULL means do not filter. DEFAULT = NULL.
+#' @param entryInstruction Optional character vector of HTML filenames. Each fires as a jsPsychExternalHtml trial at set entry (one screen per file, in order). Phase 3.5 Decision D / Decision 7 close-out -- use for per-set transition screens that should display before the set's first trial. The same screens fire whether the set is reached by rule-fire (executeSwitch path), natural fallthrough (on_timeline_finish path), or as the first set in a switchRules block, OR as a regular set in a non-switchRules block (IsSetFirst hook). Each HTML file must contain a button with id="Go" (current engine convention; Phase 5.5 forms refactor will harmonize). NULL means no set-level entry screens. DEFAULT = NULL.
 #''
 #' @return The updated QCEsetInfoList, with the new set appended.
 #' @keywords QCE QCEsetInfoList update add set
@@ -32,7 +33,7 @@
 #'   excludePreviouslyPresented = TRUE)
 
 
-addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL, setName, numberOfTrialsPerSet = 1, selectionType = "randomWithoutReplacement", trigger = NULL, showIf = NULL, excludePreviouslyPresented = NULL) {
+addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL, setName, numberOfTrialsPerSet = 1, selectionType = "randomWithoutReplacement", trigger = NULL, showIf = NULL, excludePreviouslyPresented = NULL, entryInstruction = NULL) {
 
   # Hard error with migration guidance if researcher passes the old vector form
   if (missing(setName) || is.null(setName) || length(setName) != 1 || !is.character(setName)) {
@@ -73,6 +74,20 @@ addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL
     }
   }
 
+  # Phase 3.5 Decision D / Decision 7 close-out -- set-level entryInstruction
+  if (!is.null(entryInstruction)) {
+    if (!is.character(entryInstruction) || length(entryInstruction) == 0) {
+      stop("entryInstruction option must be a character vector of .html ",
+           "filenames when present (each file is pushed as a separate ",
+           "externalHtml screen at set entry).")
+    }
+    for (eFile in entryInstruction) {
+      if (!isValidFilename(eFile, "html")) {
+        stop("entryInstruction filenames must each end in '.html'.")
+      }
+    }
+  }
+
   # Build the entry
   entry <- list(N = numberOfTrialsPerSet, selection = selectionType)
   if (!is.null(trigger)) {
@@ -83,6 +98,9 @@ addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL
   }
   if (!is.null(excludePreviouslyPresented)) {
     entry$excludePreviouslyPresented <- excludePreviouslyPresented
+  }
+  if (!is.null(entryInstruction)) {
+    entry$entryInstruction <- entryInstruction
   }
 
   # Append to QCEsetInfoList
