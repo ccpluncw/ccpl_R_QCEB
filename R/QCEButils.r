@@ -207,3 +207,68 @@ validateSwitchRulesShape <- function(rules, paramName = "switchRules") {
   }
   invisible(TRUE)
 }
+
+
+# Internal helper (not exported): shape-validate a list of BLOCK-to-BLOCK
+# switch rules (Phase 4 Step 2). Reused by
+# addBlockSwitchRulesToQCETrialStructureList. Mirrors validateSwitchRulesShape
+# but for the block-scope schema: each rule must name a watchBlock and may
+# carry a switchToBlock (instead of the set-level switchToSet /
+# switchInstruction). Cross-references (block existence, forward-only,
+# blockIterator.N == 1) are NOT checked here -- the engine's
+# validateSessionSwitchRules enforces them at session start, where the full
+# trial structure is available.
+validateBlockSwitchRulesShape <- function(rules, paramName = "switchRules") {
+  if (!is.list(rules)) {
+    stop(paramName, " must be a list of block-switch-rule lists (each from buildQCEblockSwitchRule).")
+  }
+  if (length(rules) < 1) {
+    stop(paramName, " must contain at least one rule.")
+  }
+  for (i in seq_along(rules)) {
+    rule  <- rules[[i]]
+    label <- paste0(paramName, "[[", i, "]]")
+    if (!is.list(rule)) {
+      stop(label, " must be a list (output of buildQCEblockSwitchRule).")
+    }
+    # watchBlock required -- this is the field that distinguishes a block rule
+    # from a set rule (set rules have no watchBlock; association is positional).
+    if (is.null(rule$watchBlock)) {
+      stop(label, " missing watchBlock. Block-to-block rules must name the ",
+           "block they count within. Did you forget to wrap with ",
+           "buildQCEblockSwitchRule?")
+    }
+    if (!isSingleString(rule$watchBlock) || nchar(rule$watchBlock) == 0) {
+      stop(label, ".watchBlock must be a non-empty single string.")
+    }
+    hasResp <- !is.null(rule$countResponse)
+    hasWhen <- !is.null(rule$countWhen)
+    if (!hasResp && !hasWhen) {
+      stop(label, " missing both countResponse and countWhen. ",
+           "Did you forget to wrap with buildQCEblockSwitchRule?")
+    }
+    if (hasResp && hasWhen) {
+      stop(label, " has both countResponse and countWhen -- pick one ",
+           "(countResponse is sugar for countWhen=list(field='Key', operator='equals', value=<x>)).")
+    }
+    if (hasResp) {
+      if (!isSingleString(rule$countResponse) || nchar(rule$countResponse) == 0) {
+        stop(label, ".countResponse must be a non-empty single string.")
+      }
+    }
+    if (hasWhen) {
+      validateSwitchCountWhenShape(rule$countWhen, paste0(label, ".countWhen"))
+    }
+    if (is.null(rule$threshold)) {
+      stop(label, " missing threshold. Did you forget to wrap with buildQCEblockSwitchRule?")
+    }
+    validateSwitchThresholdShape(rule$threshold, paste0(label, ".threshold"))
+    if (!is.null(rule$switchToBlock)) {
+      if (!isSingleString(rule$switchToBlock) || nchar(rule$switchToBlock) == 0) {
+        stop(label, ".switchToBlock must be a non-empty single string when present ",
+             "(omit for end-session-early without a destination).")
+      }
+    }
+  }
+  invisible(TRUE)
+}
