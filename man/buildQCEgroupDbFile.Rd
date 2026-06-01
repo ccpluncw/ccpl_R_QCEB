@@ -22,7 +22,9 @@ buildQCEgroupDbFile(
   triggerRelayPort = 5678,
   restEveryNMinutes = NULL,
   restMaxTrial = NULL,
-  keyMaps = NULL
+  keyMaps = NULL,
+  customHooksFile = NULL,
+  customHooksStateKeys = NULL
 )
 }
 \arguments{
@@ -58,7 +60,11 @@ buildQCEgroupDbFile(
 
 \item{restMaxTrial}{Optional positive integer -- suppress all rest breaks once `trialsShown` reaches this number. Useful for experiments where late-stage rests would disrupt a flow state. NULL means no trial-count cap. DEFAULT = NULL.}
 
-\item{keyMaps}{Optional named list of keyMap entries (each from buildQCEkeyMapEntry). Phase 3.5 named-keyMap registry -- blocks reference these entries by name via the `keyMapName` arg of addBlockToQCETrialStructureList. NULL means no named keyMaps (legacy single-keyMap experiments work unchanged via the `keyMap` arg). For incremental construction, use addKeyMapToDbfile after this function returns. DEFAULT = NULL.
+\item{keyMaps}{Optional named list of keyMap entries (each from buildQCEkeyMapEntry). Phase 3.5 named-keyMap registry -- blocks reference these entries by name via the `keyMapName` arg of addBlockToQCETrialStructureList. NULL means no named keyMaps (legacy single-keyMap experiments work unchanged via the `keyMap` arg). For incremental construction, use addKeyMapToDbfile after this function returns. DEFAULT = NULL.}
+
+\item{customHooksFile}{Optional single filename ending in `.js` -- the Phase 5 researcher-authored custom-hooks file (defines the global `QCEPHooks` object). NULL means no hooks (legacy experiments take the byte-identical no-hooks code path). Use saveCustomHooksTemplate() to scaffold the file, and copy it into the experiment directory. For incremental construction, use addHooksToQCEgroupDbFile after this function returns. DEFAULT = NULL.}
+
+\item{customHooksStateKeys}{Optional character vector of state-key names the hooks will write to `qceState.custom`, used by the engine to statically validate `stateRef` showIf conditions (built with buildQCEstateCondition) -- an undeclared stateRef errors at session start as a likely typo. Only meaningful when customHooksFile is set. NULL means no declared keys (engine warns rather than errors on unknown stateRefs). DEFAULT = NULL.
 '}
 
 \item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL}

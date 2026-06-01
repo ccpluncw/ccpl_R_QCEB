@@ -8,6 +8,10 @@ Authors@R:
            email = "first.last@example.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: What the package does (one paragraph).
+Note: Development of this package was assisted by Claude (Anthropic), an AI
+    coding assistant, for code refactoring, documentation, testing, and
+    debugging. All scientific decisions, model specifications, and algorithm
+    design were made by the package authors.
 License: What license it uses
 Encoding: UTF-8
 LazyData: true

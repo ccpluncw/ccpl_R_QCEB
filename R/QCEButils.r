@@ -87,19 +87,26 @@ isValidFilename <- function (filename, extension) {
 # second valid single-condition shape, alongside the original stimRef+
 # operator leaf. A leaf is one OR the other, never both. Compound (all/any)
 # groups can contain a mix.
+#
+# Phase 5 (2026-06-01): stateRef+operator leaf added as a third valid single-
+# condition shape (the hook->state->showIf channel; built by
+# buildQCEstateCondition). Still XOR per leaf; compound groups can mix all three.
 validateShowIfShape <- function(x, paramName = "showIf") {
   if (!is.list(x)) {
     stop(paramName, " must be a list (output of buildQCEshowIfCondition, ",
-         "buildQCEblockSwitchedCondition, or buildQCEshowIfCompound).")
+         "buildQCEblockSwitchedCondition, buildQCEstateCondition, or ",
+         "buildQCEshowIfCompound).")
   }
   isStimLeaf  <- !is.null(x$stimRef)  && !is.null(x$operator)
   isBlockLeaf <- !is.null(x$blockRef) && !is.null(x$operator)
+  isStateLeaf <- !is.null(x$stateRef) && !is.null(x$operator)
   isCompound  <- !is.null(x$all) || !is.null(x$any)
-  if (!isStimLeaf && !isBlockLeaf && !isCompound) {
+  if (!isStimLeaf && !isBlockLeaf && !isStateLeaf && !isCompound) {
     stop(paramName, " is not a valid showIf condition: ",
          "expected stimRef+operator (single), blockRef+operator (single, ",
-         "Phase 3.5), or all/any (compound). Did you forget to wrap with ",
-         "buildQCEshowIfCondition, buildQCEblockSwitchedCondition, or ",
+         "Phase 3.5), stateRef+operator (single, Phase 5), or all/any ",
+         "(compound). Did you forget to wrap with buildQCEshowIfCondition, ",
+         "buildQCEblockSwitchedCondition, buildQCEstateCondition, or ",
          "buildQCEshowIfCompound?")
   }
   invisible(TRUE)
