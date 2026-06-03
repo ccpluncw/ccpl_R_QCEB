@@ -86,6 +86,13 @@ var QCEPHooks = {
    *   { choicesOverride: ["y", "n"] }             // replace the allowed response keys
    *   { dataAnnotations: { myField: 1 } }         // merge extra fields into the data row
    * Return nothing to leave the trial unchanged.
+   *
+   * DISPLAY IMPLIES RECORD: each stimulusReplacements value is ALSO written to
+   * the data row under its token name (so a value you show is captured, not
+   * just displayed). It is SAVED only if you list that token name in fields.txt
+   * -- same as every other output variable. So you do NOT need to repeat a
+   * displayed token in dataAnnotations; use dataAnnotations only for fields you
+   * record but do NOT display (or to override a token's recorded value).
    */
   onTrialStart: function (trial, ctx) {
     // Example: substitute a running score into the stimulus text
