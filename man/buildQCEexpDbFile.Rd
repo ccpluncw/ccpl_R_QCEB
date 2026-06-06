@@ -22,7 +22,8 @@ buildQCEexpDbFile(
   closeBrowserMsg = NULL,
   fullscreenMsg = NULL,
   fullscreenBtn = "Continue",
-  completionRedirect = NULL
+  completionRedirect = NULL,
+  saveDataEveryNTrials = 50
 )
 }
 \arguments{
@@ -60,7 +61,9 @@ buildQCEexpDbFile(
 
 \item{fullscreenBtn}{A string that specifies a the text to put on the button in full screen mode.  DEFAULT = "Continue".}
 
-\item{completionRedirect}{A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, then this should be an empty string. DEFAULT = "".
+\item{completionRedirect}{A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, then this should be an empty string. DEFAULT = "".}
+
+\item{saveDataEveryNTrials}{A single positive integer specifying how often (in trials) the data is incrementally saved to the server during the experiment. The final save always occurs at the end regardless of this value. DEFAULT = 50.
 '}
 }
 \value{
