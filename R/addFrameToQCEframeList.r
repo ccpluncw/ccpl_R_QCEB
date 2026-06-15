@@ -35,10 +35,16 @@
 
 addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = TRUE, output = TRUE, trigger = NULL, pluginParams = NULL) {
 
-  validTrialTypes <- c("key", "textbox", "numberline", "angleline")
-
-  if(!(trialType %in% validTrialTypes)) {
-    stop(paste("trialType option must take on one of the following values: ", paste(validTrialTypes, sep="", collapse=" ")))
+  # trialType is validated against the QCEB trialType registry (mirrors the
+  # engine's trialTypeRegistry.js), NOT a hard-coded list, so custom/third-party
+  # plugins are accepted once registered with registerQCEBtrialType(). The core
+  # types (key/textbox/numberline/angleline) and the bundled "survey" plugin are
+  # pre-registered. For surveys, prefer addSurveyFrameToQCEframeList(), which
+  # serializes a SurveyJS model into the stimulus for you.
+  if(!isRegisteredQCEBtrialType(trialType)) {
+    stop("trialType '", trialType, "' is not registered. Registered types: ",
+         paste(getRegisteredQCEBtrialTypes(), collapse = ", "),
+         ". Register custom plugin types with registerQCEBtrialType().")
   }
 
   validKinds <- c("string", "number", "other")

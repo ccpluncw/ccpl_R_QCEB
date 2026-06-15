@@ -10,7 +10,8 @@ addSessionToSessionList(
   sessionName = "unspecified",
   dbFile = "dbfile.txt",
   tsFile = "tsFile.txt",
-  stimFile = "stimulus.txt"
+  stimFile = "stimulus.txt",
+  plugins = NULL
 )
 }
 \arguments{
@@ -24,7 +25,9 @@ addSessionToSessionList(
 
 \item{tsFile}{A string that specifies the name of the trial structure file for this session. DEFAULT = "tsFile.txt".}
 
-\item{stimFile}{A string that specifies the name of the stimFile (that contains the scenarios) for this session. DEFAULT = "stimFile.txt".
+\item{stimFile}{A string that specifies the name of the stimFile (that contains the scenarios) for this session. DEFAULT = "stimFile.txt".}
+
+\item{plugins}{Optional character vector of custom plugin names to load for this session (e.g. c("survey")). Each name must correspond to a plugin registered in the deployment's pluginManifest.json; the engine's validateTrialTypes confirms at session start that every non-core trialType used by the session is covered by a loaded plugin. Emitted as the session's "plugins" array only when provided, so legacy sessions produce byte-identical JSON. DEFAULT = NULL (no custom plugins).
 '}
 }
 \value{
@@ -34,7 +37,11 @@ the updated QCEsessionList
 Function that creates or modifys an QCEsessionList by adding sessions to the list one at a time.
 }
 \examples{
+# Basic session
 addSessionToSessionList (QCEsessionList, sessionOrder = -1, sessionName = "unspecified", dbFile = "dbfile.txt", tsFile = "tsFile.txt", stimFile = "stimulus.txt")
+
+# Session that loads the survey plugin (for trialType = "survey" frames)
+addSessionToSessionList (QCEsessionList, sessionName = "study1", dbFile = "db.json", tsFile = "ts.json", stimFile = "stim.json", plugins = c("survey"))
 }
 \keyword{QCE}
 \keyword{QCEsessionList}

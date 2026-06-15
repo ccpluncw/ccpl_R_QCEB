@@ -1,0 +1,113 @@
+#' Add a SurveyJS survey frame to a QCEframeList
+#'
+#' Convenience builder for a \code{trialType = "survey"} frame. It serializes a
+#' SurveyJS model (from \code{\link{surveyModel}}) into the frame's
+#' \code{stimulus} as a JSON string and appends the frame to a QCEframeList,
+#' exactly like \code{\link{addFrameToQCEframeList}} does for the core trial
+#' types. The resulting scenario is added with
+#' \code{\link{addScenarioToQCEscenarioList}} like any other.
+#'
+#' The survey plugin (surveyTrialType.js, Phase 6) renders the model and records
+#' one data column per question (matrix/multipletext questions flatten to one
+#' column per cell). For the data to be saved you must (1) load the plugin by
+#' passing \code{plugins = c("survey")} to \code{\link{addSessionToSessionList}},
+#' and (2) list the resulting column names in your fields.txt.
+#'
+#' Survey blocks have no key input, so give the BLOCK \code{keyMapName = "none"}
+#' (the engine's explicit no-keymap sentinel) in
+#' \code{\link{addBlockToQCETrialStructureList}} so no keymap-instruction screen
+#' fires before the survey.
+#'
+#' @param QCEframeList An existing QCEframeList to append to, or NULL to start a
+#'   new one. DEFAULT = NULL.
+#' @param surveyModel A SurveyJS model list, normally from
+#'   \code{\link{surveyModel}}. The serializer guarantees that collection
+#'   properties (choices/rows/columns/rateValues/...) render as JSON arrays even
+#'   when length 1.
+#' @param frameName A single string naming this frame in the data file. NULL
+#'   makes it "frame#" by position (consistent with
+#'   \code{\link{addFrameToQCEframeList}}). DEFAULT = NULL.
+#' @param stimulus_duration Integer ms to force-advance even without a submit,
+#'   or NULL to wait for the participant's survey submit button (the normal
+#'   case). DEFAULT = NULL.
+#' @param post_trial_gap Integer ms of blank screen after the survey.
+#'   DEFAULT = 300.
+#' @param background Page background color (hex). DEFAULT = "#FFFFFF" (surveys
+#'   are typically shown on a light background, unlike the black stimulus
+#'   frames).
+#' @param cursorVisible Boolean; surveys are mouse-driven so the cursor must be
+#'   visible. DEFAULT = TRUE.
+#' @param output Boolean; whether to record this frame's data. DEFAULT = TRUE.
+#' @param trigger Optional buildQCETriggerList() output for fNIRS frame-level
+#'   triggers. DEFAULT = NULL.
+#'
+#' @return The updated QCEframeList.
+#' @keywords QCE survey frame SurveyJS QCEframeList
+#' @export
+#' @examples
+#' model <- surveyModel(surveyPage("p1",
+#'   surveyQuestion("rating", "mvs1", "How desirable a partner are you?",
+#'                  isRequired = TRUE, rateMin = 1, rateMax = 7)))
+#' fr <- addSurveyFrameToQCEframeList(NULL, model, frameName = "MVS")
+#' # scenarios <- addScenarioToQCEscenarioList(scenarios, fr, NULL, NULL, "mvs_pre")
+addSurveyFrameToQCEframeList <- function(QCEframeList = NULL, surveyModel, frameName = NULL,
+                                         stimulus_duration = NULL, post_trial_gap = 300,
+                                         background = "#FFFFFF", cursorVisible = TRUE,
+                                         output = TRUE, trigger = NULL) {
+
+  # "survey" must be a registered trialType (it is, by default). This guard
+  # keeps the R-side error friendly and consistent with addFrameToQCEframeList.
+  if (!isRegisteredQCEBtrialType("survey")) {
+    stop("addSurveyFrameToQCEframeList: trialType 'survey' is not registered. ",
+         "This is unexpected -- 'survey' is seeded by default. ",
+         "Call registerQCEBtrialType('survey') if you cleared the registry.")
+  }
+
+  if (!is.list(surveyModel) || is.null(surveyModel$pages)) {
+    stop("addSurveyFrameToQCEframeList: surveyModel must be a SurveyJS model ",
+         "list with a 'pages' element (build it with surveyModel()).")
+  }
+
+  if (!isSingleNumeric(post_trial_gap)) {
+    stop("post_trial_gap option must be a single integer.")
+  }
+  if (!is.null(stimulus_duration) && !isSingleNumeric(stimulus_duration)) {
+    stop("stimulus_duration option must be a single integer or NULL.")
+  }
+  if (!isColor(background)) {
+    stop("background option must be a valid color.")
+  }
+
+  if (is.null(frameName)) {
+    if (is.null(QCEframeList)) {
+      frameName <- "frame1"
+    } else {
+      frameName <- paste0("frame", length(QCEframeList))
+    }
+  } else {
+    frameName <- as.character(frameName)
+  }
+
+  modelStr <- .serializeSurveyModel(surveyModel)
+
+  # Empty atomic vectors serialize as JSON [] (matches the engine's
+  # expectations for a no-key, no-duration frame). choices is always [] for a
+  # survey -- the survey plugin uses its own submit button, not the keymap.
+  if (is.null(stimulus_duration)) stimulus_duration <- numeric()
+
+  tmpList <- list(trialType = "survey", frameName = frameName, stimulus = modelStr,
+                  stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap,
+                  choices = character(), background = background,
+                  cursorVisible = cursorVisible, output = output)
+  if (!is.null(trigger)) {
+    tmpList$trigger <- trigger
+  }
+
+  if (is.null(QCEframeList)) {
+    QCEframeList[[as.name(1)]] <- tmpList
+  } else {
+    QCEframeList[[as.name(length(QCEframeList) + 1)]] <- tmpList
+  }
+
+  QCEframeList
+}

@@ -82,7 +82,7 @@ test_that("pluginParams without kind merges in default kind for textbox", {
     expect_equal(frame$pluginParams$kind, "string")
 })
 
-test_that("invalid trialType still rejected (existing validation unchanged)", {
+test_that("unregistered trialType rejected via registry (new validation)", {
     expect_error(
         addFrameToQCEframeList(
             trialType = "bogus",
@@ -90,8 +90,17 @@ test_that("invalid trialType still rejected (existing validation unchanged)", {
             stimulus_duration = 100,
             post_trial_gap = 0
         ),
-        "trialType option must take on one of the following values"
+        "is not registered"
     )
+})
+
+test_that("registered 'survey' trialType is accepted by addFrameToQCEframeList", {
+    fl <- addFrameToQCEframeList(
+        trialType = "survey", frameName = "s",
+        stimulus = "{\"pages\":[]}", stimulus_duration = NULL, post_trial_gap = 0,
+        choices = NULL
+    )
+    expect_equal(fl[[1]]$trialType, "survey")
 })
 
 test_that("chained frames — second frame appends correctly", {
