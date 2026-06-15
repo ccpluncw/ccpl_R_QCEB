@@ -237,6 +237,7 @@ test_that("regression: legacy block (no new args) byte-identical -- no new field
     expect_null(entry$keyMapName)
     expect_null(entry$entryInstruction)
     expect_null(entry$excludePreviouslyPresented)
+    expect_null(entry$showKeyMapInstruction)
 })
 
 test_that("keyMapName: valid string is included on block entry", {
@@ -286,6 +287,39 @@ test_that("excludePreviouslyPresented non-boolean throws", {
     expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
                                                   excludePreviouslyPresented = "yes"),
                  "single boolean")
+})
+
+test_that("showKeyMapInstruction: each valid string mode is included on block entry", {
+    inp <- .makeBlockInputs()
+    for (mode in c("auto", "always", "never")) {
+        tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                showKeyMapInstruction = mode)
+        expect_equal(tsl[[1]]$showKeyMapInstruction, mode)
+    }
+})
+
+test_that("showKeyMapInstruction: boolean TRUE/FALSE normalize to always/never", {
+    inp <- .makeBlockInputs()
+    tslT <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                             showKeyMapInstruction = TRUE)
+    expect_equal(tslT[[1]]$showKeyMapInstruction, "always")
+    tslF <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                             showKeyMapInstruction = FALSE)
+    expect_equal(tslF[[1]]$showKeyMapInstruction, "never")
+})
+
+test_that("showKeyMapInstruction: unrecognized string throws", {
+    inp <- .makeBlockInputs()
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                  showKeyMapInstruction = "sometimes"),
+                 "auto.*always.*never")
+})
+
+test_that("showKeyMapInstruction: multi-element vector throws", {
+    inp <- .makeBlockInputs()
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                  showKeyMapInstruction = c("auto", "always")),
+                 "single string")
 })
 
 test_that("showIf accepts blockRef leaf (Phase 3.5 Decision G)", {

@@ -12,6 +12,7 @@
 #' @param keyMapName Optional single string -- the name of a named keyMap (declared on the dbfile via addKeyMapToDbfile or the dbfile's `keyMaps` arg) that this block uses for its key-response trials. Three cases: (1) NULL / omitted -- the block falls back to the dbfile's legacy single keyMap (`mydB.keyMap`); (2) the reserved string "none" -- the block has NO keyMap (use this for survey/click-only blocks with no key-response trials, so no keymap-instruction screen fires and nothing is scored against a keyMap); (3) any other string -- the name of an entry in `mydB.keyMaps`. Phase 3.5 (Decision A/B): cascade resolves at IsBlockItFirst -- "none" -> no keyMap, else `mydB.keyMaps[name]` if name set, else `mydB.keyMap` default. Because R drops NULL list elements, NULL cannot serialize to JSON null; "none" is the R-emittable way to declare an explicit no-keymap block. DEFAULT = NULL.
 #' @param entryInstruction Optional character vector of HTML filenames. Each fires as a jsPsychExternalHtml trial at block entry (one screen per file, in order). Phase 3.5 Decision D -- use for per-task framing screens ("Welcome to Part 2") that should display before the keymap-instruction screen and the first trial. Each HTML file must contain a button with id="Go" (current engine convention; Phase 5.5 forms refactor will harmonize). NULL means no block-level entry screens. DEFAULT = NULL.
 #' @param excludePreviouslyPresented Optional single boolean. When TRUE, this block's trial pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Phase 3.5 Decision H -- extends the set-level flag (already on addSetToQCEsetInfoList) to apply uniformly across ALL sets in the block. Honored in both switchRules blocks (via buildSetNode cascade) and regular non-switchRules blocks (runtime trial-list filter at IsBlockItFirst). NULL means do not filter at block level. DEFAULT = NULL.
+#' @param showKeyMapInstruction Optional single string controlling whether the keymap-instruction screen fires at THIS block's entry (the policy is block-based, not keyMap-based). Three values: "auto" (show only when this block's active keyMap differs from the last one shown -- the smart default that avoids re-showing an unchanged keymap); "always" (re-show even if unchanged -- use for repeated phases that share one keyMap, e.g. phase1/phase2/phase3 all using a "dating" keyMap, where each phase should re-orient the participant); "never" (suppress even if the keyMap changed). Boolean TRUE/FALSE are accepted as aliases for "always"/"never" and normalized to the string form. In every mode the engine still requires the block to contain at least one key-response frame -- a survey/click-only block never shows a keymap screen. NULL / omitted means "auto", which is byte-identical to the pre-existing engine behavior. DEFAULT = NULL.
 #''
 #' @return the updated QCETrialStructureList
 #' @keywords QCE QCETrialStructureList update add block
@@ -40,7 +41,7 @@
 #'   blockName   = "PreferenceSwitching",
 #'   switchRules = list(rule))
 
-addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEsetInfoList, QCEblockIteratorList, blockNumber = -1, blockName = "blockName", trigger = NULL, showIf = NULL, switchRules = NULL, keyMapName = NULL, entryInstruction = NULL, excludePreviouslyPresented = NULL) {
+addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEsetInfoList, QCEblockIteratorList, blockNumber = -1, blockName = "blockName", trigger = NULL, showIf = NULL, switchRules = NULL, keyMapName = NULL, entryInstruction = NULL, excludePreviouslyPresented = NULL, showKeyMapInstruction = NULL) {
 
   if (!is.null(showIf)) {
     validateShowIfShape(showIf, "showIf")
@@ -77,6 +78,22 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
       stop("excludePreviouslyPresented option must be a single boolean (TRUE or FALSE) when provided.")
     }
   }
+  # showKeyMapInstruction: accept the three string modes, or boolean
+  # TRUE/FALSE as aliases for "always"/"never". Normalize to the string form
+  # the engine reads so the emitted JSON is self-documenting.
+  if (!is.null(showKeyMapInstruction)) {
+    if (is.logical(showKeyMapInstruction) && length(showKeyMapInstruction) == 1 && !is.na(showKeyMapInstruction)) {
+      showKeyMapInstruction <- if (showKeyMapInstruction) "always" else "never"
+    } else if (isSingleString(showKeyMapInstruction)) {
+      if (!showKeyMapInstruction %in% c("auto", "always", "never")) {
+        stop("showKeyMapInstruction must be one of \"auto\", \"always\", or ",
+             "\"never\" (or boolean TRUE/FALSE) when provided.")
+      }
+    } else {
+      stop("showKeyMapInstruction must be a single string (\"auto\", \"always\", ",
+           "or \"never\") or a single boolean (TRUE/FALSE) when provided.")
+    }
+  }
 
   tmpList <- list(blockNumber = blockNumber, setInfo = QCEsetInfoList, blockIterator = QCEblockIteratorList, blockName = blockName)
   if (!is.null(trigger)) {
@@ -98,6 +115,9 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
   }
   if (!is.null(excludePreviouslyPresented)) {
     tmpList$excludePreviouslyPresented <- excludePreviouslyPresented
+  }
+  if (!is.null(showKeyMapInstruction)) {
+    tmpList$showKeyMapInstruction <- showKeyMapInstruction
   }
 
   if(is.null(QCETrialStructureList)) {

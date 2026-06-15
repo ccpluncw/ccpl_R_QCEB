@@ -15,7 +15,8 @@ addBlockToQCETrialStructureList(
   switchRules = NULL,
   keyMapName = NULL,
   entryInstruction = NULL,
-  excludePreviouslyPresented = NULL
+  excludePreviouslyPresented = NULL,
+  showKeyMapInstruction = NULL
 )
 }
 \arguments{
@@ -39,7 +40,9 @@ addBlockToQCETrialStructureList(
 
 \item{entryInstruction}{Optional character vector of HTML filenames. Each fires as a jsPsychExternalHtml trial at block entry (one screen per file, in order). Phase 3.5 Decision D -- use for per-task framing screens ("Welcome to Part 2") that should display before the keymap-instruction screen and the first trial. Each HTML file must contain a button with id="Go" (current engine convention; Phase 5.5 forms refactor will harmonize). NULL means no block-level entry screens. DEFAULT = NULL.}
 
-\item{excludePreviouslyPresented}{Optional single boolean. When TRUE, this block's trial pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Phase 3.5 Decision H -- extends the set-level flag (already on addSetToQCEsetInfoList) to apply uniformly across ALL sets in the block. Honored in both switchRules blocks (via buildSetNode cascade) and regular non-switchRules blocks (runtime trial-list filter at IsBlockItFirst). NULL means do not filter at block level. DEFAULT = NULL.
+\item{excludePreviouslyPresented}{Optional single boolean. When TRUE, this block's trial pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Phase 3.5 Decision H -- extends the set-level flag (already on addSetToQCEsetInfoList) to apply uniformly across ALL sets in the block. Honored in both switchRules blocks (via buildSetNode cascade) and regular non-switchRules blocks (runtime trial-list filter at IsBlockItFirst). NULL means do not filter at block level. DEFAULT = NULL.}
+
+\item{showKeyMapInstruction}{Optional single string controlling whether the keymap-instruction screen fires at THIS block's entry (the policy is block-based, not keyMap-based). Three values: "auto" (show only when this block's active keyMap differs from the last one shown -- the smart default that avoids re-showing an unchanged keymap); "always" (re-show even if unchanged -- use for repeated phases that share one keyMap, e.g. phase1/phase2/phase3 all using a "dating" keyMap, where each phase should re-orient the participant); "never" (suppress even if the keyMap changed). Boolean TRUE/FALSE are accepted as aliases for "always"/"never" and normalized to the string form. In every mode the engine still requires the block to contain at least one key-response frame -- a survey/click-only block never shows a keymap screen. NULL / omitted means "auto", which is byte-identical to the pre-existing engine behavior. DEFAULT = NULL.
 '}
 }
 \value{
