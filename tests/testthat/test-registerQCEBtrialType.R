@@ -6,11 +6,12 @@ test_that("core types and survey are pre-registered", {
     expect_true(isRegisteredQCEBtrialType("numberline"))
     expect_true(isRegisteredQCEBtrialType("angleline"))
     expect_true(isRegisteredQCEBtrialType("survey"))
+    expect_true(isRegisteredQCEBtrialType("mcKeys"))
 })
 
 test_that("getRegisteredQCEBtrialTypes returns the seeded set sorted", {
     types <- getRegisteredQCEBtrialTypes()
-    expect_true(all(c("angleline", "key", "numberline", "survey", "textbox") %in% types))
+    expect_true(all(c("angleline", "key", "mcKeys", "numberline", "survey", "textbox") %in% types))
 })
 
 test_that("unknown type is not registered", {

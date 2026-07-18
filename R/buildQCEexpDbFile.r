@@ -20,13 +20,15 @@
 #' @param fullscreenBtn A string that specifies a the text to put on the button in full screen mode.  DEFAULT = "Continue".
 #' @param completionRedirect A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, then this should be an empty string. DEFAULT = "".
 #' @param saveDataEveryNTrials A single positive integer specifying how often (in trials) the data is incrementally saved to the server during the experiment. The final save always occurs at the end regardless of this value. DEFAULT = 50.
+#' @param completionGate Optional named list gating the end-of-experiment completion redirect (e.g. a SONA credit URL) on an EXPERIMENT-WIDE criterion computed over the whole-run data (every trial from every session). Use exactly ONE of two forms. (1) Formula: `formula` = a list of flat formulas, each a list with `fn` (one of "mean", "median", "proportion", "count", "sum", "min", "max", "sd"), `column` (a data column name, e.g. "correct" or "rt"), `op` (one of ">=", "<=", ">", "<", "==", "!="), `value` (a single finite number; for `proportion` in [0,1]), and optional `where` (a named list of column filters, each a scalar for equality or a list(op=, value=) for a range); plus optional `combinator` = "all" (default) or "any". proportion(column) = mean of the column coerced to 0/1; count(column) = number of non-missing rows. (2) Escape hatch: `gateFn` = a single string naming a global JS function called with (custom, experimentData) that returns a boolean. Both forms accept an optional `noCreditMsg` (HTML shown on a fail). The engine evaluates the gate ONCE after all sessions; on failure it suppresses the redirect and shows the no-credit message. Fail-closed: a formula that cannot be evaluated (unknown column, wrong-type value, empty sample) or a gateFn error denies credit and logs a warning. NULL means no gate (the redirect fires unconditionally, as before). DEFAULT = NULL.
+#' @param maxExperimentMinutes Optional single positive number: a generous WHOLE-EXPERIMENT wall-clock cap in minutes, stamped once at experiment start. Once exceeded, the engine skips remaining stimuli at stimulus boundaries and ends the run gracefully (into the completion gate + save/end nodes). A backstop against leaving the tab open indefinitely; set well above the task's expected length. NULL means uncapped. DEFAULT = NULL.
 #''
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
 #' @examples buildQCEdbFile (expName = "myExp", addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
-buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50) {
+buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL) {
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
@@ -130,6 +132,81 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
 
 
   tmpList <- list (expName = expName, addQualtricsCode = addQualtricsCode, defaultBackgroundColor = defaultBackgroundColor, restAfterEveryNTrials = restAfterEveryNTrials,  instructionFile = instructionFile, getUserNameFile = getUserNameFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, restMsg = restMsg, endOfSessionMsg = endOfSessionMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg, closeBrowserMsg = closeBrowserMsg, fullscreenMsg = fullscreenMsg, fullscreenBtn = fullscreenBtn, completionRedirect = completionRedirect, saveDataEveryNTrials = saveDataEveryNTrials)
+
+  # Experiment-wide completion gate -- emit only when supplied, so legacy dbfiles
+  # are byte-identical and the redirect fires unconditionally as before. Exactly
+  # one form: a non-empty `formula` list (flat aggregate criteria over the whole-run
+  # data) OR a `gateFn` string (escape hatch). Mirrors the engine's config-time
+  # validation so a bad gate fails here at BUILD time, not only at experiment start.
+  # The engine evaluates it once after all sessions.
+  if (!is.null(completionGate)) {
+    if (!is.list(completionGate)) {
+      stop("completionGate must be a named list (formula | gateFn, plus optional noCreditMsg).")
+    }
+    hasFn <- !is.null(completionGate$gateFn)
+    hasFormula <- !is.null(completionGate$formula) && length(completionGate$formula) > 0
+    if (hasFn && hasFormula) {
+      stop("completionGate must have EITHER a 'formula' list OR a 'gateFn' string, not both.")
+    }
+    if (!hasFn && !hasFormula) {
+      stop("completionGate needs a non-empty 'formula' list or a 'gateFn' string.")
+    }
+    if (hasFn) {
+      if (!isSingleString(completionGate$gateFn)) {
+        stop("completionGate$gateFn must be a single string naming a global JS function.")
+      }
+    } else {
+      validOps <- c(">=", "<=", ">", "<", "==", "!=")
+      validFns <- c("mean", "median", "proportion", "count", "sum", "min", "max", "sd")
+      for (i in seq_along(completionGate$formula)) {
+        f <- completionGate$formula[[i]]
+        if (!is.list(f) || is.null(f$fn) || is.null(f$column) || is.null(f$op) || is.null(f$value)) {
+          stop(sprintf("completionGate formula %d must be a list with 'fn', 'column', 'op', and 'value'.", i))
+        }
+        if (!(f$fn %in% validFns)) {
+          stop(sprintf("completionGate formula %d has invalid fn '%s'. Valid: %s.",
+                       i, as.character(f$fn), paste(validFns, collapse = " ")))
+        }
+        if (!(f$op %in% validOps)) {
+          stop(sprintf("completionGate formula %d has invalid op '%s'. Valid: %s.",
+                       i, as.character(f$op), paste(validOps, collapse = " ")))
+        }
+        if (!is.numeric(f$value) || length(f$value) != 1 || !is.finite(f$value)) {
+          stop(sprintf("completionGate formula %d 'value' must be a single finite number.", i))
+        }
+        if (f$fn == "proportion" && (f$value < 0 || f$value > 1)) {
+          stop(sprintf("completionGate formula %d (proportion) 'value' must be in [0,1].", i))
+        }
+        if (!is.null(f$where)) {
+          if (!is.list(f$where)) {
+            stop(sprintf("completionGate formula %d 'where' must be a named list of column filters.", i))
+          }
+          for (wc in names(f$where)) {
+            spec <- f$where[[wc]]
+            if (is.list(spec) && !is.null(spec$op) && !(spec$op %in% validOps)) {
+              stop(sprintf("completionGate formula %d 'where$%s' has invalid op '%s'.",
+                           i, wc, as.character(spec$op)))
+            }
+          }
+        }
+      }
+      if (!is.null(completionGate$combinator) &&
+          !(completionGate$combinator %in% c("all", "any"))) {
+        stop("completionGate$combinator must be 'all' or 'any'.")
+      }
+    }
+    tmpList$completionGate <- completionGate
+  }
+
+  # Whole-experiment hard deadline (minutes) -- emit only when supplied; absent
+  # means uncapped (legacy). The engine stamps the wall-clock end-time once at
+  # experiment start and skips remaining stimuli once past it.
+  if (!is.null(maxExperimentMinutes)) {
+    if (!is.numeric(maxExperimentMinutes) || length(maxExperimentMinutes) != 1 || maxExperimentMinutes <= 0) {
+      stop("maxExperimentMinutes must be a single positive number of minutes.")
+    }
+    tmpList$maxExperimentMinutes <- maxExperimentMinutes
+  }
 
   return(tmpList)
 

@@ -131,3 +131,14 @@ test_that("incremental + one-shot interop: keyMaps from arg + addKeyMapToDbfile 
     db <- addKeyMapToDbfile(db, "km2", km2)
     expect_equal(names(db$keyMaps), c("km1", "km2"))
 })
+
+test_that("completionGate/maxSessionMinutes are no longer group-level (moved to buildQCEexpDbFile)", {
+  base <- buildQCEgroupDbFile(condName = "c1")
+  expect_null(base$completionGate)
+  expect_null(base$maxSessionMinutes)
+  expect_null(base$maxExperimentMinutes)
+  # the args were removed from this builder -- completion + run clock are
+  # experiment-wide now; passing them here is an unused-argument error.
+  expect_error(buildQCEgroupDbFile(condName = "c1", completionGate = list()), "unused argument")
+  expect_error(buildQCEgroupDbFile(condName = "c1", maxSessionMinutes = 60), "unused argument")
+})

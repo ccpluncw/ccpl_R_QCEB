@@ -7,9 +7,9 @@
 #' registering its trialType name here -- no edit to the QCEB core is needed.
 #'
 #' The CORE types (\code{"key"}, \code{"textbox"}, \code{"numberline"},
-#' \code{"angleline"}) and the bundled \code{"survey"} plugin are pre-registered
-#' automatically, so you only call this for additional third-party / custom
-#' plugins (e.g. a Cyberball plugin).
+#' \code{"angleline"}) and the bundled \code{"survey"} and \code{"mcKeys"} plugins
+#' are pre-registered automatically, so you only call this for additional
+#' third-party / custom plugins (e.g. a Cyberball plugin).
 #'
 #' This is a friendly, R-side typo guard only. The authoritative gate is the
 #' engine's \code{validateTrialTypes} at session start, which checks that the
@@ -87,12 +87,18 @@ getRegisteredQCEBtrialTypes <- function() {
 
 # Seed the built-in types if they are not already present. Idempotent.
 #   key / textbox / numberline / angleline -- engine CORE types.
-#   survey                                 -- the bundled Phase 6 plugin
+#   survey                                 -- the bundled survey plugin
 #                                             (surveyTrialType.js). Pre-seeded so
 #                                             addSurveyFrameToQCEframeList works
 #                                             out of the box; the plugin is still
 #                                             only LOADED if the session lists it
 #                                             in plugins=.
+#   mcKeys                                  -- the bundled keyboard multiple-choice
+#                                             plugin (jspsychMcKeys.js). Pre-seeded;
+#                                             loaded unconditionally by the engine
+#                                             (a core script, no plugins= opt-in).
+#                                             Content goes in the frame stimulus as
+#                                             an mc_spec { stem, choices, correctValue }.
 .seedCoreQCEBtrialTypes <- function() {
   core <- list(
     key        = list(name = "key",        requiresKeymap = TRUE),
@@ -100,7 +106,9 @@ getRegisteredQCEBtrialTypes <- function() {
     numberline = list(name = "numberline", requiresKeymap = FALSE),
     angleline  = list(name = "angleline",  requiresKeymap = FALSE),
     survey     = list(name = "survey",     requiresKeymap = FALSE,
-                      stimulusParam = "survey_json")
+                      stimulusParam = "survey_json"),
+    mcKeys     = list(name = "mcKeys",     requiresKeymap = FALSE,
+                      stimulusParam = "mc_spec")
   )
   for (nm in names(core)) {
     if (!exists(nm, envir = .qcebTrialTypeRegistry, inherits = FALSE)) {

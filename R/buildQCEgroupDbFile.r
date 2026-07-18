@@ -160,6 +160,12 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
             "(state keys only matter when a hooks file is declared).")
   }
 
+  # NOTE: completionGate and the whole-run deadline are EXPERIMENT-WIDE, not
+  # per-group -- completion means "finished the study" and the run clock spans the
+  # whole experiment. They now live on the experiment dbfile (buildQCEexpDbFile:
+  # completionGate + maxExperimentMinutes), beside completionRedirect. They were
+  # removed from this per-group builder.
+
   return(tmpList)
 
 }
