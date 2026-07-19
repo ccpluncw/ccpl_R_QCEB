@@ -57,7 +57,7 @@ buildQCEexpDbFile(
 
 \item{saveMsg}{A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."}
 
-\item{closeBrowserMsg}{A string that tells the user that they may hit Enter and then close the browser (it is the end of the experiment). The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit the ENTER key and then you may close this browser window"}
+\item{closeBrowserMsg}{A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "You may now close this browser window."}
 
 \item{fullscreenMsg}{A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "The experiment will switch to full screen mode when you press the button below."}
 

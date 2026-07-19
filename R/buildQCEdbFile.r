@@ -26,7 +26,7 @@
 #' @param restMsg A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please take a self-timed break. Press any key to resume the experiment."
 #' @param endOfExpMsg A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Thank you for taking part in the experiment."
 #' @param saveMsg A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."
-#' @param closeBrowserMsg A string that tells the user that they may hit Enter and then close the browser (it is the end of the experiment). The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit the ENTER key and then you may close this browser window"
+#' @param closeBrowserMsg A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "You may now close this browser window."
 #' @param friendlyReminderMsg A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "This is a friendly reminder."
 #' @param remindMsg A string that specifies a message that the keymap reminder might be shown again. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "We may present this screen again during the experiment to remind you of the keys."
 #' @param proceedMsg A string that specifies a message to hit any key to proceed. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit any key to proceed."
@@ -119,10 +119,10 @@ buildQCEdbFile <- function (expName = "defaultExpName", condName="defaultCond", 
   }
 
   if(is.null(closeBrowserMsg)) {
-    fullscreenMsg <- "Please hit the ENTER key and then you may close this browser window"
+    closeBrowserMsg <- "You may now close this browser window."
   } else {
-    if(!isSingleString(fullscreenMsg)) {
-      stop("fullscreenMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the fullscreenMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
+    if(!isSingleString(closeBrowserMsg)) {
+      stop("closeBrowserMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the closeBrowserMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
     }
   }
 

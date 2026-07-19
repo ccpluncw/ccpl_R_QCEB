@@ -15,7 +15,7 @@
 #' @param endOfExpMsg A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Thank you for taking part in the experiment."
 #' @param endOfSessionMsg A string that specifies the end of a session when a new session is comming up message. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "You have just completed the block. Please press any key to start to the next block."
 #' @param saveMsg A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."
-#' @param closeBrowserMsg A string that tells the user that they may hit Enter and then close the browser (it is the end of the experiment). The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit the ENTER key and then you may close this browser window"
+#' @param closeBrowserMsg A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "You may now close this browser window."
 #' @param fullscreenMsg A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "The experiment will switch to full screen mode when you press the button below."
 #' @param fullscreenBtn A string that specifies a the text to put on the button in full screen mode.  DEFAULT = "Continue".
 #' @param completionRedirect A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, then this should be an empty string. DEFAULT = "".
@@ -90,7 +90,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
     endOfSessionMsg <- "You have just completed the block. Please press any key to start to the next block"
   } else {
     if(!isSingleString(endOfSessionMsg)) {
-      stop("endOfExpMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the endOfExpMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
+      stop("endOfSessionMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the endOfSessionMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
     }
   }
 
@@ -111,7 +111,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   }
 
   if(is.null(closeBrowserMsg)) {
-    closeBrowserMsg <- "Please hit the ENTER key and then you may close this browser window"
+    closeBrowserMsg <- "You may now close this browser window."
   } else {
     if(!isSingleString(closeBrowserMsg)) {
       stop("closeBrowserMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the closeBrowserMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
