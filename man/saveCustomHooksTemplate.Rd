@@ -40,7 +40,7 @@ addHooksToQCEgroupDbFile(dbfile, "customHooks.js").
 saveCustomHooksTemplate()
 
 # Custom name (remember to match it in addHooksToQCEgroupDbFile)
-saveCustomHooksTemplate("rubyT4Hooks.js")
+saveCustomHooksTemplate("myHooks.js")
 }
 \keyword{QCE}
 \keyword{dynamic}

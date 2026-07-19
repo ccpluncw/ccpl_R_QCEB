@@ -55,7 +55,7 @@ produces byte-identical JSON to a pre-Phase-5 dbfile (no `customHooksFile`
 legacy no-hooks code path.
 }
 \examples{
-dbfile <- buildQCEgroupDbFile(condName = "rubyT4",
+dbfile <- buildQCEgroupDbFile(condName = "condA",
   keyMap = buildKeyMap(data.frame(Yes = "y", No = "n")))
 
 # Declare the hooks file and the state keys the hooks will set

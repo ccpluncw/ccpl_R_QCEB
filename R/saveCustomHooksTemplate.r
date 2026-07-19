@@ -30,7 +30,7 @@
 #' saveCustomHooksTemplate()
 #'
 #' # Custom name (remember to match it in addHooksToQCEgroupDbFile)
-#' saveCustomHooksTemplate("rubyT4Hooks.js")
+#' saveCustomHooksTemplate("myHooks.js")
 
 saveCustomHooksTemplate <- function(filename = "customHooks.js") {
 
