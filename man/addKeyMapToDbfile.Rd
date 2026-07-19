@@ -44,7 +44,7 @@ warning intentionally, remove the existing entry first
 (`QCEdbfile$keyMaps[[name]] <- NULL`).
 }
 \examples{
-dbfile <- buildQCEgroupDbFile(condName = "multiTask",
+dbfile <- buildQCEgroupDbFile(condName = "condA",
   keyMap = buildKeyMap(data.frame(Yes = "y", No = "n")))
 
 # Register two named keyMaps for blocks to reference

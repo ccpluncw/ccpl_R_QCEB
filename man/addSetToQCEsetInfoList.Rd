@@ -53,8 +53,8 @@ addSetToQCEsetInfoListOldDep for the legacy behavior.
 sl <- addSetToQCEsetInfoList(NULL, scenarios, "baseline", 10)
 sl <- addSetToQCEsetInfoList(sl, scenarios, "task", 20,
   trigger = buildQCETriggerList(onset = 200, offset = 201))
-sl <- addSetToQCEsetInfoList(sl, scenarios, "smokingFollowUp", 15,
-  showIf = buildQCEshowIfCondition("smoker", "equals", "Yes", "Response"))
+sl <- addSetToQCEsetInfoList(sl, scenarios, "followUp", 15,
+  showIf = buildQCEshowIfCondition("eligible", "equals", "Yes", "Response"))
 
 # SetB is the post-switch destination -- exclude previously-presented items
 sl <- addSetToQCEsetInfoList(sl, scenarios, "SetB", 10,

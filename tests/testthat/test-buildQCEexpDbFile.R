@@ -89,6 +89,33 @@ test_that("completionGate validation rejects malformed configs", {
     "single string")
 })
 
+test_that("where ordering ops require a finite numeric bound", {
+  whereVal <- function(v) {
+    buildQCEexpDbFile(expName = "e1",
+      completionGate = list(formula = list(list(fn = "count", column = "rt", op = ">=", value = 1,
+                                                where = list(rt = list(op = "<", value = v))))))
+  }
+  # A non-numeric bound can never match a row: it would silently empty the sample
+  # at run time, so it is rejected at build time instead.
+  expect_error(whereVal("abc"), "must be a single finite number")
+  expect_error(whereVal(TRUE),  "must be a single finite number")
+  expect_error(whereVal(NULL),  "missing a 'value'")
+  # Numbers and numeric strings are accepted.
+  expect_silent(whereVal(200))
+  expect_silent(whereVal("200"))
+
+  # Equality ops still accept non-numeric values -- that is their purpose.
+  expect_silent(
+    buildQCEexpDbFile(expName = "e1",
+      completionGate = list(formula = list(list(fn = "count", column = "rt", op = ">=", value = 1,
+                                                where = list(trialType = list(op = "==", value = "mcKeys")))))))
+  # A bare scalar filter is untouched by the rule.
+  expect_silent(
+    buildQCEexpDbFile(expName = "e1",
+      completionGate = list(formula = list(list(fn = "count", column = "rt", op = ">=", value = 1,
+                                                where = list(trialType = "mcKeys"))))))
+})
+
 test_that("maxExperimentMinutes validation rejects non-positive / non-scalar", {
   expect_error(buildQCEexpDbFile(expName = "e1", maxExperimentMinutes = -5), "positive number")
   expect_error(buildQCEexpDbFile(expName = "e1", maxExperimentMinutes = 0), "positive number")

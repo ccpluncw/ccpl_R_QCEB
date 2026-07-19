@@ -23,7 +23,9 @@ buildQCEexpDbFile(
   fullscreenMsg = NULL,
   fullscreenBtn = "Continue",
   completionRedirect = NULL,
-  saveDataEveryNTrials = 50
+  saveDataEveryNTrials = 50,
+  completionGate = NULL,
+  maxExperimentMinutes = NULL
 )
 }
 \arguments{
@@ -63,7 +65,11 @@ buildQCEexpDbFile(
 
 \item{completionRedirect}{A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, then this should be an empty string. DEFAULT = "".}
 
-\item{saveDataEveryNTrials}{A single positive integer specifying how often (in trials) the data is incrementally saved to the server during the experiment. The final save always occurs at the end regardless of this value. DEFAULT = 50.
+\item{saveDataEveryNTrials}{A single positive integer specifying how often (in trials) the data is incrementally saved to the server during the experiment. The final save always occurs at the end regardless of this value. DEFAULT = 50.}
+
+\item{completionGate}{Optional named list gating the end-of-experiment completion redirect (e.g. a SONA credit URL) on an EXPERIMENT-WIDE criterion computed over the whole-run data (every trial from every session). Use exactly ONE of two forms. (1) Formula: `formula` = a list of flat formulas, each a list with `fn` (one of "mean", "median", "proportion", "count", "sum", "min", "max", "sd"), `column` (a data column name, e.g. "correct" or "rt"), `op` (one of ">=", "<=", ">", "<", "==", "!="), `value` (a single finite number; for `proportion` in [0,1]), and optional `where` (a named list of column filters, each a scalar for equality or a list(op=, value=) for a range; an ordering op requires a finite numeric value. Equality normalizes booleans to 1/0, so TRUE/1 and FALSE/0 are interchangeable and a boolean column filters the same way it aggregates; strings are NOT coerced, so "1" does not match TRUE); plus optional `combinator` = "all" (default) or "any". proportion(column) = mean of the column coerced to 0/1; count(column) = number of non-missing rows. (2) Escape hatch: `gateFn` = a single string naming a global JS function called with (custom, experimentData) that returns a boolean. `experimentData` is a PLAIN JavaScript ARRAY of trial row objects (every trial from every session), not a jsPsych DataCollection -- so use standard array methods (filter/map/reduce), not DataCollection query methods such as select(). A gateFn needing the DataCollection API can obtain it directly via myJsPsych.data.get(), which is global. Both forms accept an optional `noCreditMsg` (HTML shown on a fail). The engine evaluates the gate ONCE after all sessions; on failure it suppresses the redirect and shows the no-credit message. Fail-closed: a formula that cannot be evaluated (unknown column, wrong-type value, empty sample) counts as UNKNOWN rather than pass, so it can never grant credit on its own, and it is always logged as a warning. Under `combinator` "all" a single unknown therefore denies. Under "any" a soundly passing formula still grants, since an unevaluable alternative cannot revoke a criterion already met. A gateFn that is missing or errors denies outright. NULL means no gate (the redirect fires unconditionally, as before). DEFAULT = NULL.}
+
+\item{maxExperimentMinutes}{Optional single positive number: a generous WHOLE-EXPERIMENT wall-clock cap in minutes, stamped once at experiment start. Once exceeded, the engine skips remaining stimuli at stimulus boundaries and ends the run gracefully (into the completion gate + save/end nodes). A backstop against leaving the tab open indefinitely; set well above the task's expected length. NULL means uncapped. DEFAULT = NULL.
 '}
 }
 \value{

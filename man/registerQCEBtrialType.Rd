@@ -29,9 +29,9 @@ registering its trialType name here -- no edit to the QCEB core is needed.
 }
 \details{
 The CORE types (\code{"key"}, \code{"textbox"}, \code{"numberline"},
-\code{"angleline"}) and the bundled \code{"survey"} plugin are pre-registered
-automatically, so you only call this for additional third-party / custom
-plugins (e.g. a Cyberball plugin).
+\code{"angleline"}) and the bundled \code{"survey"} and \code{"mcKeys"} plugins
+are pre-registered automatically, so you only call this for additional
+third-party / custom plugins (e.g. a Cyberball plugin).
 
 This is a friendly, R-side typo guard only. The authoritative gate is the
 engine's \code{validateTrialTypes} at session start, which checks that the
