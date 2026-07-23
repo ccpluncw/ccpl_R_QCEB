@@ -22,13 +22,16 @@
 #' @param saveDataEveryNTrials A single positive integer specifying how often (in trials) the data is incrementally saved to the server during the experiment. The final save always occurs at the end regardless of this value. DEFAULT = 50.
 #' @param completionGate Optional named list gating the end-of-experiment completion redirect (e.g. a SONA credit URL) on an EXPERIMENT-WIDE criterion computed over the whole-run data (every trial from every session). Use exactly ONE of two forms. (1) Formula: `formula` = a list of flat formulas, each a list with `fn` (one of "mean", "median", "proportion", "count", "sum", "min", "max", "sd"), `column` (a data column name, e.g. "correct" or "rt"), `op` (one of ">=", "<=", ">", "<", "==", "!="), `value` (a single finite number; for `proportion` in [0,1]), and optional `where` (a named list of column filters, each a scalar for equality or a list(op=, value=) for a range; an ordering op requires a finite numeric value. Equality normalizes booleans to 1/0, so TRUE/1 and FALSE/0 are interchangeable and a boolean column filters the same way it aggregates; strings are NOT coerced, so "1" does not match TRUE); plus optional `combinator` = "all" (default) or "any". proportion(column) = mean of the column coerced to 0/1; count(column) = number of non-missing rows. (2) Escape hatch: `gateFn` = a single string naming a global JS function called with (custom, experimentData) that returns a boolean. `experimentData` is a PLAIN JavaScript ARRAY of trial row objects (every trial from every session), not a jsPsych DataCollection -- so use standard array methods (filter/map/reduce), not DataCollection query methods such as select(). A gateFn needing the DataCollection API can obtain it directly via myJsPsych.data.get(), which is global. Both forms accept an optional `noCreditMsg` (HTML shown on a fail). The engine evaluates the gate ONCE after all sessions; on failure it suppresses the redirect and shows the no-credit message. Fail-closed: a formula that cannot be evaluated (unknown column, wrong-type value, empty sample) counts as UNKNOWN rather than pass, so it can never grant credit on its own, and it is always logged as a warning. Under `combinator` "all" a single unknown therefore denies. Under "any" a soundly passing formula still grants, since an unevaluable alternative cannot revoke a criterion already met. A gateFn that is missing or errors denies outright. NULL means no gate (the redirect fires unconditionally, as before). DEFAULT = NULL.
 #' @param maxExperimentMinutes Optional single positive number: a generous WHOLE-EXPERIMENT wall-clock cap in minutes, stamped once at experiment start. Once exceeded, the engine skips remaining stimuli at stimulus boundaries and ends the run gracefully (into the completion gate + save/end nodes). A backstop against leaving the tab open indefinitely; set well above the task's expected length. NULL means uncapped. DEFAULT = NULL.
+#' @param saveTimeoutMs Optional single positive number: the per-request timeout in milliseconds applied to every data-save POST. A save that neither succeeds nor fails within this window is treated as a failure so the serialized save chain proceeds instead of hanging behind it. Set below any final-save watchdog. NULL uses the engine default (20000). DEFAULT = NULL.
+#' @param saveCanary Optional single Boolean gating the start-of-run save health check. When enabled (the engine default), the experiment probes that the save path is writable BEFORE building the timeline and halts the participant before any work if it is not -- bounding a save outage on an unattended run to the cohort already in flight rather than crediting empty runs. Set FALSE to opt a run out. NULL uses the engine default (enabled). DEFAULT = NULL.
+#' @param saveUnavailableMsg A string shown on the terminal halt screen when the start-of-run save canary fails. The string must be in html format. You can use any html codes. NULL uses the engine default, which asks the participant to close the window and try again in about 24 hours. DEFAULT = NULL.
 #''
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
 #' @examples buildQCEdbFile (expName = "myExp", addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
-buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL) {
+buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL) {
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
@@ -220,6 +223,37 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
       stop("maxExperimentMinutes must be a single positive number of minutes.")
     }
     tmpList$maxExperimentMinutes <- maxExperimentMinutes
+  }
+
+  # Save-resilience knobs -- all optional, emitted only when supplied so legacy
+  # dbfiles stay byte-identical and the engine's own defaults apply when absent.
+
+  # Per-request save timeout (ms). A save that neither resolves nor rejects
+  # within this window is treated as a failure so the serialized save chain is
+  # not blocked behind one hung request.
+  if (!is.null(saveTimeoutMs)) {
+    if (!is.numeric(saveTimeoutMs) || length(saveTimeoutMs) != 1 || saveTimeoutMs <= 0) {
+      stop("saveTimeoutMs must be a single positive number of milliseconds.")
+    }
+    tmpList$saveTimeoutMs <- saveTimeoutMs
+  }
+
+  # Start-of-run save canary. FALSE opts a run out of the pre-timeline
+  # writability probe that otherwise halts a participant before any work when
+  # the save path is down.
+  if (!is.null(saveCanary)) {
+    if (!is.logical(saveCanary) || length(saveCanary) != 1 || is.na(saveCanary)) {
+      stop("saveCanary must be a single Boolean (TRUE or FALSE).")
+    }
+    tmpList$saveCanary <- saveCanary
+  }
+
+  # Message for the terminal halt screen shown when the canary fails.
+  if (!is.null(saveUnavailableMsg)) {
+    if (!isSingleString(saveUnavailableMsg)) {
+      stop("saveUnavailableMsg must be a single string composed in html or NULL.")
+    }
+    tmpList$saveUnavailableMsg <- saveUnavailableMsg
   }
 
   return(tmpList)
