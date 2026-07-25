@@ -42,3 +42,29 @@ test_that("isRegisteredQCEBtrialType is robust to non-string input", {
     expect_false(isRegisteredQCEBtrialType(NULL))
     expect_false(isRegisteredQCEBtrialType(42))
 })
+
+# --- forceResp: mirrors the engine registry, drives the no-exit exemption ----
+
+test_that("core types carry forceResp exactly as the engine registry does", {
+    expect_false(QCEB:::.qcebTrialTypeForcesResponse("key"))
+    expect_true(QCEB:::.qcebTrialTypeForcesResponse("textbox"))
+    expect_true(QCEB:::.qcebTrialTypeForcesResponse("numberline"))
+    expect_true(QCEB:::.qcebTrialTypeForcesResponse("angleline"))
+    expect_true(QCEB:::.qcebTrialTypeForcesResponse("survey"))
+    expect_true(QCEB:::.qcebTrialTypeForcesResponse("mcKeys"))
+})
+
+test_that("unregistered or unannotated types answer FALSE (conservative)", {
+    expect_false(QCEB:::.qcebTrialTypeForcesResponse("nosuchtype"))
+    expect_false(QCEB:::.qcebTrialTypeForcesResponse(NULL))
+    registerQCEBtrialType("plainCustomType", requiresKeymap = FALSE)
+    expect_false(QCEB:::.qcebTrialTypeForcesResponse("plainCustomType"))
+})
+
+test_that("a custom type may declare forceResp and is then exempt", {
+    registerQCEBtrialType("selfEndingType", requiresKeymap = FALSE, forceResp = TRUE)
+    expect_true(QCEB:::.qcebTrialTypeForcesResponse("selfEndingType"))
+    expect_silent(addFrameToQCEframeList(
+        trialType = "selfEndingType", frameName = "f", stimulus = "x",
+        trial_duration = "NO_LIMIT", post_trial_gap = 0, choices = "NO_KEYS"))
+})

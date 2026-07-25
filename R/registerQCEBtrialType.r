@@ -22,10 +22,15 @@
 #'   name the plugin uses in its \code{registerTrialType()} call on the engine
 #'   side (e.g. "survey").
 #' @param ... Optional named metadata describing the type (e.g.
-#'   \code{stimulusParam}, \code{requiresKeymap}). Stored verbatim for
-#'   introspection; QCEB does not act on it. The registry entry is an OPEN
-#'   object, exactly like the engine's, so plugins can carry extra metadata
-#'   without a QCEB change.
+#'   \code{stimulusParam}, \code{requiresKeymap}, \code{forceResp}). Stored
+#'   verbatim for introspection. The registry entry is an OPEN object, exactly
+#'   like the engine's, so plugins can carry extra metadata without a QCEB
+#'   change. One field is acted on: \code{forceResp = TRUE} declares that the
+#'   plugin always gives the participant a way to respond -- a mouse, a text
+#'   field, a submit button -- independently of the frame's \code{choices}. Such
+#'   a frame is exempt from the check that a frame with no time limit still has
+#'   some way to end. Omit it (the default) for keyboard-driven types, whose
+#'   only exit is a key listed in \code{choices}.
 #'
 #' @return Invisibly, the registry entry list that was stored.
 #' @keywords QCE trialType register plugin
@@ -78,6 +83,20 @@ getRegisteredQCEBtrialTypes <- function() {
   sort(ls(envir = .qcebTrialTypeRegistry))
 }
 
+# Does this trialType's plugin always give the participant a way to respond,
+# regardless of `choices`? Internal; reads the registry's optional forceResp
+# field so no builder has to name specific trialTypes. An unregistered or
+# unannotated type answers FALSE, which is the conservative direction: it keeps
+# the frame subject to the no-exit check rather than silently exempting it.
+.qcebTrialTypeForcesResponse <- function(name) {
+  .seedCoreQCEBtrialTypes()
+  if (!isSingleString(name) ||
+      !exists(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)) {
+    return(FALSE)
+  }
+  isTRUE(get(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)$forceResp)
+}
+
 # --- internal registry store ------------------------------------------------
 # Package-level mutable environment. Created once when the namespace loads.
 # Seeded lazily (see .seedCoreQCEBtrialTypes) so the accessors are
@@ -100,14 +119,17 @@ getRegisteredQCEBtrialTypes <- function() {
 #                                             Content goes in the frame stimulus as
 #                                             an mc_spec { stem, choices, correctValue }.
 .seedCoreQCEBtrialTypes <- function() {
+  # forceResp mirrors the same field in the engine's trialTypeRegistry.js. Every
+  # core type except "key" brings its own response surface and so can always be
+  # ended by the participant; "key" can only be ended by a key in `choices`.
   core <- list(
     key        = list(name = "key",        requiresKeymap = TRUE),
-    textbox    = list(name = "textbox",    requiresKeymap = FALSE),
-    numberline = list(name = "numberline", requiresKeymap = FALSE),
-    angleline  = list(name = "angleline",  requiresKeymap = FALSE),
-    survey     = list(name = "survey",     requiresKeymap = FALSE,
+    textbox    = list(name = "textbox",    requiresKeymap = FALSE, forceResp = TRUE),
+    numberline = list(name = "numberline", requiresKeymap = FALSE, forceResp = TRUE),
+    angleline  = list(name = "angleline",  requiresKeymap = FALSE, forceResp = TRUE),
+    survey     = list(name = "survey",     requiresKeymap = FALSE, forceResp = TRUE,
                       stimulusParam = "survey_json"),
-    mcKeys     = list(name = "mcKeys",     requiresKeymap = FALSE,
+    mcKeys     = list(name = "mcKeys",     requiresKeymap = FALSE, forceResp = TRUE,
                       stimulusParam = "mc_spec")
   )
   for (nm in names(core)) {

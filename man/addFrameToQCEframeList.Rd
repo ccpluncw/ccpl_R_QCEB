@@ -18,7 +18,8 @@ addFrameToQCEframeList(
   cursorVisible = TRUE,
   output = TRUE,
   trigger = NULL,
-  pluginParams = NULL
+  pluginParams = NULL,
+  trial_duration = NULL
 )
 }
 \arguments{
@@ -30,11 +31,11 @@ addFrameToQCEframeList(
 
 \item{stimulus}{A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of any kind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and     <input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.}
 
-\item{stimulus_duration}{An integer that specifies how long to present the frame in milliseconds. A NULL will present the stimulus until there is a user input. DEFAULT = NULL}
+\item{stimulus_duration}{An integer that specifies how long the stimulus is VISIBLE, in milliseconds. A NULL leaves it visible until there is a user input. By default the frame also ENDS when the stimulus disappears; set trial_duration to separate the two. DEFAULT = NULL}
 
 \item{post_trial_gap}{An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)}
 
-\item{response_ends_trial}{A boolean that specifies whether the key response ends the trial.  If set to FALSE, then stimulus_duration must not be NULL. DEFAULT = TRUE}
+\item{response_ends_trial}{A boolean that specifies whether the key response ends the trial. A frame must have SOME way to end: if this is FALSE, the frame needs a stimulus_duration or a trial_duration to end it. The same applies when choices is NULL, empty, or "NO_KEYS", since those leave no key to press. Trial types whose plugin supplies its own response surface (textbox, numberline, angleline, survey, mcKeys) can always be ended by the participant and are exempt. DEFAULT = TRUE}
 
 \item{choices}{Specifies the keyboard keys accepted as a response. Interpretation depends on trialType.
 For trialType = "key": a character vector of allowed key names (e.g., c("a", "b", " ", "Enter")), or the sentinel "ALL_KEYS" to accept any key. NULL or an empty vector disables the keyboard response path entirely — the trial then advances on stimulus_duration only.
@@ -54,6 +55,12 @@ choices does not control what can be typed into an html textbox input field — 
 \item{trigger}{Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this frame's boundaries — onset fires in the frame's on_start, offset fires in the frame's on_finish (even for non-response frames like fixation). NULL means no frame-level triggers. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.}
 
 \item{pluginParams}{A named list of plugin-specific parameters passed through to the jsPsych plugin for this frame. For textbox trials, the 'kind' argument (above) is automatically merged into this list — passing 'kind' both as a named argument AND inside pluginParams is an error. For future custom plugins (Cyberball etc.), pass their specific parameters here. DEFAULT = NULL.}
+
+\item{trial_duration}{An integer that specifies how long the frame lasts before it ends on its own, in milliseconds. Three states:
+NULL means "not specified", and the frame ends when its stimulus does (it inherits stimulus_duration). This is the long-standing behavior and what every frame that does not mention trial_duration still gets.
+The sentinel "NO_LIMIT" removes the time limit entirely, so the frame ends only when the participant responds. This is the only way to hide a stimulus partway through (via stimulus_duration) while continuing to accept input, since the inheritance above otherwise ties the two durations together.
+A positive number is that many milliseconds, independent of stimulus_duration. A value LARGER than stimulus_duration gives a limited-exposure stimulus with a response window that outlives it.
+DEFAULT = NULL}
 }
 \value{
 the updated QCEframeList
@@ -69,6 +76,17 @@ addFrameToQCEframeList (frameList, trialType = "key", frameName = "mask2", stimu
 addFrameToQCEframeList (frameList, trialType = "key", frameName = "stimulus",
   stimulus = myStimString, stimulus_duration = 1000, post_trial_gap = 0,
   trigger = buildQCETriggerList(onset = 10000, offset = 10001))
+
+# Limited exposure: show the stimulus for 2 s, then hide it but keep waiting
+# for the response for as long as the participant needs.
+addFrameToQCEframeList (frameList, trialType = "key", frameName = "masked",
+  stimulus = myStimString, stimulus_duration = 2000, trial_duration = "NO_LIMIT",
+  post_trial_gap = 0, choices = c("f", "j"))
+
+# The same, but cut the response window off at 10 s.
+addFrameToQCEframeList (frameList, trialType = "key", frameName = "masked",
+  stimulus = myStimString, stimulus_duration = 2000, trial_duration = 10000,
+  post_trial_gap = 0, choices = c("f", "j"))
 }
 \keyword{QCE}
 \keyword{QCEframeList}

@@ -12,10 +12,15 @@ name the plugin uses in its \code{registerTrialType()} call on the engine
 side (e.g. "survey").}
 
 \item{...}{Optional named metadata describing the type (e.g.
-\code{stimulusParam}, \code{requiresKeymap}). Stored verbatim for
-introspection; QCEB does not act on it. The registry entry is an OPEN
-object, exactly like the engine's, so plugins can carry extra metadata
-without a QCEB change.}
+\code{stimulusParam}, \code{requiresKeymap}, \code{forceResp}). Stored
+verbatim for introspection. The registry entry is an OPEN object, exactly
+like the engine's, so plugins can carry extra metadata without a QCEB
+change. One field is acted on: \code{forceResp = TRUE} declares that the
+plugin always gives the participant a way to respond -- a mouse, a text
+field, a submit button -- independently of the frame's \code{choices}. Such
+a frame is exempt from the check that a frame with no time limit still has
+some way to end. Omit it (the default) for keyboard-driven types, whose
+only exit is a key listed in \code{choices}.}
 }
 \value{
 Invisibly, the registry entry list that was stored.

@@ -189,3 +189,139 @@ test_that("choices=NULL serializes as empty array", {
     json <- jsonlite::toJSON(fl, auto_unbox = FALSE)
     expect_match(as.character(json), '"choices":\\[\\]')
 })
+
+# --- trial_duration: three-state resolution + the no-exit guard --------------
+
+test_that("a frame that never mentions trial_duration omits the key entirely", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 1000, post_trial_gap = 0
+    )
+    expect_false("trial_duration" %in% names(fl[[1]]))
+})
+
+test_that("omitting trial_duration leaves the emitted frame byte-identical", {
+    args <- list(trialType = "key", frameName = "f", stimulus = "x",
+                 stimulus_duration = 1000, post_trial_gap = 0,
+                 choices = c("a", "b"), background = "#FFFFFF")
+    withNew <- do.call(addFrameToQCEframeList, args)
+    # The reference shape: every key the builder has always emitted, in order.
+    expect_equal(names(withNew[[1]]),
+                 c("trialType", "frameName", "stimulus", "stimulus_duration",
+                   "post_trial_gap", "response_ends_trial", "choices",
+                   "background", "cursorVisible", "output"))
+})
+
+test_that("a numeric trial_duration is emitted as given", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 2000, trial_duration = 10000, post_trial_gap = 0,
+        choices = c("f", "j")
+    )
+    expect_equal(fl[[1]]$trial_duration, 10000)
+})
+
+test_that("NO_LIMIT is emitted as an unboxed JSON string, not an array", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 2000, trial_duration = "NO_LIMIT", post_trial_gap = 0,
+        choices = c("f", "j")
+    )
+    js <- jsonlite::toJSON(fl[[1]]$trial_duration)
+    expect_equal(as.character(js), "\"NO_LIMIT\"")
+})
+
+test_that("NO_LIMIT is accepted case-insensitively and normalized to upper case", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 2000, trial_duration = "no_limit", post_trial_gap = 0,
+        choices = c("f", "j")
+    )
+    expect_equal(as.character(fl[[1]]$trial_duration), "NO_LIMIT")
+})
+
+test_that("trial_duration rejects non-positive, non-finite, and unknown strings", {
+    base <- function(td) addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 1000, trial_duration = td, post_trial_gap = 0,
+        choices = c("f", "j")
+    )
+    expect_error(base(0), "positive number")
+    expect_error(base(-100), "positive number")
+    expect_error(base(Inf), "positive number")
+    expect_error(base("forever"), "NO_LIMIT")
+    expect_error(base(c(100, 200)), "positive number")
+})
+
+test_that("no-exit guard: NO_LIMIT with NO_KEYS is refused", {
+    expect_error(
+        addFrameToQCEframeList(
+            trialType = "key", frameName = "f", stimulus = "x",
+            trial_duration = "NO_LIMIT", post_trial_gap = 0, choices = "NO_KEYS"
+        ),
+        "can never end")
+})
+
+test_that("no-exit guard: NO_LIMIT with response_ends_trial FALSE is refused", {
+    expect_error(
+        addFrameToQCEframeList(
+            trialType = "key", frameName = "f", stimulus = "x",
+            trial_duration = "NO_LIMIT", post_trial_gap = 0,
+            response_ends_trial = FALSE, choices = "ALL_KEYS"
+        ),
+        "can never end")
+})
+
+test_that("no-exit guard: no duration at all plus no choices is refused", {
+    expect_error(
+        addFrameToQCEframeList(
+            trialType = "key", frameName = "f", stimulus = "x",
+            post_trial_gap = 0, choices = NULL
+        ),
+        "can never end")
+})
+
+test_that("no-exit guard still catches the original response_ends_trial case", {
+    expect_error(
+        addFrameToQCEframeList(
+            trialType = "key", frameName = "f", stimulus = "x",
+            post_trial_gap = 0, response_ends_trial = FALSE
+        ),
+        "can never end")
+})
+
+test_that("no-exit guard allows the legitimate combinations", {
+    # NO_LIMIT with a real key
+    expect_silent(addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 2000, trial_duration = "NO_LIMIT",
+        post_trial_gap = 0, choices = c("f", "j")))
+    # the min-dwell pattern: NO_KEYS, but a duration ends it
+    expect_silent(addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 1500, post_trial_gap = 0, choices = "NO_KEYS"))
+    # a timed frame that refuses responses
+    expect_silent(addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 3000, post_trial_gap = 0,
+        response_ends_trial = FALSE, choices = NULL))
+})
+
+test_that("forceResp plugins are exempt from the no-exit guard", {
+    # A survey ends on its own submit button, so no keyboard exit is required.
+    expect_silent(addFrameToQCEframeList(
+        trialType = "survey", frameName = "f", stimulus = "{}",
+        trial_duration = "NO_LIMIT", post_trial_gap = 0, choices = "NO_KEYS"))
+    # mcKeys supplies its own digit keys.
+    expect_silent(addFrameToQCEframeList(
+        trialType = "mcKeys", frameName = "f", stimulus = "{}",
+        trial_duration = "NO_LIMIT", post_trial_gap = 0, choices = "NO_KEYS"))
+})
+
+test_that("mcKeys per-question deadline round-trips as trial_duration", {
+    fl <- addFrameToQCEframeList(
+        trialType = "mcKeys", frameName = "q", stimulus = "{}",
+        trial_duration = 25000, post_trial_gap = 0
+    )
+    expect_equal(fl[[1]]$trial_duration, 25000)
+})

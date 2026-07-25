@@ -5,9 +5,14 @@
 #' @param trialType A string that specifies the response type that you will be collecting.  It can take on one of the following values: "key", "textbox", "numberline", or "angleline".  "key" indicates a key press (or no input) to move on to the next frame. "textbox" presents a textbox for participants to input text. "numberline" presents a draggable number-line response plugin. "angleline" presents a draggable angle-line response plugin. DEFAULT = "key".
 #' @param frameName A string that specifies the name of the frame that will be output in the datafile, to indicate the data collected for this particular frame. One row is output in the datafile for each frame, so the frameName helps you keep track of the frame.  DEFAULT = NULL.  A NULL will force the frameName to equal "frame#" where # is the frame number.
 #' @param stimulus A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of any kind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and 	<input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.
-#' @param stimulus_duration  An integer that specifies how long to present the frame in milliseconds. A NULL will present the stimulus until there is a user input. DEFAULT = NULL
+#' @param stimulus_duration  An integer that specifies how long the stimulus is VISIBLE, in milliseconds. A NULL leaves it visible until there is a user input. By default the frame also ENDS when the stimulus disappears; set trial_duration to separate the two. DEFAULT = NULL
+#' @param trial_duration  An integer that specifies how long the frame lasts before it ends on its own, in milliseconds. Three states:
+#'   NULL means "not specified", and the frame ends when its stimulus does (it inherits stimulus_duration). This is the long-standing behavior and what every frame that does not mention trial_duration still gets.
+#'   The sentinel "NO_LIMIT" removes the time limit entirely, so the frame ends only when the participant responds. This is the only way to hide a stimulus partway through (via stimulus_duration) while continuing to accept input, since the inheritance above otherwise ties the two durations together.
+#'   A positive number is that many milliseconds, independent of stimulus_duration. A value LARGER than stimulus_duration gives a limited-exposure stimulus with a response window that outlives it.
+#'   DEFAULT = NULL
 #' @param post_trial_gap  An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)
-#' @param response_ends_trial  A boolean that specifies whether the key response ends the trial.  If set to FALSE, then stimulus_duration must not be NULL. DEFAULT = TRUE
+#' @param response_ends_trial  A boolean that specifies whether the key response ends the trial. A frame must have SOME way to end: if this is FALSE, the frame needs a stimulus_duration or a trial_duration to end it. The same applies when choices is NULL, empty, or "NO_KEYS", since those leave no key to press. Trial types whose plugin supplies its own response surface (textbox, numberline, angleline, survey, mcKeys) can always be ended by the participant and are exempt. DEFAULT = TRUE
 #' @param choices Specifies the keyboard keys accepted as a response. Interpretation depends on trialType.
 #'   For trialType = "key": a character vector of allowed key names (e.g., c("a", "b", " ", "Enter")), or the sentinel "ALL_KEYS" to accept any key. NULL or an empty vector disables the keyboard response path entirely — the trial then advances on stimulus_duration only.
 #'   For trialType = "textbox" with kind = "string" or "number": the default "ALL_KEYS" is appropriate (the plugin handles character filtering internally via the kind argument).
@@ -32,8 +37,19 @@
 #' addFrameToQCEframeList (frameList, trialType = "key", frameName = "stimulus",
 #'   stimulus = myStimString, stimulus_duration = 1000, post_trial_gap = 0,
 #'   trigger = buildQCETriggerList(onset = 10000, offset = 10001))
+#'
+#' # Limited exposure: show the stimulus for 2 s, then hide it but keep waiting
+#' # for the response for as long as the participant needs.
+#' addFrameToQCEframeList (frameList, trialType = "key", frameName = "masked",
+#'   stimulus = myStimString, stimulus_duration = 2000, trial_duration = "NO_LIMIT",
+#'   post_trial_gap = 0, choices = c("f", "j"))
+#'
+#' # The same, but cut the response window off at 10 s.
+#' addFrameToQCEframeList (frameList, trialType = "key", frameName = "masked",
+#'   stimulus = myStimString, stimulus_duration = 2000, trial_duration = 10000,
+#'   post_trial_gap = 0, choices = c("f", "j"))
 
-addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = TRUE, output = TRUE, trigger = NULL, pluginParams = NULL) {
+addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = TRUE, output = TRUE, trigger = NULL, pluginParams = NULL, trial_duration = NULL) {
 
   # trialType is validated against the QCEB trialType registry (mirrors the
   # engine's trialTypeRegistry.js), NOT a hard-coded list, so custom/third-party
@@ -71,12 +87,45 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
     stop("post_trial_gap option must be a single integer.")
   }
 
-  if(response_ends_trial == FALSE & is.null(stimulus_duration)) {
-    stop("response_ends_trial option must be TRUE if stimulus_duration is NULL.  stimulus_duration specifies how long the trial will last when there is no response.")
+  # trial_duration is three-state: NULL (inherit stimulus_duration), the
+  # sentinel "NO_LIMIT" (no timer at all), or a positive number of milliseconds.
+  isNoLimitDuration <- is.character(trial_duration) && length(trial_duration) == 1 &&
+                       toupper(trial_duration) == "NO_LIMIT"
+  if(!is.null(trial_duration) && !isNoLimitDuration &&
+     !(isSingleNumeric(trial_duration) && is.finite(trial_duration) && trial_duration > 0)) {
+    stop("trial_duration option must be NULL, a single positive number of milliseconds, or the sentinel \"NO_LIMIT\".")
   }
 
   if(!is.character(choices) & !is.null(choices)) {
     stop("choices option must be a vector of charactors representing allowable keys or NULL.")
+  }
+
+  # Does anything end this frame on a clock? "NO_LIMIT" says no; an explicit
+  # number says yes; NULL defers to stimulus_duration.
+  frameHasTimer <- if (isNoLimitDuration) FALSE
+                   else if (!is.null(trial_duration)) TRUE
+                   else !is.null(stimulus_duration)
+
+  # Can the participant end it instead? Plugins that bring their own response
+  # surface always can (registry forceResp). A keyboard frame can only when a
+  # response ends the trial AND some key is actually accepted -- an empty or
+  # absent choices vector disables the keyboard path, and "NO_KEYS" tells
+  # jsPsych to accept nothing.
+  frameCanEndOnResponse <-
+    .qcebTrialTypeForcesResponse(trialType) ||
+    (response_ends_trial == TRUE && !is.null(choices) && length(choices) > 0 &&
+     !(length(choices) == 1 && toupper(choices) == "NO_KEYS"))
+
+  # No-exit guard. A frame with neither a clock nor a response path strands the
+  # participant on a screen that never advances, which in the browser presents
+  # as a frozen experiment with nothing in the log. Caught here instead. This
+  # supersedes the narrower response_ends_trial/stimulus_duration pairing, and
+  # additionally covers the case where choices alone removes the only exit.
+  if(!frameHasTimer && !frameCanEndOnResponse) {
+    stop("This frame can never end: it has no time limit (trial_duration is \"NO_LIMIT\", ",
+         "or neither duration is set) and no way to respond (response_ends_trial = ",
+         response_ends_trial, ", choices = ", deparse(choices), "). ",
+         "Give it a stimulus_duration or trial_duration, or keys to press.")
   }
 
   if(!isColor(background)) {
@@ -116,6 +165,15 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
   }
 
   tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, background = background, cursorVisible = cursorVisible, output = output)
+  # trial_duration is emitted ONLY when the researcher set it. Omitting the key
+  # is what tells the engine "not specified -- inherit stimulus_duration", so a
+  # frame that never mentions it produces exactly the JSON it always has. The
+  # sentinel is boxed for the same reason "ALL_KEYS"/"NO_KEYS" are: it must
+  # arrive as a JSON string, not as a one-element array.
+  if (!is.null(trial_duration)) {
+    tmpList$trial_duration <- if (isNoLimitDuration) jsonlite::unbox(toupper(trial_duration))
+                              else trial_duration
+  }
   if (!is.null(trigger)) {
     tmpList$trigger <- trigger
   }
