@@ -159,17 +159,16 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
         stop("completionGate$gateFn must be a single string naming a global JS function.")
       }
     } else {
-      validOps <- c(">=", "<=", ">", "<", "==", "!=")
-      validFns <- c("mean", "median", "proportion", "count", "sum", "min", "max", "sd")
+      # Vocabulary and the shared aggregator/where checks live in QCEButils.r so
+      # the gate and card fields cannot drift apart. The op/value rules below are
+      # the gate's own: a card field displays a number, it does not compare one.
+      validOps <- .qcebValidCompareOps
       for (i in seq_along(completionGate$formula)) {
         f <- completionGate$formula[[i]]
         if (!is.list(f) || is.null(f$fn) || is.null(f$column) || is.null(f$op) || is.null(f$value)) {
           stop(sprintf("completionGate formula %d must be a list with 'fn', 'column', 'op', and 'value'.", i))
         }
-        if (!(f$fn %in% validFns)) {
-          stop(sprintf("completionGate formula %d has invalid fn '%s'. Valid: %s.",
-                       i, as.character(f$fn), paste(validFns, collapse = " ")))
-        }
+        validateQCEaggregateFn(f, sprintf("completionGate formula %d", i))
         if (!(f$op %in% validOps)) {
           stop(sprintf("completionGate formula %d has invalid op '%s'. Valid: %s.",
                        i, as.character(f$op), paste(validOps, collapse = " ")))
@@ -180,32 +179,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
         if (f$fn == "proportion" && (f$value < 0 || f$value > 1)) {
           stop(sprintf("completionGate formula %d (proportion) 'value' must be in [0,1].", i))
         }
-        if (!is.null(f$where)) {
-          if (!is.list(f$where)) {
-            stop(sprintf("completionGate formula %d 'where' must be a named list of column filters.", i))
-          }
-          for (wc in names(f$where)) {
-            spec <- f$where[[wc]]
-            if (is.list(spec) && !is.null(spec$op) && !(spec$op %in% validOps)) {
-              stop(sprintf("completionGate formula %d 'where$%s' has invalid op '%s'.",
-                           i, wc, as.character(spec$op)))
-            }
-            # An ordering op compares numerically, so a non-numeric bound can never
-            # match a row -- it would silently filter the sample to empty at run
-            # time. Rejected here as well as in the engine.
-            if (is.list(spec) && !is.null(spec$op) && !(spec$op %in% c("==", "!="))) {
-              if (is.null(spec$value)) {
-                stop(sprintf("completionGate formula %d 'where$%s' is missing a 'value'.", i, wc))
-              }
-              wv <- spec$value[[1]]
-              if (is.logical(wv) || length(wv) != 1 || is.na(suppressWarnings(as.numeric(wv)))) {
-                stop(sprintf(paste0("completionGate formula %d 'where$%s' uses ordering op '%s' ",
-                                    "so its 'value' must be a single finite number."),
-                             i, wc, as.character(spec$op)))
-              }
-            }
-          }
-        }
+        validateQCEwhereFilter(f$where, sprintf("completionGate formula %d", i))
       }
       if (!is.null(completionGate$combinator) &&
           !(completionGate$combinator %in% c("all", "any"))) {

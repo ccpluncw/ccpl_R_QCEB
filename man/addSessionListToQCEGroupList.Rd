@@ -7,7 +7,9 @@
 addSessionListToQCEGroupList(
   QCEGroupList = NULL,
   QCEsessionList,
-  groupName = "groupName"
+  groupName = "groupName",
+  pages = NULL,
+  cards = NULL
 )
 }
 \arguments{
@@ -15,7 +17,11 @@ addSessionListToQCEGroupList(
 
 \item{QCEsessionList}{A list that specifies the session name, order number, dbfileName, tsFilename, and scenarioFilename.}
 
-\item{groupName}{A string that specifies the name of the name of the between subjects group that contains these sessions.  This will be output in the datafile.
+\item{groupName}{A string that specifies the name of the name of the between subjects group that contains these sessions.  This will be output in the datafile.}
+
+\item{pages}{A single string naming this group's page placement file (e.g. "pagesA.json", written by \code{\link{saveQCEpageFiles}}). Positionable HTML pages play at event anchors -- consent, demographics, a debrief. Each group may point at a different file, so groups can differ in the pages they show. NULL means this group shows no pages. DEFAULT = NULL.}
+
+\item{cards}{A single string naming this group's card placement file (e.g. "cards1.json", written by \code{\link{saveQCEcardFiles}}). Cards are persistent panels that stay on screen across trials. NULL means this group shows no cards. DEFAULT = NULL.
 '}
 }
 \value{
@@ -26,10 +32,16 @@ Function that creates or modifys a QCEGroupList by adding QCEsessionList to the 
 }
 \examples{
 addSessionListToQCEGroupList (QCEGroupList, QCEsessionList, "ponys")
+
+# A group that shows intake pages and a persistent progress card
+addSessionListToQCEGroupList (QCEGroupList, QCEsessionList, "ponys",
+                              pages = "pagesA.json", cards = "cards1.json")
 }
 \keyword{QCE}
 \keyword{QCEGroupList}
 \keyword{QCEsessionList}
 \keyword{add}
+\keyword{cards}
+\keyword{pages}
 \keyword{session}
 \keyword{update}

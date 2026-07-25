@@ -97,6 +97,22 @@ getRegisteredQCEBtrialTypes <- function() {
   isTRUE(get(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)$forceResp)
 }
 
+# The data columns this trialType's extractor contributes, or NULL when the type
+# has not declared any. Internal; read by buildQCEoutputFieldManifest. NULL and
+# character(0) mean different things: NULL is "this type never said", which the
+# manifest reports so the researcher knows to look it up, while character(0)
+# would be a type that genuinely writes no columns.
+.qcebTrialTypeOutputColumns <- function(name) {
+  .seedCoreQCEBtrialTypes()
+  if (!isSingleString(name) ||
+      !exists(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)) {
+    return(NULL)
+  }
+  cols <- get(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)$outputColumns
+  if (is.null(cols)) return(NULL)
+  as.character(cols)
+}
+
 # --- internal registry store ------------------------------------------------
 # Package-level mutable environment. Created once when the namespace loads.
 # Seeded lazily (see .seedCoreQCEBtrialTypes) so the accessors are
@@ -122,15 +138,28 @@ getRegisteredQCEBtrialTypes <- function() {
   # forceResp mirrors the same field in the engine's trialTypeRegistry.js. Every
   # core type except "key" brings its own response surface and so can always be
   # ended by the participant; "key" can only be ended by a key in `choices`.
+  # outputColumns names the data columns each type's extractor contributes, so
+  # buildQCEoutputFieldManifest can report them without hard-coding a per-type
+  # list of its own. Mirrors each dataExtractor's return keys in the engine.
+  # The survey type is absent on purpose: its columns are derived from the
+  # question names in each survey model, so they are read from the config
+  # instead. Types that declare nothing are reported as undeclared rather than
+  # silently contributing no columns.
   core <- list(
-    key        = list(name = "key",        requiresKeymap = TRUE),
-    textbox    = list(name = "textbox",    requiresKeymap = FALSE, forceResp = TRUE),
-    numberline = list(name = "numberline", requiresKeymap = FALSE, forceResp = TRUE),
-    angleline  = list(name = "angleline",  requiresKeymap = FALSE, forceResp = TRUE),
+    key        = list(name = "key",        requiresKeymap = TRUE,
+                      outputColumns = c("Key", "FeedBack", "Response")),
+    textbox    = list(name = "textbox",    requiresKeymap = FALSE, forceResp = TRUE,
+                      outputColumns = c("Key", "FeedBack", "Response")),
+    numberline = list(name = "numberline", requiresKeymap = FALSE, forceResp = TRUE,
+                      outputColumns = c("Key", "FeedBack", "Response", "Stimulus")),
+    angleline  = list(name = "angleline",  requiresKeymap = FALSE, forceResp = TRUE,
+                      outputColumns = c("Key", "FeedBack", "Response", "Stimulus")),
     survey     = list(name = "survey",     requiresKeymap = FALSE, forceResp = TRUE,
                       stimulusParam = "survey_json"),
     mcKeys     = list(name = "mcKeys",     requiresKeymap = FALSE, forceResp = TRUE,
-                      stimulusParam = "mc_spec")
+                      stimulusParam = "mc_spec",
+                      outputColumns = c("qid", "shownOrder", "pressedKey", "selectedLabel",
+                                        "selectedValue", "correctValue", "correct", "timedOut"))
   )
   for (nm in names(core)) {
     if (!exists(nm, envir = .qcebTrialTypeRegistry, inherits = FALSE)) {

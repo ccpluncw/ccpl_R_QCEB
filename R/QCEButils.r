@@ -279,3 +279,65 @@ validateBlockSwitchRulesShape <- function(rules, paramName = "switchRules") {
   }
   invisible(TRUE)
 }
+
+# --- Shared vocabulary for the completion gate, card fields, pages ------------
+
+# The aggregators the engine's qcepComputeAggregate implements, and the
+# comparison operators its evaluator accepts. Named once so the completion gate,
+# card fields, and any future consumer cannot drift apart.
+.qcebValidAggregateFns <- c("mean", "median", "proportion", "count", "sum", "min", "max", "sd")
+.qcebValidCompareOps   <- c(">=", "<=", ">", "<", "==", "!=")
+
+# Anchors at which a page may be played or a card mounted/unmounted. The two
+# systems share one vocabulary: the session boundaries, plus entry/exit of a
+# named block or set. Mirrors qcepIsValidCardAnchor in the engine.
+isValidQCEanchor <- function(key) {
+  isSingleString(key) &&
+    (key %in% c("sessionStart", "sessionEnd") ||
+       grepl("^(entry|exit)\\((block|set):.+\\)$", key))
+}
+
+# Validate the aggregator half of a formula -- the parts a completion-gate
+# formula and a card-field formula have in common. `label` prefixes every
+# message so each caller keeps its own phrasing. Gate-only concerns (op, value)
+# stay with the caller, since a card field displays a number rather than
+# comparing one.
+validateQCEaggregateFn <- function(f, label) {
+  if (!(f$fn %in% .qcebValidAggregateFns)) {
+    stop(sprintf("%s has invalid fn '%s'. Valid: %s.",
+                 label, as.character(f$fn), paste(.qcebValidAggregateFns, collapse = " ")))
+  }
+  if (!isSingleString(f$column) || nchar(f$column) == 0) {
+    stop(sprintf("%s 'column' must be a single non-empty string naming a data column.", label))
+  }
+  invisible(TRUE)
+}
+
+# Validate a `where` row filter: a named list whose entries are either a bare
+# scalar (loose equality) or a list(op, value).
+validateQCEwhereFilter <- function(where, label) {
+  if (is.null(where)) return(invisible(TRUE))
+  if (!is.list(where) || is.null(names(where)) || any(names(where) == "")) {
+    stop(sprintf("%s 'where' must be a named list of column filters.", label))
+  }
+  for (wc in names(where)) {
+    spec <- where[[wc]]
+    if (is.list(spec) && !is.null(spec$op) && !(spec$op %in% .qcebValidCompareOps)) {
+      stop(sprintf("%s 'where$%s' has invalid op '%s'.", label, wc, as.character(spec$op)))
+    }
+    # An ordering op compares numerically, so a non-numeric bound can never match
+    # a row -- it would silently filter the sample to empty at run time. Rejected
+    # here as well as in the engine.
+    if (is.list(spec) && !is.null(spec$op) && !(spec$op %in% c("==", "!="))) {
+      if (is.null(spec$value)) {
+        stop(sprintf("%s 'where$%s' is missing a 'value'.", label, wc))
+      }
+      wv <- spec$value[[1]]
+      if (is.logical(wv) || length(wv) != 1 || is.na(suppressWarnings(as.numeric(wv)))) {
+        stop(sprintf(paste0("%s 'where$%s' uses ordering op '%s' so its 'value' must be ",
+                            "a single finite number."), label, wc, as.character(spec$op)))
+      }
+    }
+  }
+  invisible(TRUE)
+}
