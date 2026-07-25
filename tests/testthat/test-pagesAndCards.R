@@ -390,3 +390,19 @@ test_that("the manifest rejects a bad directory or a missing fields.txt", {
     expect_error(buildQCEoutputFieldManifest(d, fieldsFile = file.path(d, "absent.txt")),
                  "does not exist")
 })
+
+test_that("an unset config field (serialized as {}) is not read as a declared screen", {
+    d <- file.path(tempdir(), "mfempty"); dir.create(d, showWarnings = FALSE, recursive = TRUE)
+    on.exit(unlink(d, recursive = TRUE), add = TRUE)
+    stim <- list(s1 = list(frame = list(`1` = list(trialType = "mcKeys"))))
+    jsonlite::write_json(stim, file.path(d, "e_stimfile.json"), auto_unbox = FALSE)
+    # buildQCEexpDbFile emits NULL params as empty objects, not as absent keys.
+    db <- list(expName = "x", getDemographicsFile = setNames(list(), character(0)),
+               getGenderFile = setNames(list(), character(0)),
+               customHooksFile = setNames(list(), character(0)))
+    jsonlite::write_json(db, file.path(d, "expDBfile.json"), auto_unbox = FALSE)
+    txt <- paste(buildQCEoutputFieldManifest(d, outFile = NULL), collapse = "\n")
+    expect_false(grepl("Birth", txt))
+    expect_false(grepl("Gender", txt))
+    expect_false(grepl("CHECK THIS!", txt))   # no hooks declared
+})

@@ -98,13 +98,19 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
       }
     }
 
+    # An unset config field serializes as an empty object/array rather than
+    # being absent, so "declared" means non-empty, not merely non-NULL. Testing
+    # only for NULL reports screens the engine will in fact skip.
+    isSet <- function(v) !is.null(v) && length(unlist(v)) > 0 &&
+                         any(nzchar(as.character(unlist(v))))
+
     # Hooks are declared on a group dbfile.
-    if (!is.null(j$customHooksFile)) {
+    if (isSet(j$customHooksFile)) {
       hooksFiles <- c(hooksFiles, as.character(u(j$customHooksFile)))
     }
     # The legacy intake screens the engine renders itself.
-    if (!is.null(j$getDemographicsFile)) demographicCols <- c(demographicCols, "Birth", "Ethnicity")
-    if (!is.null(j$getGenderFile))       demographicCols <- c(demographicCols, "Gender", "Sex")
+    if (isSet(j$getDemographicsFile)) demographicCols <- c(demographicCols, "Birth", "Ethnicity")
+    if (isSet(j$getGenderFile))       demographicCols <- c(demographicCols, "Gender", "Sex")
   }
 
   typesUsed    <- sort(unique(typesUsed))
