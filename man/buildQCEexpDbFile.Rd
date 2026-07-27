@@ -28,7 +28,9 @@ buildQCEexpDbFile(
   maxExperimentMinutes = NULL,
   saveTimeoutMs = NULL,
   saveCanary = NULL,
-  saveUnavailableMsg = NULL
+  saveUnavailableMsg = NULL,
+  warnOnLeave = NULL,
+  strictGroupAssignment = NULL
 )
 }
 \arguments{
@@ -78,7 +80,11 @@ buildQCEexpDbFile(
 
 \item{saveCanary}{Optional single Boolean gating the start-of-run save health check. When enabled (the engine default), the experiment probes that the save path is writable BEFORE building the timeline and halts the participant before any work if it is not -- bounding a save outage on an unattended run to the cohort already in flight rather than crediting empty runs. Set FALSE to opt a run out. NULL uses the engine default (enabled). DEFAULT = NULL.}
 
-\item{saveUnavailableMsg}{A string shown on the terminal halt screen when the start-of-run save canary fails. The string must be in html format. You can use any html codes. NULL uses the engine default, which asks the participant to close the window and try again in about 24 hours. DEFAULT = NULL.
+\item{saveUnavailableMsg}{A string shown on the terminal halt screen when the start-of-run save canary fails. The string must be in html format. You can use any html codes. NULL uses the engine default, which asks the participant to close the window and try again in about 24 hours. DEFAULT = NULL.}
+
+\item{warnOnLeave}{Optional single Boolean gating the browser's leave-the-page confirmation during a run. When enabled (the engine default), closing the tab or navigating away raises the browser's own "leave site?" dialog, so a participant does not discard an in-progress run with one stray click. The guard is armed only once the experiment itself begins -- the preliminary screens and the file loading are free to leave, and guarding them is noise that teaches participants to dismiss the dialog -- and it is released when the run ends, so it never fires on the final screens. The dialog's wording is fixed by the browser and cannot be set from configuration; this option only turns it on or off. Set FALSE to opt a run out. NULL uses the engine default (enabled). DEFAULT = NULL.}
+
+\item{strictGroupAssignment}{Optional single Boolean controlling what a multi-group experiment does when it cannot obtain a group assignment from the server. Server-side assignment is what makes the chosen group durable across a reload and what lets the server withhold groups a participant has already completed. When strict, a run that cannot obtain one refuses to start and tells the participant that nothing has been recorded and they may try again; when not strict (the engine default), it falls back to drawing a group in the browser, which is how multi-group experiments behaved before assignment existed but leaves the choice recorded nowhere. Has no effect on a single-group experiment, which never asks the server. Strict is forced on regardless of this setting for repeat-session links, where the recorded group is part of the credit key. Set TRUE to opt in. NULL uses the engine default (not strict). DEFAULT = NULL.
 '}
 }
 \value{

@@ -25,13 +25,15 @@
 #' @param saveTimeoutMs Optional single positive number: the per-request timeout in milliseconds applied to every data-save POST. A save that neither succeeds nor fails within this window is treated as a failure so the serialized save chain proceeds instead of hanging behind it. Set below any final-save watchdog. NULL uses the engine default (20000). DEFAULT = NULL.
 #' @param saveCanary Optional single Boolean gating the start-of-run save health check. When enabled (the engine default), the experiment probes that the save path is writable BEFORE building the timeline and halts the participant before any work if it is not -- bounding a save outage on an unattended run to the cohort already in flight rather than crediting empty runs. Set FALSE to opt a run out. NULL uses the engine default (enabled). DEFAULT = NULL.
 #' @param saveUnavailableMsg A string shown on the terminal halt screen when the start-of-run save canary fails. The string must be in html format. You can use any html codes. NULL uses the engine default, which asks the participant to close the window and try again in about 24 hours. DEFAULT = NULL.
+#' @param warnOnLeave Optional single Boolean gating the browser's leave-the-page confirmation during a run. When enabled (the engine default), closing the tab or navigating away raises the browser's own "leave site?" dialog, so a participant does not discard an in-progress run with one stray click. The guard is armed only once the experiment itself begins -- the preliminary screens and the file loading are free to leave, and guarding them is noise that teaches participants to dismiss the dialog -- and it is released when the run ends, so it never fires on the final screens. The dialog's wording is fixed by the browser and cannot be set from configuration; this option only turns it on or off. Set FALSE to opt a run out. NULL uses the engine default (enabled). DEFAULT = NULL.
+#' @param strictGroupAssignment Optional single Boolean controlling what a multi-group experiment does when it cannot obtain a group assignment from the server. Server-side assignment is what makes the chosen group durable across a reload and what lets the server withhold groups a participant has already completed. When strict, a run that cannot obtain one refuses to start and tells the participant that nothing has been recorded and they may try again; when not strict (the engine default), it falls back to drawing a group in the browser, which is how multi-group experiments behaved before assignment existed but leaves the choice recorded nowhere. Has no effect on a single-group experiment, which never asks the server. Strict is forced on regardless of this setting for repeat-session links, where the recorded group is part of the credit key. Set TRUE to opt in. NULL uses the engine default (not strict). DEFAULT = NULL.
 #''
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
 #' @examples buildQCEdbFile (expName = "myExp", addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
-buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL) {
+buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL, warnOnLeave = NULL, strictGroupAssignment = NULL) {
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
@@ -228,6 +230,34 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
       stop("saveUnavailableMsg must be a single string composed in html or NULL.")
     }
     tmpList$saveUnavailableMsg <- saveUnavailableMsg
+  }
+
+  # Run-integrity knobs -- also optional and also emitted only when supplied, so
+  # a config that does not mention them produces the same JSON it always did and
+  # takes the engine's own default. Both are read by the engine as flags, which
+  # tolerates the string spellings of a Boolean because dbfiles are hand-authored
+  # too; this builder does not. A string here is a mistake in R code, and passing
+  # it through would emit a value whose meaning depends on a coercion table
+  # rather than on what was written.
+
+  # Leave-the-page guard. FALSE opts a run out of the browser confirmation the
+  # engine otherwise arms for the duration of the timeline.
+  if (!is.null(warnOnLeave)) {
+    if (!is.logical(warnOnLeave) || length(warnOnLeave) != 1 || is.na(warnOnLeave)) {
+      stop("warnOnLeave must be a single Boolean (TRUE or FALSE).")
+    }
+    tmpList$warnOnLeave <- warnOnLeave
+  }
+
+  # Group-assignment strictness. TRUE refuses to start a multi-group run whose
+  # server assignment could not be obtained, rather than drawing a group in the
+  # browser and leaving the choice unrecorded.
+  if (!is.null(strictGroupAssignment)) {
+    if (!is.logical(strictGroupAssignment) || length(strictGroupAssignment) != 1 ||
+        is.na(strictGroupAssignment)) {
+      stop("strictGroupAssignment must be a single Boolean (TRUE or FALSE).")
+    }
+    tmpList$strictGroupAssignment <- strictGroupAssignment
   }
 
   return(tmpList)

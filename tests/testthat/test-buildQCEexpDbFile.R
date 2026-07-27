@@ -121,3 +121,50 @@ test_that("maxExperimentMinutes validation rejects non-positive / non-scalar", {
   expect_error(buildQCEexpDbFile(expName = "e1", maxExperimentMinutes = 0), "positive number")
   expect_error(buildQCEexpDbFile(expName = "e1", maxExperimentMinutes = c(1, 2)), "single positive")
 })
+
+test_that("run-integrity flags are absent unless supplied", {
+  base <- buildQCEexpDbFile(expName = "e1")
+  expect_false("warnOnLeave" %in% names(base))
+  expect_false("strictGroupAssignment" %in% names(base))
+})
+
+test_that("run-integrity flags emit both Boolean values", {
+  # FALSE must emit, not be treated as "unset": the whole point of warnOnLeave is
+  # to turn OFF a guard that is on by default, so a builder that dropped FALSE
+  # would make the opt-out impossible to express.
+  off <- buildQCEexpDbFile(expName = "e1", warnOnLeave = FALSE)
+  expect_true("warnOnLeave" %in% names(off))
+  expect_false(off$warnOnLeave)
+
+  on <- buildQCEexpDbFile(expName = "e1", warnOnLeave = TRUE, strictGroupAssignment = TRUE)
+  expect_true(on$warnOnLeave)
+  expect_true(on$strictGroupAssignment)
+
+  lax <- buildQCEexpDbFile(expName = "e1", strictGroupAssignment = FALSE)
+  expect_true("strictGroupAssignment" %in% names(lax))
+  expect_false(lax$strictGroupAssignment)
+})
+
+test_that("run-integrity flags reject non-Boolean and non-scalar", {
+  # Strings are rejected even though the engine's flag reader accepts them from a
+  # hand-authored dbfile: in R code a string is a mistake, not a spelling.
+  expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = "TRUE"), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = 1), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = NA), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = c(TRUE, FALSE)), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = "yes"), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = 0), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = NA), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = c(TRUE, TRUE)), "single Boolean")
+})
+
+test_that("run-integrity flags survive the JSON round trip as scalars", {
+  # The engine reads these through a flag helper that unwraps jsonlite's
+  # one-element array wrapping. Confirm the wrapping is what that helper expects
+  # and that FALSE does not come back as an empty value.
+  db <- buildQCEexpDbFile(expName = "e1", warnOnLeave = FALSE, strictGroupAssignment = TRUE)
+  back <- jsonlite::fromJSON(jsonlite::toJSON(db), simplifyVector = FALSE)
+  expect_equal(length(back$warnOnLeave), 1)
+  expect_false(back$warnOnLeave[[1]])
+  expect_true(back$strictGroupAssignment[[1]])
+})
