@@ -33,7 +33,7 @@ addFrameToQCEframeList(
 
 \item{stimulus_duration}{An integer that specifies how long the stimulus is VISIBLE, in milliseconds. A NULL leaves it visible until there is a user input. By default the frame also ENDS when the stimulus disappears; set trial_duration to separate the two. DEFAULT = NULL}
 
-\item{post_trial_gap}{An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)}
+\item{post_trial_gap}{An integer that specifies how long to present a blank frame after this frame in milliseconds. REQUIRED: pass 0 when you want no gap. The NULL in the signature is not a working default -- omitting this argument is an error, so that a frame's inter-trial timing is always something the researcher stated rather than something inherited silently. NO DEFAULT.}
 
 \item{response_ends_trial}{A boolean that specifies whether the key response ends the trial. A frame must have SOME way to end: if this is FALSE, the frame needs a stimulus_duration or a trial_duration to end it. The same applies when choices is NULL, empty, or "NO_KEYS", since those leave no key to press. Trial types whose plugin supplies its own response surface (textbox, numberline, angleline, survey, mcKeys) can always be ended by the participant and are exempt. DEFAULT = TRUE}
 

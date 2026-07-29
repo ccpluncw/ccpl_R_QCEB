@@ -231,12 +231,12 @@ test_that("saveQCEpageFiles writes the map and its sidecars", {
     on.exit(unlink(d, recursive = TRUE), add = TRUE)
     p <- addPageToQCEpagePlacement(NULL, "sessionStart", "consent")
     saveQCEpageFiles(p, "pagesA.json",
-                     sidecars = list(consent = buildQCEpageSidecar(contBtn = "I agree")),
+                     sidecars = list(consent = buildQCEpageSidecar(contBtn = "agreeBtn")),
                      dir = d)
     expect_true(file.exists(file.path(d, "pagesA.json")))
     expect_true(file.exists(file.path(d, "consent.page.json")))
     back <- jsonlite::fromJSON(file.path(d, "consent.page.json"))
-    expect_equal(back$contBtn, "I agree")
+    expect_equal(back$contBtn, "agreeBtn")
 })
 
 test_that("saveQCEpageFiles catches a sidecar whose name matches no placement", {

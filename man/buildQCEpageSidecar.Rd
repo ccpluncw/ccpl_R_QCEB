@@ -11,8 +11,12 @@ buildQCEpageSidecar(fields = NULL, contBtn = NULL, dataScope = "global")
 \code{\link{buildQCEpageField}}, in the order you want them checked. NULL
 for a display-only page. DEFAULT = NULL.}
 
-\item{contBtn}{A single string: the label on the continue button. NULL uses
-the engine default. DEFAULT = NULL.}
+\item{contBtn}{A single string: the HTML \code{id} attribute of the button
+that ends the page -- NOT the words printed on it. The engine binds its
+click handler by looking this id up in the loaded page, so a page whose
+button carries a different id never advances and errors instead. The
+visible label lives in your HTML and nothing here changes it. NULL uses the
+engine default id. DEFAULT = NULL.}
 
 \item{dataScope}{Where captured values are written. \code{"global"} stamps
 them onto every row of the dataset, which is how intake pages behave --
@@ -25,7 +29,7 @@ A list: the page sidecar, ready for \code{\link{saveQCEpageFiles}}.
 }
 \description{
 A page's sidecar (\code{<file>.page.json}) sits beside the HTML file and says
-what the page IS -- its continue-button label and which form fields to read --
+what the page IS -- which button ends it and which form fields to read --
 while the placement file built by \code{\link{addPageToQCEpagePlacement}} says
 WHERE and WHEN it plays. Keeping the two apart is what lets a page be copied
 between experiments without carrying one study's timeline with it.
@@ -33,17 +37,19 @@ between experiments without carrying one study's timeline with it.
 \details{
 Every part is optional. A page with no \code{fields} is a display-only screen
 (instructions, a debrief); the sidecar may then be omitted entirely, in which
-case the engine falls back to its default continue-button label.
+case the engine looks for its default button ID.
 }
 \examples{
-consent <- buildQCEpageSidecar(contBtn = "I agree")
+# Display-only. The HTML holds <button id="agreeBtn">I agree</button>, so the
+# sidecar names the ID -- "agreeBtn" -- and the wording stays in the HTML.
+consent <- buildQCEpageSidecar(contBtn = "agreeBtn")
 
 intake <- buildQCEpageSidecar(
   fields = list(
     buildQCEpageField("birth_year", type = "number", as = "Birth", required = TRUE),
     buildQCEpageField("gender", type = "radio", as = "Gender", required = TRUE)
   ),
-  contBtn = "Continue")
+  contBtn = "startBtn")
 }
 \keyword{QCE}
 \keyword{page}

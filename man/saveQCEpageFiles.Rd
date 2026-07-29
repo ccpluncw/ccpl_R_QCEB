@@ -32,13 +32,14 @@ The sidecar name must match the \code{file} you used when placing the page, so
 that \code{addPageToQCEpagePlacement(..., file = "consent")} pairs with
 \code{sidecars = list(consent = ...)}.
 
-A page needs no sidecar if it collects nothing and wants the default continue
-button; the engine falls back cleanly when one is absent.
+A page needs no sidecar if it collects nothing and its continue button already
+carries the engine's default id; the engine falls back cleanly when one is
+absent.
 }
 \examples{
 pages <- addPageToQCEpagePlacement(NULL, "sessionStart", "consent")
 saveQCEpageFiles(pages, "pagesA.json",
-                 sidecars = list(consent = buildQCEpageSidecar(contBtn = "I agree")),
+                 sidecars = list(consent = buildQCEpageSidecar(contBtn = "agreeBtn")),
                  dir = tempdir())
 }
 \keyword{QCE}

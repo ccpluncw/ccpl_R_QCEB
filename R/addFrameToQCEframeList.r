@@ -11,7 +11,7 @@
 #'   The sentinel "NO_LIMIT" removes the time limit entirely, so the frame ends only when the participant responds. This is the only way to hide a stimulus partway through (via stimulus_duration) while continuing to accept input, since the inheritance above otherwise ties the two durations together.
 #'   A positive number is that many milliseconds, independent of stimulus_duration. A value LARGER than stimulus_duration gives a limited-exposure stimulus with a response window that outlives it.
 #'   DEFAULT = NULL
-#' @param post_trial_gap  An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = NULL (indicating no gap)
+#' @param post_trial_gap  An integer that specifies how long to present a blank frame after this frame in milliseconds. REQUIRED: pass 0 when you want no gap. The NULL in the signature is not a working default -- omitting this argument is an error, so that a frame's inter-trial timing is always something the researcher stated rather than something inherited silently. NO DEFAULT.
 #' @param response_ends_trial  A boolean that specifies whether the key response ends the trial. A frame must have SOME way to end: if this is FALSE, the frame needs a stimulus_duration or a trial_duration to end it. The same applies when choices is NULL, empty, or "NO_KEYS", since those leave no key to press. Trial types whose plugin supplies its own response surface (textbox, numberline, angleline, survey, mcKeys) can always be ended by the participant and are exempt. DEFAULT = TRUE
 #' @param choices Specifies the keyboard keys accepted as a response. Interpretation depends on trialType.
 #'   For trialType = "key": a character vector of allowed key names (e.g., c("a", "b", " ", "Enter")), or the sentinel "ALL_KEYS" to accept any key. NULL or an empty vector disables the keyboard response path entirely — the trial then advances on stimulus_duration only.
@@ -147,9 +147,9 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
   if(is.null(stimulus_duration)) {
     stimulus_duration <- numeric()
   }
-  if(is.null(post_trial_gap)) {
-    post_trial_gap <- numeric()
-  }
+  # No such normalizer for post_trial_gap: it is validated above as a required
+  # single number, so it can never be NULL here. Every frame therefore states
+  # its own inter-trial gap, and 0 is how you say "none".
 
   # Plugin-specific parameters. The QCEP engine (post-2026-04-19 refactor)
   # expects plugin-specific fields to live inside pluginParams, NOT at frame
