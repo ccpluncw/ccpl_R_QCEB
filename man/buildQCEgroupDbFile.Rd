@@ -24,7 +24,8 @@ buildQCEgroupDbFile(
   restMaxTrial = NULL,
   keyMaps = NULL,
   customHooksFile = NULL,
-  customHooksStateKeys = NULL
+  customHooksStateKeys = NULL,
+  customHooksColumns = NULL
 )
 }
 \arguments{
@@ -66,6 +67,8 @@ buildQCEgroupDbFile(
 
 \item{customHooksStateKeys}{Optional character vector of state-key names the hooks will write to `qceState.custom`, used by the engine to statically validate `stateRef` showIf conditions (built with buildQCEstateCondition) -- an undeclared stateRef errors at session start as a likely typo. Only meaningful when customHooksFile is set. NULL means no declared keys (engine warns rather than errors on unknown stateRefs). DEFAULT = NULL.
 '}
+
+\item{customHooksColumns}{Optional character vector of the data columns the hooks will write via `dataAnnotations`. Declaring them lets buildQCEoutputFieldManifest report them and missingQCEoutputFields fail a build when fields.txt does not carry one; they are invisible to every check otherwise, existing only inside JavaScript. Only meaningful when customHooksFile is set. DEFAULT = NULL.}
 
 \item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL}
 }

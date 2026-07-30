@@ -121,6 +121,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   surveyCols <- character(0)
   # --- scan for hooks + demographics ----------------------------------------
   hooksFiles <- character(0)
+  hookCols   <- character(0)
   demographicCols <- character(0)
 
   for (p in jsonFiles) {
@@ -163,6 +164,12 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     # Hooks are declared on a group dbfile.
     if (isSet(j$customHooksFile)) {
       hooksFiles <- c(hooksFiles, as.character(u(j$customHooksFile)))
+      # Columns the hooks promise to write. Nothing else in the config files can
+      # reveal them -- they exist only inside JavaScript -- so a declared list is
+      # the one way they can be checked against fields.txt at build time.
+      if (isSet(j$customHooksColumns)) {
+        hookCols <- c(hookCols, as.character(unlist(j$customHooksColumns)))
+      }
     }
     # The legacy intake screens the engine renders itself.
     if (isSet(j$getDemographicsFile)) demographicCols <- c(demographicCols, "Birth", "Ethnicity")
@@ -174,6 +181,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   feedbackKeys <- sort(unique(feedbackKeys))
   surveyCols   <- sort(unique(surveyCols))
   hooksFiles   <- sort(unique(hooksFiles))
+  hookCols     <- sort(unique(hookCols))
   demographicCols <- sort(unique(demographicCols))
 
   # --- scan the page sidecars for their output columns ----------------------
@@ -244,12 +252,23 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   if (length(hooksFiles) > 0) {
     out <- c(out,
              "# ============================================================",
-             sprintf("# CHECK THIS! Custom hooks are in use (%s).", paste(hooksFiles, collapse = ", ")),
-             "# A hook can write any column it likes at run time, and none of them can",
-             "# be seen from the config files. Read your hooks file and add whatever",
-             "# columns it writes -- they will be dropped silently otherwise.",
-             "# ============================================================",
-             "")
+             sprintf("# Custom hooks are in use (%s).", paste(hooksFiles, collapse = ", ")))
+    if (length(hookCols) > 0) {
+      # Declared columns are treated exactly like any other expected column
+      # below, so the fields.txt diff covers them.
+      out <- c(out,
+               "# The dbfile declares the columns they write (customHooksColumns), so",
+               "# they are included above and checked against fields.txt like the rest:",
+               paste0("#   ", hookCols))
+    } else {
+      out <- c(out,
+               "# CHECK THIS! A hook can write any column it likes at run time, and none",
+               "# of them can be seen from the config files. Declare them with",
+               "# customHooksColumns on the group dbfile and this report will check them;",
+               "# until then, read your hooks file and add whatever columns it writes --",
+               "# they will be dropped silently otherwise.")
+    }
+    out <- c(out, "# ============================================================", "")
   }
 
   out <- c(out,
@@ -265,7 +284,8 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     have <- trimws(readLines(fieldsFile, warn = FALSE))
     have <- have[nchar(have) > 0]
     expected <- unique(c(serverCols, demographicCols, engineCols, typeCols,
-                         outputVars, feedbackKeys, surveyCols, pageCols))
+                         outputVars, feedbackKeys, surveyCols, pageCols,
+                         hookCols))
     missingCols <- setdiff(expected, have)
     extraCols <- setdiff(have, expected)
 

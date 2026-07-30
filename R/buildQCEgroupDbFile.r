@@ -20,6 +20,7 @@
 #' @param restMaxTrial Optional positive integer -- suppress all rest breaks once `trialsShown` reaches this number. Useful for experiments where late-stage rests would disrupt a flow state. NULL means no trial-count cap. DEFAULT = NULL.
 #' @param keyMaps Optional named list of keyMap entries (each from buildQCEkeyMapEntry). Phase 3.5 named-keyMap registry -- blocks reference these entries by name via the `keyMapName` arg of addBlockToQCETrialStructureList. NULL means no named keyMaps (legacy single-keyMap experiments work unchanged via the `keyMap` arg). For incremental construction, use addKeyMapToDbfile after this function returns. DEFAULT = NULL.
 #' @param customHooksFile Optional single filename ending in `.js` -- the Phase 5 researcher-authored custom-hooks file (defines the global `QCEPHooks` object). NULL means no hooks (legacy experiments take the byte-identical no-hooks code path). Use saveCustomHooksTemplate() to scaffold the file, and copy it into the experiment directory. For incremental construction, use addHooksToQCEgroupDbFile after this function returns. DEFAULT = NULL.
+#' @param customHooksColumns Optional character vector of the data columns the hooks will write via `dataAnnotations`. Declaring them lets buildQCEoutputFieldManifest report them and missingQCEoutputFields fail a build when fields.txt does not carry one; they are invisible to every check otherwise, existing only inside JavaScript. Only meaningful when customHooksFile is set. DEFAULT = NULL.
 #' @param customHooksStateKeys Optional character vector of state-key names the hooks will write to `qceState.custom`, used by the engine to statically validate `stateRef` showIf conditions (built with buildQCEstateCondition) -- an undeclared stateRef errors at session start as a likely typo. Only meaningful when customHooksFile is set. NULL means no declared keys (engine warns rather than errors on unknown stateRefs). DEFAULT = NULL.
 #''
 #' @return the QCEBdbfileList
@@ -40,7 +41,7 @@
 #'   restTrials = c(50, 100, 150),
 #'   restEveryNMinutes = 10, restMaxTrial = 200)
 
-buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, defaultBackgroundColor = "#000000", restTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", restMsg = NULL,  friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, enableTriggers = FALSE, triggerRelayPort = 5678, restEveryNMinutes = NULL, restMaxTrial = NULL, keyMaps = NULL, customHooksFile = NULL, customHooksStateKeys = NULL ) {
+buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, defaultBackgroundColor = "#000000", restTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", restMsg = NULL,  friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, enableTriggers = FALSE, triggerRelayPort = 5678, restEveryNMinutes = NULL, restMaxTrial = NULL, keyMaps = NULL, customHooksFile = NULL, customHooksStateKeys = NULL, customHooksColumns = NULL ) {
 
   if(!isSingleString(condName)) {
     stop("condName option must be a single string.  Yours, apparently, is not a single string.")
@@ -154,7 +155,8 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
   # path. customHooksStateKeys without customHooksFile is a no-op (the keys
   # have nothing to validate against) -- warn so the researcher notices.
   if (!is.null(customHooksFile)) {
-    tmpList <- addHooksToQCEgroupDbFile(tmpList, customHooksFile, customHooksStateKeys)
+    tmpList <- addHooksToQCEgroupDbFile(tmpList, customHooksFile, customHooksStateKeys,
+                                       customHooksColumns)
   } else if (!is.null(customHooksStateKeys)) {
     warning("customHooksStateKeys was supplied without customHooksFile; ignoring ",
             "(state keys only matter when a hooks file is declared).")

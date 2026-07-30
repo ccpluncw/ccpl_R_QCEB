@@ -14,6 +14,12 @@
 #' saveCustomHooksTemplate() to scaffold a starter file. The file must be
 #' copied into the experiment directory alongside the other preload assets.
 #'
+#' `customHooksColumns` is the companion for data: the set of column names the
+#' hooks promise to write through `dataAnnotations`. A hook can write any column
+#' it likes at run time and nothing in the config files can see it, so a column
+#' left out of `fields.txt` is dropped when the data is saved and the run still
+#' looks clean. Declaring them here is what lets the build catch that.
+#'
 #' `customHooksStateKeys` is the set of keys the hooks promise to write into
 #' `qceState.custom`. The engine uses this list for static validation: any
 #' `stateRef` in a showIf condition (built with buildQCEstateCondition) that
@@ -33,9 +39,15 @@
 #'   the hooks will write to `qceState.custom`, used for static validation of
 #'   `stateRef` showIf conditions. NULL means no declared keys (the engine
 #'   warns rather than errors on unknown stateRefs). DEFAULT = NULL.
+#' @param customHooksColumns Optional character vector of the data columns the
+#'   hooks will write via `dataAnnotations`. Declaring them lets
+#'   buildQCEoutputFieldManifest report them and missingQCEoutputFields fail a
+#'   build when `fields.txt` does not carry one -- without this the columns are
+#'   invisible to every check, because they exist only inside JavaScript.
+#'   NULL means undeclared. DEFAULT = NULL.
 #''
 #' @return The updated QCEdbfile, with `$customHooksFile` set (and
-#'   `$customHooksStateKeys` set when supplied).
+#'   `$customHooksStateKeys` / `$customHooksColumns` set when supplied).
 #' @keywords QCE hooks dbfile dynamic
 #' @export
 #' @examples
@@ -49,7 +61,8 @@
 #' # Hooks file with no state keys (e.g., feedback-only hooks)
 #' dbfile <- addHooksToQCEgroupDbFile(dbfile, "summaryHooks.js")
 
-addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStateKeys = NULL) {
+addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStateKeys = NULL,
+                                     customHooksColumns = NULL) {
 
   if (is.null(QCEdbfile) || !is.list(QCEdbfile)) {
     stop("QCEdbfile option must be a QCEdbfile (output of buildQCEgroupDbFile).")
@@ -78,6 +91,21 @@ addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStat
     }
   }
 
+  # customHooksColumns takes the same shape as customHooksStateKeys: a
+  # non-empty character vector of non-empty names. An NA or "" entry would
+  # become a column nothing can match, defeating the check it exists for.
+  if (!is.null(customHooksColumns)) {
+    if (!is.character(customHooksColumns) || length(customHooksColumns) < 1 ||
+        any(is.na(customHooksColumns)) || any(nchar(customHooksColumns) == 0)) {
+      stop("customHooksColumns option must be a character vector of one or ",
+           "more non-empty column names, or NULL.")
+    }
+    if (any(duplicated(customHooksColumns))) {
+      warning("customHooksColumns contains duplicate names; de-duplicating.")
+      customHooksColumns <- unique(customHooksColumns)
+    }
+  }
+
   # Duplicate-declaration warning. Catches a copy-pasted dbfile that wasn't
   # fully edited, mirroring addKeyMapToDbfile's footgun guard.
   if (!is.null(QCEdbfile$customHooksFile)) {
@@ -92,6 +120,9 @@ addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStat
   # dbfile omits the key entirely (engine treats absence as "no declared keys").
   if (!is.null(customHooksStateKeys)) {
     QCEdbfile$customHooksStateKeys <- customHooksStateKeys
+  }
+  if (!is.null(customHooksColumns)) {
+    QCEdbfile$customHooksColumns <- customHooksColumns
   }
 
   return(QCEdbfile)
