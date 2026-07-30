@@ -2,7 +2,7 @@
 % Please edit documentation in R/buildQCEhookRowManifest.r
 \name{buildQCEhookRowManifest}
 \alias{buildQCEhookRowManifest}
-\title{Report scenarios whose trial-hook data would not be saved}
+\title{Report scenarios that would gain a row to hold trial-hook data}
 \usage{
 buildQCEhookRowManifest(dir, outFile = "hook_row_manifest.txt", quiet = FALSE)
 }
@@ -19,28 +19,27 @@ so a build that scrolls past still shows the finding. DEFAULT = FALSE.}
 Invisibly, a character vector: the lines of the report.
 }
 \description{
-Scans the JSON config files in an experiment directory for scenarios that end
-on a frame the save path discards, and writes a plain-text report naming
-them. It is ADVISORY: it changes no config, it tells you where data a hook
-returns would go missing.
+Scans the JSON config files in an experiment directory for scenarios that keep
+no row of their own, and writes a plain-text report naming them. It is
+ADVISORY: it changes no config, and nothing it lists is a defect.
 }
 \details{
-Why it matters: \code{onTrialFinish} fires once per scenario, on its LAST
-frame, and what it returns is written onto that frame's row. Rows from frames
-marked \code{output = FALSE} are dropped when the data is saved. So a scenario
-that ends on a discarded frame -- a trailing fixation or inter-trial blank
-after the frame that mattered -- loses every \code{dataAnnotations} value the
-hook computed for it. Nothing errors and no column goes missing; the affected
-rows simply hold no value, in a file that otherwise looks complete.
+Why it matters: \code{onTrialFinish} fires once per scenario and its return
+value is written onto that scenario's last SAVED row. A scenario whose frames
+are all \code{output = FALSE} has no such row, so the engine keeps its last
+frame to carry the values rather than discard them. Those scenarios therefore
+record one row each that the config does not otherwise ask for -- which
+changes the row count of the saved data, and is worth knowing before it turns
+up in an analysis.
 
-Only scenarios with more than one frame can be affected, and only those with
-at least one kept frame are reported: a scenario with nothing saved at all has
-no row to lose.
+A scenario that ends on a discarded frame but keeps an earlier one is NOT
+reported: the engine routes annotations to the last kept row, so a trailing
+fixation costs nothing.
 
 What it CANNOT see: whether your hook returns \code{dataAnnotations} at all.
-That is decided in JavaScript at run time. A hook that only returns
-\code{feedback} is unaffected, so treat a report as "check this", not as proof
-of a defect.
+That is decided in JavaScript at run time, and no row is added unless it does.
+A hook that returns only \code{feedback}, or that skips these scenarios, leaves
+the data exactly as the config describes it.
 }
 \examples{
 # After writing an experiment's config files:

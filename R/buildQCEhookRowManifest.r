@@ -1,4 +1,4 @@
-# Shared scanner behind buildQCEhookRowManifest() and unsavedQCEhookRows().
+# Shared scanner behind buildQCEhookRowManifest() and promotedQCEhookRows().
 #
 # Both entry points need the same answer, so the scan lives here once and each
 # returns a different view of it. Keeping the machine-readable half a view of a
@@ -72,13 +72,14 @@
       outs <- vapply(ord, function(k) isTrueFlag(fr[[k]]$output),
                      logical(1), USE.NAMES = FALSE)
 
-      # The shape that loses data: some frame is kept, but the LAST one is not.
+      # Scenarios that keep NO frame. A hook annotating one of these has no row
+      # to write to, so the engine keeps the last frame's row to carry the
+      # values -- that scenario records a row the config did not ask for.
       #
-      # A scenario with NO kept frame is excluded deliberately. Nothing of its
-      # own is saved either way, so there is no row an annotation could have
-      # landed on and nothing is lost -- reporting it would be noise, and noise
-      # is what stops a check like this from being read.
-      if (any(outs) && !outs[length(outs)]) {
+      # Scenarios that keep SOME frame are not reported at any position of the
+      # kept frames: the engine routes annotations to the last kept row, so
+      # ending on a discarded fixation costs nothing.
+      if (!any(outs)) {
         atRisk[[length(atRisk) + 1L]] <- list(
           file      = basename(p),
           scenario  = nm,
@@ -95,29 +96,28 @@
 }
 
 
-#' Report scenarios whose trial-hook data would not be saved
+#' Report scenarios that would gain a row to hold trial-hook data
 #'
-#' Scans the JSON config files in an experiment directory for scenarios that end
-#' on a frame the save path discards, and writes a plain-text report naming
-#' them. It is ADVISORY: it changes no config, it tells you where data a hook
-#' returns would go missing.
+#' Scans the JSON config files in an experiment directory for scenarios that keep
+#' no row of their own, and writes a plain-text report naming them. It is
+#' ADVISORY: it changes no config, and nothing it lists is a defect.
 #'
-#' Why it matters: \code{onTrialFinish} fires once per scenario, on its LAST
-#' frame, and what it returns is written onto that frame's row. Rows from frames
-#' marked \code{output = FALSE} are dropped when the data is saved. So a scenario
-#' that ends on a discarded frame -- a trailing fixation or inter-trial blank
-#' after the frame that mattered -- loses every \code{dataAnnotations} value the
-#' hook computed for it. Nothing errors and no column goes missing; the affected
-#' rows simply hold no value, in a file that otherwise looks complete.
+#' Why it matters: \code{onTrialFinish} fires once per scenario and its return
+#' value is written onto that scenario's last SAVED row. A scenario whose frames
+#' are all \code{output = FALSE} has no such row, so the engine keeps its last
+#' frame to carry the values rather than discard them. Those scenarios therefore
+#' record one row each that the config does not otherwise ask for -- which
+#' changes the row count of the saved data, and is worth knowing before it turns
+#' up in an analysis.
 #'
-#' Only scenarios with more than one frame can be affected, and only those with
-#' at least one kept frame are reported: a scenario with nothing saved at all has
-#' no row to lose.
+#' A scenario that ends on a discarded frame but keeps an earlier one is NOT
+#' reported: the engine routes annotations to the last kept row, so a trailing
+#' fixation costs nothing.
 #'
 #' What it CANNOT see: whether your hook returns \code{dataAnnotations} at all.
-#' That is decided in JavaScript at run time. A hook that only returns
-#' \code{feedback} is unaffected, so treat a report as "check this", not as proof
-#' of a defect.
+#' That is decided in JavaScript at run time, and no row is added unless it does.
+#' A hook that returns only \code{feedback}, or that skips these scenarios, leaves
+#' the data exactly as the config describes it.
 #'
 #' @param dir The experiment directory holding the JSON config files.
 #' @param outFile Filename to write the report to, inside \code{dir}. Pass NULL
@@ -149,12 +149,14 @@ buildQCEhookRowManifest <- function(dir, outFile = "hook_row_manifest.txt",
   n <- length(scan$atRisk)
 
   out <- c(
-    "# Trial-hook data that would not be saved",
+    "# Scenarios that would gain a row to hold trial-hook data",
     sprintf("# directory: %s", dir),
     "#",
-    "# onTrialFinish writes what it returns onto a scenario's LAST frame. Rows",
-    "# from frames with output = FALSE are dropped when the data is saved, so a",
-    "# scenario ending on one loses the dataAnnotations its hook computed.",
+    "# onTrialFinish writes what it returns onto the scenario's last SAVED row.",
+    "# A scenario with no frame marked output = TRUE has no such row, so the",
+    "# engine keeps its last frame to carry the values rather than discard them.",
+    "# Those scenarios record one row each that this config does not otherwise",
+    "# ask for -- only if a hook actually annotates them.",
     "#",
     sprintf("# multi-frame scenarios scanned: %d", scan$scanned)
   )
@@ -168,13 +170,14 @@ buildQCEhookRowManifest <- function(dir, outFile = "hook_row_manifest.txt",
 
   out <- c(out, "")
   if (n == 0) {
-    out <- c(out, "# No scenario ends on a discarded frame.")
+    out <- c(out, "# Every multi-frame scenario keeps at least one row of its own.")
   } else {
     out <- c(out,
-             sprintf("# CHECK THIS! %d scenario(s) end on a frame that is not saved.", n),
-             "# If your onTrialFinish returns dataAnnotations for these, those values",
-             "# are being dropped. Fix by marking the final frame output = TRUE, or by",
-             "# moving the trailing frame ahead of the one you keep.",
+             sprintf("# NOTE: %d scenario(s) keep no row of their own.", n),
+             "# If your onTrialFinish annotates these, each records one extra row whose",
+             "# only content is those values. That is intended -- it is how the data",
+             "# survives. Mark a frame output = TRUE if you want the row to carry that",
+             "# frame's own data as well.",
              "#",
              "#   file                      scenario        frames  last")
     for (r in scan$atRisk) {
@@ -203,30 +206,34 @@ buildQCEhookRowManifest <- function(dir, outFile = "hook_row_manifest.txt",
 }
 
 
-#' Which scenarios would lose their trial-hook data
+#' Which scenarios would gain a row for their trial-hook data
 #'
 #' The machine-readable half of \code{\link{buildQCEhookRowManifest}}: the same
-#' scan, returning scenario names instead of a report to read. Use it to make a
-#' build script FAIL when a scenario would silently drop what its hook returns,
-#' rather than leaving the gap to be noticed in the data later.
+#' scan, returning scenario names instead of a report to read. Use it when a
+#' build needs to assert its own row count -- for instance to confirm that a
+#' change to which frames are kept has not quietly altered how many rows a
+#' participant produces.
+#'
+#' This is informational, not a defect check. Nothing is lost either way: the
+#' engine keeps the last frame of such a scenario precisely so the hook's values
+#' survive. Failing a build on it is usually the wrong response.
 #'
 #' Returns nothing when the directory declares no hooks file, since no trial hook
-#' runs and there is nothing to lose.
+#' runs and no row can be added.
 #'
 #' @param dir The experiment directory holding the JSON config files.
 #' @param requireHooksFile When TRUE, only report scenarios if a hooks file is
 #'   declared. Set FALSE to check the scenario shape on its own, for a config
 #'   whose hooks are added later. DEFAULT = TRUE.
 #'
-#' @return A character vector of scenario names that end on a discarded frame;
+#' @return A character vector of scenario names that keep no row of their own;
 #'   empty when there are none.
 #' @keywords QCE hooks onTrialFinish output frames
 #' @export
 #' @examples
-#' # In a build script, right after writing the config files:
-#' # lost <- unsavedQCEhookRows("myExperiment/")
-#' # if (length(lost)) stop("hook data dropped for: ", paste(lost, collapse = ", "))
-unsavedQCEhookRows <- function(dir, requireHooksFile = TRUE) {
+#' # After writing the config files:
+#' # promotedQCEhookRows("myExperiment/")
+promotedQCEhookRows <- function(dir, requireHooksFile = TRUE) {
 
   if (missing(dir) || !isSingleString(dir) || !dir.exists(dir)) {
     stop("dir option must be a single string naming an existing experiment directory.")
