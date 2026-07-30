@@ -293,7 +293,7 @@ validateBlockSwitchRulesShape <- function(rules, paramName = "switchRules") {
 # named block or set. Mirrors qcepIsValidCardAnchor in the engine.
 isValidQCEanchor <- function(key) {
   isSingleString(key) &&
-    (key %in% c("sessionStart", "sessionEnd") ||
+    (key %in% c("experimentStart", "sessionStart", "sessionEnd") ||
        grepl("^(entry|exit)\\((block|set):.+\\)$", key))
 }
 

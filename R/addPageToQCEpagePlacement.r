@@ -8,10 +8,18 @@
 #'
 #' Pages at the same anchor play in the order you add them.
 #'
-#' Anchors are \code{"sessionStart"}, \code{"sessionEnd"}, or entry/exit of a
-#' named block or set: \code{"entry(block:practice)"},
-#' \code{"exit(set:trialSet1)"}. The block or set name must match the one used
-#' when building the trial structure. Cards use the same vocabulary.
+#' Anchors are \code{"experimentStart"}, \code{"sessionStart"},
+#' \code{"sessionEnd"}, or entry/exit of a named block or set:
+#' \code{"entry(block:practice)"}, \code{"exit(set:trialSet1)"}. The block or set
+#' name must match the one used when building the trial structure. Cards use the
+#' same vocabulary.
+#'
+#' \code{"experimentStart"} and \code{"sessionStart"} are not interchangeable.
+#' \code{"experimentStart"} plays ONCE for the whole run, before the experiment
+#' instructions -- the position the engine's built-in intake screens occupy, and
+#' the right home for consent, demographics, or anything that must precede the
+#' framing of the study. \code{"sessionStart"} plays at the top of EVERY session,
+#' after that session's instructions.
 #'
 #' @param QCEpagePlacement An existing placement map to add to, or NULL to start
 #'   a new one. DEFAULT = NULL.

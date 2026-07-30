@@ -9,7 +9,8 @@ buildQCEpageField(
   type = "text",
   as = NULL,
   required = FALSE,
-  emptyValue = NULL
+  emptyValue = NULL,
+  requiredMessage = NULL
 )
 }
 \arguments{
@@ -32,6 +33,12 @@ NULL and "". Use it when your HTML carries a placeholder default -- an age
 box pre-set to 0, a select whose first option is "Choose..." -- so the
 required check treats the placeholder as unanswered without you editing the
 HTML. DEFAULT = NULL.}
+
+\item{requiredMessage}{A single string shown on the page when this field
+blocks the continue button. Use it where the generic wording would not tell
+the participant what to do -- a slider whose starting position is also its
+placeholder looks answered, so "Please set your age" is worth saying. NULL
+uses the generic message. DEFAULT = NULL.}
 }
 \value{
 A list describing one page field.

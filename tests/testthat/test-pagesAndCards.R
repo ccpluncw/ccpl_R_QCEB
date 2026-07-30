@@ -20,6 +20,22 @@ test_that("buildQCEpageField carries as/emptyValue when given", {
     expect_true(f$required)
 })
 
+test_that("buildQCEpageField carries requiredMessage only when given", {
+    expect_null(buildQCEpageField("age", required = TRUE)$requiredMessage)
+    f <- buildQCEpageField("age", required = TRUE, requiredMessage = "Set your age.")
+    expect_equal(f$requiredMessage, "Set your age.")
+})
+
+test_that("buildQCEpageField rejects a bad requiredMessage and warns when it cannot fire", {
+    expect_error(buildQCEpageField("age", required = TRUE, requiredMessage = ""),
+                 "non-empty string")
+    expect_error(buildQCEpageField("age", required = TRUE, requiredMessage = c("a", "b")),
+                 "non-empty string")
+    # A message on an optional field is dead config, not an error.
+    expect_warning(buildQCEpageField("age", required = FALSE, requiredMessage = "hi"),
+                   "never be shown")
+})
+
 test_that("buildQCEpageField rejects bad input, type, and required", {
     expect_error(buildQCEpageField(""), "non-empty string")
     expect_error(buildQCEpageField(c("a", "b")), "non-empty string")
@@ -88,10 +104,25 @@ test_that("a single page at an anchor still serializes as an array", {
 })
 
 test_that("page placement accepts the full anchor vocabulary", {
-    for (a in c("sessionStart", "sessionEnd", "entry(block:practice)",
-                "exit(block:practice)", "entry(set:s1)", "exit(set:s1)")) {
+    for (a in c("experimentStart", "sessionStart", "sessionEnd",
+                "entry(block:practice)", "exit(block:practice)",
+                "entry(set:s1)", "exit(set:s1)")) {
         expect_silent(addPageToQCEpagePlacement(NULL, a, "pg"))
     }
+})
+
+test_that("experimentStart and sessionStart are distinct anchors", {
+    p <- addPageToQCEpagePlacement(NULL, "experimentStart", "consent")
+    p <- addPageToQCEpagePlacement(p, "sessionStart", "reminder")
+    expect_named(p, c("experimentStart", "sessionStart"))
+    expect_equal(p$experimentStart[[1]]$file, "consent")
+    expect_equal(p$sessionStart[[1]]$file, "reminder")
+})
+
+test_that("cards accept experimentStart as a mount/unmount point", {
+    expect_silent(addCardToQCEcardPlacement(NULL, "scoreCard",
+                                            mount = "experimentStart",
+                                            unmount = "sessionEnd"))
 })
 
 test_that("page placement rejects unknown anchors and extensioned filenames", {
@@ -380,6 +411,86 @@ test_that("the manifest diff is silent when fields.txt is complete", {
     writeLines(cols, ff)
     txt <- paste(buildQCEoutputFieldManifest(d, outFile = NULL, fieldsFile = ff), collapse = "\n")
     expect_true(grepl("No expected column is missing", txt))
+})
+
+makeSurveyExp <- function(d) {
+    dir.create(d, showWarnings = FALSE, recursive = TRUE)
+    model <- list(pages = list(list(name = "p1", elements = list(
+        list(type = "html", name = "blurb", html = "<p>hi</p>"),
+        list(type = "rating", name = "MVS_goodCatch", title = "How good a catch?"),
+        list(type = "matrix", name = "PANAS",
+             rows = list(list(value = "Alert", text = "Alert"),
+                         list(value = "Upset", text = "Upset"))),
+        list(type = "panel", name = "pnl", elements = list(
+            list(type = "text", name = "nested_q")))
+    ))))
+    stim <- list(s1 = list(frame = list(`1` = list(
+        trialType = "survey", frameName = "MVS",
+        stimulus = jsonlite::toJSON(model, auto_unbox = TRUE)))))
+    jsonlite::write_json(stim, file.path(d, "s_stimfile.json"), auto_unbox = FALSE)
+    d
+}
+
+test_that("the manifest reads a survey's question names as columns", {
+    d <- makeSurveyExp(file.path(tempdir(), "mfsurvey"))
+    on.exit(unlink(d, recursive = TRUE), add = TRUE)
+    out <- buildQCEoutputFieldManifest(d, outFile = NULL)
+    expect_true("MVS_goodCatch" %in% out)
+    expect_true("nested_q" %in% out)          # inside a panel
+    expect_false("blurb" %in% out)            # display-only html element
+})
+
+test_that("the manifest expands a matrix into the per-item columns the data carries", {
+    d <- makeSurveyExp(file.path(tempdir(), "mfmatrix"))
+    on.exit(unlink(d, recursive = TRUE), add = TRUE)
+    out <- buildQCEoutputFieldManifest(d, outFile = NULL)
+    # The trial type flattens {PANAS: {Alert: 3}} to PANAS_Alert, so reporting a
+    # bare "PANAS" would name a column that never appears in the data.
+    expect_true(all(c("PANAS_Alert", "PANAS_Upset") %in% out))
+    expect_false("PANAS" %in% out)
+})
+
+test_that("the manifest does not call the survey type undeclared once it has read it", {
+    d <- makeSurveyExp(file.path(tempdir(), "mfsurvdecl"))
+    on.exit(unlink(d, recursive = TRUE), add = TRUE)
+    txt <- paste(buildQCEoutputFieldManifest(d, outFile = NULL), collapse = "\n")
+    expect_false(grepl("\\[survey\\] declares no outputColumns", txt))
+    expect_true(grepl("survey questions", txt))
+})
+
+test_that("missingQCEoutputFields returns the gap as data, not prose", {
+    d <- makeTestExp(file.path(tempdir(), "mfgaps"))
+    on.exit(unlink(d, recursive = TRUE), add = TRUE)
+    ff <- file.path(d, "fields.txt")
+    writeLines(c("Exp_Name", "sn", "Trial"), ff)
+    gaps <- missingQCEoutputFields(d, ff)
+    expect_true(is.character(gaps))
+    expect_true(all(c("Birth", "selectedValue") %in% gaps))
+    expect_false(any(grepl("^#", gaps)))
+    # Columns already present must not be reported as gaps.
+    expect_false("Trial" %in% gaps)
+})
+
+test_that("missingQCEoutputFields is empty when fields.txt is complete", {
+    d <- makeTestExp(file.path(tempdir(), "mfgaps2"))
+    on.exit(unlink(d, recursive = TRUE), add = TRUE)
+    report <- buildQCEoutputFieldManifest(d, outFile = NULL)
+    cols <- report[!grepl("^#", report) & nchar(report) > 0]
+    ff <- file.path(d, "fields.txt")
+    writeLines(cols, ff)
+    expect_length(missingQCEoutputFields(d, ff), 0)
+})
+
+test_that("missingQCEoutputFields does not mistake the 'extra columns' list for a gap", {
+    d <- makeTestExp(file.path(tempdir(), "mfgaps3"))
+    on.exit(unlink(d, recursive = TRUE), add = TRUE)
+    report <- buildQCEoutputFieldManifest(d, outFile = NULL)
+    cols <- report[!grepl("^#", report) & nchar(report) > 0]
+    ff <- file.path(d, "fields.txt")
+    # Complete, PLUS a hook-written column the scan cannot see. That lands in the
+    # report's second list, which must not be read back as missing.
+    writeLines(c(cols, "aHookColumn"), ff)
+    expect_length(missingQCEoutputFields(d, ff), 0)
 })
 
 test_that("the manifest rejects a bad directory or a missing fields.txt", {

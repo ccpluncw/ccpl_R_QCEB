@@ -52,6 +52,54 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     tryCatch(jsonlite::fromJSON(p, simplifyVector = FALSE),
              error = function(e) NULL)
   }
+
+  # Question names from a survey model. `html` elements are display-only and
+  # produce no column; every other element writes one under its own name. Nested
+  # panels are walked, since a panel holds elements rather than being one.
+  #
+  # A question whose answer is itself a set of answers -- a matrix (one row per
+  # item) or a multipletext (one box per item) -- records a NESTED object, which
+  # the trial type flattens to "<question>_<item>". Expanding those here is the
+  # difference between reporting one column called PANAS and reporting the 36
+  # columns the data will actually carry.
+  .qcebSurveyItemNames <- function(el) {
+    items <- if (!is.null(el$rows)) el$rows else el$items
+    if (is.null(items) || length(items) == 0) return(character(0))
+    vals <- vapply(items, function(it) {
+      if (is.list(it)) {
+        v <- if (!is.null(it$value)) it$value else it$name
+        if (is.null(v)) NA_character_ else as.character(u(v))
+      } else {
+        as.character(it)
+      }
+    }, character(1))
+    vals[!is.na(vals)]
+  }
+
+  .qcebSurveyQuestionNames <- function(modelString) {
+    if (is.null(modelString) || !is.character(modelString) || length(modelString) != 1) {
+      return(character(0))
+    }
+    model <- tryCatch(jsonlite::fromJSON(modelString, simplifyVector = FALSE),
+                      error = function(e) NULL)
+    if (is.null(model) || is.null(model$pages)) return(character(0))
+    walk <- function(elements) {
+      out <- character(0)
+      for (el in elements) {
+        if (!is.list(el)) next
+        if (!is.null(el$elements)) out <- c(out, walk(el$elements))
+        if (is.null(el$name)) next
+        if (identical(as.character(u(el$type)), "html")) next
+        nm <- as.character(u(el$name))
+        items <- .qcebSurveyItemNames(el)
+        out <- c(out, if (length(items)) paste0(nm, "_", items) else nm)
+      }
+      out
+    }
+    unlist(lapply(model$pages, function(pg) {
+      if (is.list(pg) && !is.null(pg$elements)) walk(pg$elements) else character(0)
+    }), use.names = FALSE)
+  }
   # Config scalars arrive wrapped as one-element arrays; take the first element.
   u <- function(x) if (is.list(x) && length(x) >= 1) x[[1]] else x
 
@@ -70,6 +118,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   typesUsed <- character(0)
   outputVars <- character(0)
   feedbackKeys <- character(0)
+  surveyCols <- character(0)
   # --- scan for hooks + demographics ----------------------------------------
   hooksFiles <- character(0)
   demographicCols <- character(0)
@@ -86,6 +135,13 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
         for (fr in sc$frame) {
           if (is.list(fr) && !is.null(fr$trialType)) {
             typesUsed <- c(typesUsed, as.character(u(fr$trialType)))
+            # A survey frame's columns are its question names, which live inside
+            # the model carried as a JSON string in `stimulus`. They are per-config
+            # rather than per-plugin, so no registry entry can list them -- read
+            # them here or the manifest reports a whole questionnaire as missing.
+            if (identical(as.character(u(fr$trialType)), "survey")) {
+              surveyCols <- c(surveyCols, .qcebSurveyQuestionNames(u(fr$stimulus)))
+            }
           }
         }
       }
@@ -116,6 +172,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   typesUsed    <- sort(unique(typesUsed))
   outputVars   <- sort(unique(outputVars))
   feedbackKeys <- sort(unique(feedbackKeys))
+  surveyCols   <- sort(unique(surveyCols))
   hooksFiles   <- sort(unique(hooksFiles))
   demographicCols <- sort(unique(demographicCols))
 
@@ -138,7 +195,12 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   undeclared <- character(0)
   for (tt in typesUsed) {
     cols <- .qcebTrialTypeOutputColumns(tt)
-    if (is.null(cols)) {
+    if (is.null(cols) && identical(tt, "survey") && length(surveyCols) > 0) {
+      # Not undeclared, just not declarable: the columns are the question names,
+      # listed under "survey questions" below.
+      typeLines <- c(typeLines,
+                     "# [survey] columns are its question names -- see 'survey questions' below")
+    } else if (is.null(cols)) {
       undeclared <- c(undeclared, tt)
       typeLines <- c(typeLines,
                      sprintf("# [%s] declares no outputColumns -- check this plugin's own columns", tt))
@@ -174,6 +236,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     "# --- declared in your config ---",
     if (length(outputVars)) c("# outputVariables:", outputVars) else "# (no outputVariables declared)",
     if (length(feedbackKeys)) c("# feedback keys:", feedbackKeys) else NULL,
+    if (length(surveyCols)) c("# survey questions:", surveyCols) else NULL,
     if (length(pageCols)) c("# page fields:", pageCols) else NULL,
     ""
   )
@@ -202,7 +265,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     have <- trimws(readLines(fieldsFile, warn = FALSE))
     have <- have[nchar(have) > 0]
     expected <- unique(c(serverCols, demographicCols, engineCols, typeCols,
-                         outputVars, feedbackKeys, pageCols))
+                         outputVars, feedbackKeys, surveyCols, pageCols))
     missingCols <- setdiff(expected, have)
     extraCols <- setdiff(have, expected)
 
@@ -228,4 +291,38 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   }
 
   invisible(out)
+}
+
+#' Which expected columns are missing from a fields.txt
+#'
+#' The machine-readable half of \code{\link{buildQCEoutputFieldManifest}}: same
+#' scan, but it returns the column names instead of a report to read. Use it to
+#' make a build script FAIL when the config produces a column the whitelist does
+#' not carry, rather than leaving the gap to be noticed in the data later.
+#'
+#' @param dir The experiment directory holding the JSON config files.
+#' @param fieldsFile Path to the \code{fields.txt} to check. DEFAULT =
+#'   \code{file.path(dir, "fields.txt")}.
+#'
+#' @return A character vector of expected columns absent from the file; empty
+#'   when nothing is missing.
+#' @keywords QCE fields manifest columns output fields.txt
+#' @export
+#' @examples
+#' # In a build script, right after writing fields.txt:
+#' # gaps <- missingQCEoutputFields("myExperiment/")
+#' # if (length(gaps)) stop("fields.txt is missing: ", paste(gaps, collapse = ", "))
+missingQCEoutputFields <- function(dir, fieldsFile = file.path(dir, "fields.txt")) {
+  report <- buildQCEoutputFieldManifest(dir, outFile = NULL, fieldsFile = fieldsFile)
+  hdr <- which(grepl("Expected columns MISSING", report, fixed = TRUE))
+  if (length(hdr) == 0) return(character(0))
+  # The named columns are the run of "#   <name>" lines that follows the header
+  # and its explanatory second line; the run ends at the first line of any other
+  # shape, which keeps the later "in fields.txt but not expected" list out.
+  rest <- report[seq(hdr[1] + 1L, length(report))]
+  start <- match(TRUE, grepl("^#   ", rest))
+  if (is.na(start)) return(character(0))
+  rest <- rest[seq(start, length(rest))]
+  rest <- rest[cumprod(grepl("^#   ", rest)) == 1]
+  trimws(sub("^#   ", "", rest))
 }

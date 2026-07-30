@@ -28,6 +28,11 @@
 #'   box pre-set to 0, a select whose first option is "Choose..." -- so the
 #'   required check treats the placeholder as unanswered without you editing the
 #'   HTML. DEFAULT = NULL.
+#' @param requiredMessage A single string shown on the page when this field
+#'   blocks the continue button. Use it where the generic wording would not tell
+#'   the participant what to do -- a slider whose starting position is also its
+#'   placeholder looks answered, so "Please set your age" is worth saying. NULL
+#'   uses the generic message. DEFAULT = NULL.
 #'
 #' @return A list describing one page field.
 #' @keywords QCE pages page field form
@@ -40,7 +45,7 @@
 #' buildQCEpageField("ethnicity", type = "select", required = TRUE,
 #'                   emptyValue = "Choose...")
 buildQCEpageField <- function(input, type = "text", as = NULL, required = FALSE,
-                              emptyValue = NULL) {
+                              emptyValue = NULL, requiredMessage = NULL) {
 
   if (missing(input) || !isSingleString(input) || nchar(input) == 0) {
     stop("input option must be a single non-empty string naming the HTML control's 'name' attribute.")
@@ -63,12 +68,25 @@ buildQCEpageField <- function(input, type = "text", as = NULL, required = FALSE,
     stop("emptyValue option must be a single value, or NULL.")
   }
 
+  if (!is.null(requiredMessage) &&
+      (!isSingleString(requiredMessage) || nchar(requiredMessage) == 0)) {
+    stop("requiredMessage option must be a single non-empty string, or NULL.")
+  }
+
+  if (!is.null(requiredMessage) && !required) {
+    warning("requiredMessage is set on a field with required = FALSE, so it will ",
+            "never be shown. Set required = TRUE, or drop requiredMessage.")
+  }
+
   tmpList <- list(input = input, type = type, required = required)
   if (!is.null(as)) {
     tmpList$as <- as
   }
   if (!is.null(emptyValue)) {
     tmpList$emptyValue <- emptyValue
+  }
+  if (!is.null(requiredMessage)) {
+    tmpList$requiredMessage <- requiredMessage
   }
 
   return(tmpList)
