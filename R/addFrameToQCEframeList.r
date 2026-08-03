@@ -22,7 +22,7 @@
 #' @param kind A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". Only meaningful when trialType = "textbox"; silently ignored (not emitted to JSON) for other trial types. DEFAULT = "string".
 #' @param pluginParams A named list of plugin-specific parameters passed through to the jsPsych plugin for this frame. For textbox trials, the 'kind' argument (above) is automatically merged into this list — passing 'kind' both as a named argument AND inside pluginParams is an error. For future custom plugins (Cyberball etc.), pass their specific parameters here. DEFAULT = NULL.
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
-#' @param cursorVisible  A boolean that specifies whether the cursor is visible during the frame.  If set to FALSE, then the cursor will not be visible. DEFAULT = TRUE
+#' @param cursorVisible  A boolean that specifies whether the cursor is visible during the frame.  A visible pointer sitting over the stimulus is a distractor on a keyboard-response frame, so the cursor is hidden unless the frame asks for it. Set TRUE for a frame the participant answers with the mouse. DEFAULT = FALSE
 #' @param output A boolean that specifies whether to output the data from the frame into the dataset. Many times frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.
 #' @param trigger Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this frame's boundaries — onset fires in the frame's on_start, offset fires in the frame's on_finish (even for non-response frames like fixation). NULL means no frame-level triggers. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.
 #'
@@ -49,7 +49,7 @@
 #'   stimulus = myStimString, stimulus_duration = 2000, trial_duration = 10000,
 #'   post_trial_gap = 0, choices = c("f", "j"))
 
-addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = TRUE, output = TRUE, trigger = NULL, pluginParams = NULL, trial_duration = NULL) {
+addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = FALSE, output = TRUE, trigger = NULL, pluginParams = NULL, trial_duration = NULL) {
 
   # trialType is validated against the QCEB trialType registry (mirrors the
   # engine's trialTypeRegistry.js), NOT a hard-coded list, so custom/third-party
