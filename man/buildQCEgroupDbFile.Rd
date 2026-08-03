@@ -13,7 +13,7 @@ buildQCEgroupDbFile(
   restTrials = -1,
   speedFeedbackParams = NULL,
   instructionFile = NULL,
-  keyMapInstructionFile = "default",
+  keyMapInstructionFile = NULL,
   restMsg = NULL,
   friendlyReminderMsg = NULL,
   remindMsg = NULL,
@@ -43,7 +43,7 @@ buildQCEgroupDbFile(
 
 \item{instructionFile}{A string or vector of strings that specifies the name of the html file(s) that contains the instructions.  It will be shown at the begining of the experiment.  If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.}
 
-\item{keyMapInstructionFile}{A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = "default". if "default" then the program will build a key map instruction file automatically.}
+\item{keyMapInstructionFile}{A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  DEFAULT = NULL.  If NULL, the engine generates the key map screen itself from the keyMap you supplied, so most experiments should leave this alone. Supply a filename only when you want to replace that generated screen with your own html. NOTE: the string "default" is NOT accepted -- it was a sentinel in engine versions before 9.1, and the current engine reads this field as a literal filename, so "default" would send it looking for a file of that name. Use NULL to mean "generate it for me".}
 
 \item{restMsg}{A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please take a self-timed break. Press any key to resume the experiment."}
 

@@ -142,3 +142,39 @@ test_that("completionGate/maxSessionMinutes are no longer group-level (moved to 
   expect_error(buildQCEgroupDbFile(condName = "c1", completionGate = list()), "unused argument")
   expect_error(buildQCEgroupDbFile(condName = "c1", maxSessionMinutes = 60), "unused argument")
 })
+
+test_that("keyMapInstructionFile defaults to absent, not to the removed 'default' sentinel", {
+  db <- buildQCEgroupDbFile(condName = "c1")
+  expect_null(db$keyMapInstructionFile)
+
+  # The engine reads this field as a literal filename and treats absence as
+  # "generate the screen yourself". NULL serialises to {}, which is what the
+  # engine reads as absent -- the string "default" would send it looking for a
+  # file of that name.
+  j <- as.character(jsonlite::toJSON(db, pretty = FALSE))
+  expect_false(grepl('"keyMapInstructionFile":\\["default"\\]', j))
+  expect_true(grepl('"keyMapInstructionFile":\\{\\}', j))
+})
+
+test_that("keyMapInstructionFile rejects 'default' and says what to use instead", {
+  expect_error(
+    buildQCEgroupDbFile(condName = "c1", keyMapInstructionFile = "default"),
+    "no longer supported"
+  )
+  # the message has to name the replacement -- this value fails far from its
+  # cause otherwise, as a 404 in a browser after a deploy.
+  expect_error(
+    buildQCEgroupDbFile(condName = "c1", keyMapInstructionFile = "default"),
+    "NULL"
+  )
+})
+
+test_that("keyMapInstructionFile still accepts an html filename and still rejects others", {
+  db <- buildQCEgroupDbFile(condName = "c1", keyMapInstructionFile = "myKeys.html")
+  expect_equal(db$keyMapInstructionFile, "myKeys.html")
+
+  expect_error(
+    buildQCEgroupDbFile(condName = "c1", keyMapInstructionFile = "myKeys.txt"),
+    "\\.html"
+  )
+})

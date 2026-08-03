@@ -9,7 +9,7 @@
 #' @param restTrials An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown.
 #' @param speedFeedbackParams A speedFeedbackList that specifies the parameters of the speed Feedback. Create this list using the buildSpeedFeedbackList() function.  DEFAULT = NULL.  If NULL, no speed feedback will be provided.
 #' @param instructionFile A string or vector of strings that specifies the name of the html file(s) that contains the instructions.  It will be shown at the begining of the experiment.  If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.
-#' @param keyMapInstructionFile  A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  If this is NULL, then no keyMap instructions will be shown. DEFAULT = "default". if "default" then the program will build a key map instruction file automatically.
+#' @param keyMapInstructionFile  A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  DEFAULT = NULL.  If NULL, the engine generates the key map screen itself from the keyMap you supplied, so most experiments should leave this alone. Supply a filename only when you want to replace that generated screen with your own html. NOTE: the string "default" is NOT accepted -- it was a sentinel in engine versions before 9.1, and the current engine reads this field as a literal filename, so "default" would send it looking for a file of that name. Use NULL to mean "generate it for me".
 #' @param restMsg A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please take a self-timed break. Press any key to resume the experiment."
 #' @param friendlyReminderMsg A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "This is a friendly reminder."
 #' @param remindMsg A string that specifies a message that the keymap reminder might be shown again. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "We may present this screen again during the experiment to remind you of the keys."
@@ -41,7 +41,7 @@
 #'   restTrials = c(50, 100, 150),
 #'   restEveryNMinutes = 10, restMaxTrial = 200)
 
-buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, defaultBackgroundColor = "#000000", restTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = "default", restMsg = NULL,  friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, enableTriggers = FALSE, triggerRelayPort = 5678, restEveryNMinutes = NULL, restMaxTrial = NULL, keyMaps = NULL, customHooksFile = NULL, customHooksStateKeys = NULL, customHooksColumns = NULL ) {
+buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomizeKeyMap = FALSE, presentKeyMapAfterTrialNumbers = -1, defaultBackgroundColor = "#000000", restTrials = -1, speedFeedbackParams = NULL, instructionFile = NULL, keyMapInstructionFile = NULL, restMsg = NULL,  friendlyReminderMsg = NULL, remindMsg = NULL, proceedMsg = NULL, enableTriggers = FALSE, triggerRelayPort = 5678, restEveryNMinutes = NULL, restMaxTrial = NULL, keyMaps = NULL, customHooksFile = NULL, customHooksStateKeys = NULL, customHooksColumns = NULL ) {
 
   if(!isSingleString(condName)) {
     stop("condName option must be a single string.  Yours, apparently, is not a single string.")
@@ -55,11 +55,20 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
     }
   }
 
+  # "default" was a sentinel meaning "generate the screen for me". The engine
+  # removed it, because an experiment whose keymap page is genuinely NAMED
+  # default became silently unusable -- the file would be ignored as though
+  # nothing were set. Absence is now carried out of band (NULL), so no real
+  # filename can collide with it. Rejected rather than quietly mapped back to
+  # NULL: the value sits in configs built by older versions of this package and
+  # in researchers' scripts, and it fails far from its cause -- in a browser,
+  # after a deploy, as a 404 on a file nobody asked for.
   if(!is.null(keyMapInstructionFile)){
-    if(keyMapInstructionFile != "default") {
-      if(!isValidFilename(keyMapInstructionFile, "html")) {
-          stop("keyMapInstructionFile option must be a single filename that ends in '.html' or be 'default'.  Yours, apparently, is not.")
-      }
+    if(isSingleString(keyMapInstructionFile) && keyMapInstructionFile == "default") {
+        stop("keyMapInstructionFile = \"default\" is no longer supported.  The engine reads this option as a literal filename, so it would request a file named 'default' and fail.  Use NULL (the default) to have the engine build the key map instruction screen for you, or give the name of an actual '.html' file.")
+    }
+    if(!isValidFilename(keyMapInstructionFile, "html")) {
+        stop("keyMapInstructionFile option must be a single filename that ends in '.html' or NULL.  Yours, apparently, is not.")
     }
   }
 
