@@ -100,7 +100,9 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   }
 
   if(is.null(saveMsg)) {
-    saveMsg <- "<p>Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue</p>"
+    ## The saving screen takes no keypress: it ends itself once the write has
+    ## landed. Default text must not invite a control the participant lacks.
+    saveMsg <- "<p>Your data is being saved. Please do not close this window. This screen will continue on its own when the save is finished.</p>"
   } else {
     if(!isSingleString(saveMsg)) {
       stop("saveMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the saveMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
