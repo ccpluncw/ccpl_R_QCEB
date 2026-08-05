@@ -329,3 +329,64 @@ test_that("showIf accepts blockRef leaf (Phase 3.5 Decision G)", {
     expect_equal(tsl[[1]]$showIf$blockRef, "Block_T2")
     expect_equal(tsl[[1]]$showIf$operator, "switchFired")
 })
+
+# --- randomizeAllTrials vs selectionType = "fixed" --------------------------
+# The two settings are produced by different builders that cannot see each
+# other, so this function is the first place the pair can be compared.
+
+.makeFixedSetInputs <- function(selA = "fixed", selB = NULL, randAll = TRUE) {
+    fr <- addFrameToQCEframeList(
+        trialType = "key", frameName = "fix", stimulus = "+",
+        stimulus_duration = 500, post_trial_gap = 0
+    )
+    scenarios <- addScenarioToQCEscenarioList(NULL, fr, NULL, list(out = "x"), "setA")
+    setInfo   <- addSetToQCEsetInfoList(NULL, scenarios, "setA", 5, selectionType = selA)
+    if (!is.null(selB)) {
+        scenarios <- addScenarioToQCEscenarioList(scenarios, fr, NULL, list(out = "y"), "setB")
+        setInfo   <- addSetToQCEsetInfoList(setInfo, scenarios, "setB", 5, selectionType = selB)
+    }
+    blockIter <- createBlockIteratorList(1, randomizeAllTrials = randAll)
+    list(setInfo = setInfo, blockIter = blockIter)
+}
+
+test_that("randomizeAllTrials with a fixed set throws", {
+    inp <- .makeFixedSetInputs()
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter),
+                 "randomizeAllTrials.*conflicts.*fixed")
+})
+
+test_that("the error names the offending set and both exits", {
+    inp <- .makeFixedSetInputs()
+    err <- tryCatch(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                     blockName = "myBlock"),
+                    error = function(e) conditionMessage(e))
+    expect_true(grepl("myBlock", err, fixed = TRUE))
+    expect_true(grepl("\"setA\"", err, fixed = TRUE))
+    expect_true(grepl("createBlockIteratorList", err, fixed = TRUE))
+    expect_true(grepl("addSetToQCEsetInfoList", err, fixed = TRUE))
+})
+
+test_that("every fixed set is named, not just the first", {
+    inp <- .makeFixedSetInputs(selA = "fixed", selB = "fixed")
+    err <- tryCatch(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter),
+                    error = function(e) conditionMessage(e))
+    expect_true(grepl("\"setA\", \"setB\"", err, fixed = TRUE))
+})
+
+test_that("a fixed set beside a random one still throws", {
+    inp <- .makeFixedSetInputs(selA = "fixed", selB = "randomWithoutReplacement")
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter),
+                 "\"setA\"")
+})
+
+test_that("selectionType = fixed is legal without randomizeAllTrials", {
+    inp <- .makeFixedSetInputs(randAll = FALSE)
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
+    expect_equal(tsl[[1]]$setInfo$setA$selection, "fixed")
+})
+
+test_that("randomizeAllTrials is legal without any fixed set", {
+    inp <- .makeFixedSetInputs(selA = "randomWithoutReplacement")
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
+    expect_true(isTRUE(tsl[[1]]$blockIterator$randomizeAllTrials))
+})

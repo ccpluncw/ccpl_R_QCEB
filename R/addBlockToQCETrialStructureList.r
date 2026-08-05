@@ -95,6 +95,33 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
     }
   }
 
+  # randomizeAllTrials shuffles every trial in the block, ignoring set
+  # boundaries. selectionType = "fixed" states the opposite for the sets it is
+  # applied to: take the pool entries in order and keep that order. A block
+  # asking for both is asking for a trial order and for that order to be
+  # destroyed.
+  #
+  # Neither createBlockIteratorList nor addSetToQCEsetInfoList can catch this --
+  # each sees only its own half, and both calls are individually legal. This is
+  # the first function that holds both, so it is the first place the pair can be
+  # compared. The engine rejects the same combination at session start; catching
+  # it here reports it against the call that built it rather than against a JSON
+  # file, and before any participant is admitted.
+  if (isTRUE(unlist(QCEblockIteratorList$randomizeAllTrials)[1])) {
+    fixedSets <- names(QCEsetInfoList)[vapply(QCEsetInfoList, function (s) {
+      identical(unlist(s$selection)[1], "fixed")
+    }, logical(1))]
+    if (length(fixedSets) > 0) {
+      stop("Block \"", blockName, "\": randomizeAllTrials = TRUE conflicts with ",
+           "selectionType = \"fixed\" on set(s): ",
+           paste0("\"", fixedSets, "\"", collapse = ", "), ". ",
+           "\"fixed\" defines a specific trial order that shuffling would erase. ",
+           "Either set randomizeAllTrials = FALSE in createBlockIteratorList, or ",
+           "give those sets selectionType = \"randomWithoutReplacement\" or ",
+           "\"randomWithReplacement\" in addSetToQCEsetInfoList.")
+    }
+  }
+
   tmpList <- list(blockNumber = blockNumber, setInfo = QCEsetInfoList, blockIterator = QCEblockIteratorList, blockName = blockName)
   if (!is.null(trigger)) {
     tmpList$trigger <- trigger
