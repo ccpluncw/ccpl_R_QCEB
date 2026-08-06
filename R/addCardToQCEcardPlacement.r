@@ -8,19 +8,20 @@
 #'
 #' Several cards may be on screen at once; each is placed independently.
 #'
-#' Anchors use the same vocabulary as pages: \code{"sessionStart"},
-#' \code{"sessionEnd"}, or entry/exit of a named block or set, e.g.
-#' \code{"entry(block:test)"}.
+#' Anchors use the same vocabulary as pages and are built by
+#' \code{\link{QCEanchor}}: \code{QCEanchor("sessionStart")},
+#' \code{QCEanchor("sessionEnd")}, or entry/exit of a named block or set, e.g.
+#' \code{QCEanchor("entry", session = "1", block = "test")}.
 #'
 #' @param QCEcardPlacement An existing placement list to add to, or NULL to start
 #'   a new one. DEFAULT = NULL.
 #' @param card A single string: the card's base name, with no extension. The
 #'   engine loads \code{<card>.card.json} and, if present, an optional
 #'   \code{<card>.html} shell.
-#' @param mount A single string naming the anchor at which the card appears.
-#'   DEFAULT = "sessionStart".
-#' @param unmount A single string naming the anchor at which it disappears.
-#'   DEFAULT = "sessionEnd".
+#' @param mount A \code{\link{QCEanchor}} naming the moment the card appears.
+#'   DEFAULT = \code{QCEanchor("sessionStart")}.
+#' @param unmount A \code{\link{QCEanchor}} naming the moment it disappears.
+#'   DEFAULT = \code{QCEanchor("sessionEnd")}.
 #' @param position A list describing where the card sits, e.g.
 #'   \code{list(region = "top-right")}. Overrides any position on the sidecar.
 #'   DEFAULT = NULL.
@@ -35,11 +36,12 @@
 #'                                    position = list(region = "top-right"))
 #' # A card that only exists during the test block
 #' cards <- addCardToQCEcardPlacement(cards, "runningScore",
-#'                                    mount = "entry(block:test)",
-#'                                    unmount = "exit(block:test)",
+#'                                    mount = QCEanchor("entry", session = "1", block = "test"),
+#'                                    unmount = QCEanchor("exit", session = "1", block = "test"),
 #'                                    position = list(region = "bottom-left"))
 addCardToQCEcardPlacement <- function(QCEcardPlacement = NULL, card,
-                                      mount = "sessionStart", unmount = "sessionEnd",
+                                      mount = QCEanchor("sessionStart"),
+                                      unmount = QCEanchor("sessionEnd"),
                                       position = NULL) {
 
   if (missing(card) || !isSingleString(card) || nchar(card) == 0) {
@@ -52,21 +54,25 @@ addCardToQCEcardPlacement <- function(QCEcardPlacement = NULL, card,
          "itself. Use 'progress', not 'progress.card.json'.")
   }
 
-  if (!isValidQCEanchor(mount)) {
-    stop("mount option must be a single string: 'sessionStart', 'sessionEnd', or ",
-         "'entry(block:<name>)' / 'exit(block:<name>)' / 'entry(set:<name>)' / ",
-         "'exit(set:<name>)'. Got: ", deparse(mount))
+  for (argName in c("mount", "unmount")) {
+    argValue <- get(argName)
+    if (is.character(argValue)) {
+      stop(argName, " option is a string. Anchors are now built by QCEanchor(), which ",
+           "names the session and block as separate fields: ",
+           "QCEanchor('entry', session = '1', block = 'test'). Got: ", deparse(argValue))
+    }
+    argProblem <- qcebAnchorProblem(argValue)
+    if (!is.null(argProblem)) stop(argName, " option ", argProblem)
   }
 
-  if (!isValidQCEanchor(unmount)) {
-    stop("unmount option must be a single string: 'sessionStart', 'sessionEnd', or ",
-         "'entry(block:<name>)' / 'exit(block:<name>)' / 'entry(set:<name>)' / ",
-         "'exit(set:<name>)'. Got: ", deparse(unmount))
-  }
-
-  if (identical(mount, unmount)) {
-    stop("mount and unmount are both '", mount, "', so the card would be removed at ",
-         "the same anchor that adds it and never be seen. Use different anchors.")
+  # A card removed at the moment it is added is never seen. OVERLAP is the test,
+  # not equality: an unmount that names no session covers every session, so it
+  # meets a session-specific mount without being identical to it. Equality would
+  # also be defeated by field order, which the author does not control.
+  if (qcebAnchorsOverlap(mount, unmount)) {
+    stop("mount and unmount can fire at the same moment, so the card would be ",
+         "removed as soon as it appeared and never be seen. Use anchors that ",
+         "cannot coincide.")
   }
 
   if (!is.null(position) && !is.list(position)) {

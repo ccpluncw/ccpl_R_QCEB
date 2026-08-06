@@ -15,7 +15,7 @@ addFrameToQCEframeList(
   choices = "ALL_KEYS",
   kind = "string",
   background = "#000000",
-  cursorVisible = TRUE,
+  cursorVisible = FALSE,
   output = TRUE,
   trigger = NULL,
   pluginParams = NULL,
@@ -48,7 +48,7 @@ choices does not control what can be typed into an html textbox input field — 
 
 \item{background}{an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).}
 
-\item{cursorVisible}{A boolean that specifies whether the cursor is visible during the frame.  If set to FALSE, then the cursor will not be visible. DEFAULT = TRUE}
+\item{cursorVisible}{A boolean that specifies whether the cursor is visible during the frame.  A visible pointer sitting over the stimulus is a distractor on a keyboard-response frame, so the cursor is hidden unless the frame asks for it. Set TRUE for a frame the participant answers with the mouse. DEFAULT = FALSE}
 
 \item{output}{A boolean that specifies whether to output the data from the frame into the dataset. Many times frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.}
 

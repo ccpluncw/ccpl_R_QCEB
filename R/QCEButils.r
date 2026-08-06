@@ -288,13 +288,80 @@ validateBlockSwitchRulesShape <- function(rules, paramName = "switchRules") {
 .qcebValidAggregateFns <- c("mean", "median", "proportion", "count", "sum", "min", "max", "sd")
 .qcebValidCompareOps   <- c(">=", "<=", ">", "<", "==", "!=")
 
-# Anchors at which a page may be played or a card mounted/unmounted. The two
-# systems share one vocabulary: the session boundaries, plus entry/exit of a
-# named block or set. Mirrors qcepIsValidCardAnchor in the engine.
-isValidQCEanchor <- function(key) {
-  isSingleString(key) &&
-    (key %in% c("experimentStart", "sessionStart", "sessionEnd") ||
-       grepl("^(entry|exit)\\((block|set):.+\\)$", key))
+# The five events at which a page may be played or a card mounted/unmounted.
+# Pages and cards share one vocabulary; naming it once is what stops the two
+# from drifting apart, as they previously did over "experimentStart".
+.qcebAnchorEvents       <- c("experimentStart", "sessionStart", "sessionEnd", "entry", "exit")
+# The events that name a block boundary, and so require a session and a block.
+.qcebAnchorScopedEvents <- c("entry", "exit")
+
+# Why `x` is not a usable anchor, or NULL when it is. Returns the message rather
+# than stopping so each caller can prefix it with its own argument name.
+#
+# An anchor is a LIST of fields, not a string: list(at=, session=, block=, set=).
+# A string grammar would need delimiters, and block and set names are
+# unconstrained free text, so a parsed form would impose a character restriction
+# on a namespace nothing else restricts. Level -- block boundary versus set
+# boundary -- is carried by whether `set` is present, so it cannot contradict a
+# separate level field.
+qcebAnchorProblem <- function(x) {
+  if (!is.list(x) || is.null(x$at)) {
+    return(paste0("must be an anchor list built by QCEanchor(), e.g. ",
+                  "QCEanchor(\"entry\", session = \"1\", block = \"practice\")."))
+  }
+  known <- c("at", "session", "block", "set")
+  extra <- setdiff(names(x), known)
+  if (length(extra) > 0) {
+    return(paste0("has unknown field(s) '", paste(extra, collapse = "', '"),
+                  "'. An anchor carries only: ", paste(known, collapse = ", "), "."))
+  }
+  for (f in known) {
+    v <- x[[f]]
+    if (!is.null(v) && (!isSingleString(v) || is.na(v))) {
+      return(paste0("field '", f, "' must be a single non-NA string."))
+    }
+  }
+  if (!(x$at %in% .qcebAnchorEvents)) {
+    return(paste0("has an unknown 'at' value '", x$at, "'. Valid: ",
+                  paste(.qcebAnchorEvents, collapse = ", "), "."))
+  }
+  if (x$at %in% .qcebAnchorScopedEvents) {
+    if (is.null(x$session)) {
+      return(paste0("is '", x$at, "' but names no session. A block name is unique only ",
+                    "within a session, so the session is part of the block's address."))
+    }
+    if (is.null(x$block)) {
+      return(paste0("is '", x$at, "' but names no block.",
+                    if (!is.null(x$set))
+                      paste0(" A set named without its block addresses EVERY block containing ",
+                             "a set called '", x$set, "', which is almost never intended.")
+                    else ""))
+    }
+    return(NULL)
+  }
+  if (!is.null(x$block) || !is.null(x$set)) {
+    return(paste0("is '", x$at, "', which names no block or set, but carries one. ",
+                  "Use at = 'entry' or 'exit' to address a block or set boundary."))
+  }
+  if (identical(x$at, "experimentStart") && !is.null(x$session)) {
+    return(paste0("is 'experimentStart' but names a session. experimentStart plays once ",
+                  "for the whole run, before any session begins. Use 'sessionStart' to ",
+                  "place something at the top of a session."))
+  }
+  NULL
+}
+
+isValidQCEanchor <- function(x) is.null(qcebAnchorProblem(x))
+
+# Can two anchors ever fire at the same moment? Used to reject a card whose
+# mount and unmount coincide. Equality is the wrong test: an optional `session`
+# means an anchor with none and one naming session 3 both fire at session 3's
+# boundary without being equal, and field order would defeat identical().
+qcebAnchorsOverlap <- function(a, b) {
+  if (!identical(a$at, b$at)) return(FALSE)
+  if (!identical(a$block, b$block)) return(FALSE)
+  if (!identical(a$set, b$set)) return(FALSE)
+  is.null(a$session) || is.null(b$session) || identical(a$session, b$session)
 }
 
 # Validate the aggregator half of a formula -- the parts a completion-gate

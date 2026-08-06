@@ -15,8 +15,8 @@ addPageToQCEpagePlacement(
 \item{QCEpagePlacement}{An existing placement map to add to, or NULL to start
 a new one. DEFAULT = NULL.}
 
-\item{anchor}{A single string naming the event at which the page plays. See
-above for the vocabulary.}
+\item{anchor}{An anchor built by \code{\link{QCEanchor}}, naming the event at
+which the page plays and which occurrence of it is meant.}
 
 \item{file}{A single string: the page's base filename, with no extension. The
 engine loads \code{<file>.html} and \code{<file>.page.json}, so a value of
@@ -40,26 +40,25 @@ with the \code{pages} argument of
 \details{
 Pages at the same anchor play in the order you add them.
 
-Anchors are \code{"experimentStart"}, \code{"sessionStart"},
-\code{"sessionEnd"}, or entry/exit of a named block or set:
-\code{"entry(block:practice)"}, \code{"exit(set:trialSet1)"}. The block or set
-name must match the one used when building the trial structure. Cards use the
-same vocabulary.
+Build the anchor with \code{\link{QCEanchor}}, which documents the five events
+and which qualifiers each one takes. Cards use the same vocabulary.
 
-\code{"experimentStart"} and \code{"sessionStart"} are not interchangeable.
-\code{"experimentStart"} plays ONCE for the whole run, before the experiment
-instructions -- the position the engine's built-in intake screens occupy, and
-the right home for consent, demographics, or anything that must precede the
-framing of the study. \code{"sessionStart"} plays at the top of EVERY session,
-after that session's instructions.
+The SAME page file may be placed more than once -- once per session, or in
+several blocks -- by adding it with a different anchor each time. Each
+placement carries its own \code{playOnce}, so a page may repeat in one
+position and appear only once in another.
 }
 \examples{
 pages <- NULL
-pages <- addPageToQCEpagePlacement(pages, "sessionStart", "consent")
-pages <- addPageToQCEpagePlacement(pages, "sessionStart", "demographics")
-pages <- addPageToQCEpagePlacement(pages, "entry(block:practice)", "howToPractice",
-                                   playOnce = TRUE)
-pages <- addPageToQCEpagePlacement(pages, "sessionEnd", "debrief")
+pages <- addPageToQCEpagePlacement(pages, QCEanchor("sessionStart"), "consent")
+pages <- addPageToQCEpagePlacement(pages, QCEanchor("sessionStart"), "demographics")
+pages <- addPageToQCEpagePlacement(pages,
+           QCEanchor("entry", session = "1", block = "practice"),
+           "howToPractice", playOnce = TRUE)
+# The same page in a second block -- a separate placement, not a shared one.
+pages <- addPageToQCEpagePlacement(pages,
+           QCEanchor("entry", session = "1", block = "test"), "howToPractice")
+pages <- addPageToQCEpagePlacement(pages, QCEanchor("sessionEnd"), "debrief")
 }
 \keyword{QCE}
 \keyword{anchor}

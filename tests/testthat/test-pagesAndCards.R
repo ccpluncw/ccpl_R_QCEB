@@ -86,50 +86,56 @@ test_that("page sidecar fields serialize as a JSON array", {
 
 # --- page placement ----------------------------------------------------------
 
-test_that("addPageToQCEpagePlacement keys by anchor and preserves order", {
-    p <- addPageToQCEpagePlacement(NULL, "sessionStart", "consent")
-    p <- addPageToQCEpagePlacement(p, "sessionStart", "demographics")
-    p <- addPageToQCEpagePlacement(p, "sessionEnd", "debrief")
-    expect_equal(names(p), c("sessionStart", "sessionEnd"))
-    expect_length(p$sessionStart, 2)
-    expect_equal(p$sessionStart[[1]]$file, "consent")
-    expect_equal(p$sessionStart[[2]]$file, "demographics")
-    expect_false(p$sessionStart[[1]]$playOnce)
+test_that("addPageToQCEpagePlacement appends placements and preserves order", {
+    p <- addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), "consent")
+    p <- addPageToQCEpagePlacement(p, QCEanchor("sessionStart"), "demographics")
+    p <- addPageToQCEpagePlacement(p, QCEanchor("sessionEnd"), "debrief")
+    expect_equal(names(p), "placements")
+    expect_length(p$placements, 3)
+    expect_equal(p$placements[[1]]$file, "consent")
+    expect_equal(p$placements[[2]]$file, "demographics")
+    expect_equal(p$placements[[1]]$at, "sessionStart")
+    expect_false(p$placements[[1]]$playOnce)
 })
 
-test_that("a single page at an anchor still serializes as an array", {
-    p <- addPageToQCEpagePlacement(NULL, "sessionEnd", "debrief")
+test_that("a single page still serializes as an array", {
+    p <- addPageToQCEpagePlacement(NULL, QCEanchor("sessionEnd"), "debrief")
     js <- as.character(jsonlite::toJSON(p))
-    expect_true(grepl('"sessionEnd":\\[\\{', js))
+    expect_true(grepl('"placements":\\[\\{', js))
 })
 
 test_that("page placement accepts the full anchor vocabulary", {
-    for (a in c("experimentStart", "sessionStart", "sessionEnd",
-                "entry(block:practice)", "exit(block:practice)",
-                "entry(set:s1)", "exit(set:s1)")) {
+    for (a in list(QCEanchor("experimentStart"), QCEanchor("sessionStart"),
+                   QCEanchor("sessionEnd"),
+                   QCEanchor("entry", session = "1", block = "practice"),
+                   QCEanchor("exit",  session = "1", block = "practice"),
+                   QCEanchor("entry", session = "1", block = "practice", set = "s1"),
+                   QCEanchor("exit",  session = "1", block = "practice", set = "s1"))) {
         expect_silent(addPageToQCEpagePlacement(NULL, a, "pg"))
     }
 })
 
 test_that("experimentStart and sessionStart are distinct anchors", {
-    p <- addPageToQCEpagePlacement(NULL, "experimentStart", "consent")
-    p <- addPageToQCEpagePlacement(p, "sessionStart", "reminder")
-    expect_named(p, c("experimentStart", "sessionStart"))
-    expect_equal(p$experimentStart[[1]]$file, "consent")
-    expect_equal(p$sessionStart[[1]]$file, "reminder")
+    p <- addPageToQCEpagePlacement(NULL, QCEanchor("experimentStart"), "consent")
+    p <- addPageToQCEpagePlacement(p, QCEanchor("sessionStart"), "reminder")
+    expect_equal(p$placements[[1]]$at, "experimentStart")
+    expect_equal(p$placements[[1]]$file, "consent")
+    expect_equal(p$placements[[2]]$at, "sessionStart")
+    expect_equal(p$placements[[2]]$file, "reminder")
 })
 
 test_that("cards accept experimentStart as a mount/unmount point", {
     expect_silent(addCardToQCEcardPlacement(NULL, "scoreCard",
-                                            mount = "experimentStart",
-                                            unmount = "sessionEnd"))
+                                            mount = QCEanchor("experimentStart"),
+                                            unmount = QCEanchor("sessionEnd")))
 })
 
 test_that("page placement rejects unknown anchors and extensioned filenames", {
-    expect_error(addPageToQCEpagePlacement(NULL, "blockStart", "pg"), "anchor option must be")
-    expect_error(addPageToQCEpagePlacement(NULL, "entry(trial:1)", "pg"), "anchor option must be")
-    expect_error(addPageToQCEpagePlacement(NULL, "sessionStart", "consent.html"), "NOT carry an extension")
-    expect_error(addPageToQCEpagePlacement(NULL, "sessionStart", ""), "non-empty string")
+    expect_error(addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), "consent.html"), "NOT carry an extension")
+    expect_error(addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), ""), "non-empty string")
+    # The retired string form is named explicitly rather than failing obscurely.
+    expect_error(addPageToQCEpagePlacement(NULL, "sessionStart", "pg"), "anchor option is a string")
+    expect_error(QCEanchor("blockStart"), "unknown 'at' value")
 })
 
 # --- card fields -------------------------------------------------------------
@@ -223,8 +229,8 @@ test_that("addCardToQCEcardPlacement builds an unnamed list with defaults", {
     expect_null(names(c1))
     expect_length(c1, 1)
     expect_equal(c1[[1]]$card, "progress")
-    expect_equal(c1[[1]]$mount, "sessionStart")
-    expect_equal(c1[[1]]$unmount, "sessionEnd")
+    expect_equal(c1[[1]]$mount, QCEanchor("sessionStart"))
+    expect_equal(c1[[1]]$unmount, QCEanchor("sessionEnd"))
 })
 
 test_that("card placement serializes as a JSON array", {
@@ -236,23 +242,24 @@ test_that("card placement serializes as a JSON array", {
 
 test_that("card placement refuses identical mount and unmount", {
     expect_error(
-        addCardToQCEcardPlacement(NULL, "progress", mount = "sessionEnd", unmount = "sessionEnd"),
+        addCardToQCEcardPlacement(NULL, "progress", mount = QCEanchor("sessionEnd"),
+                                  unmount = QCEanchor("sessionEnd")),
         "never be seen")
 })
 
 test_that("card placement rejects bad anchors and extensioned names", {
-    expect_error(addCardToQCEcardPlacement(NULL, "progress", mount = "blockStart"), "mount option must be")
-    expect_error(addCardToQCEcardPlacement(NULL, "progress", unmount = "nope"), "unmount option must be")
+    expect_error(addCardToQCEcardPlacement(NULL, "progress", mount = "sessionStart"), "mount option is a string")
+    expect_error(addCardToQCEcardPlacement(NULL, "progress", unmount = "nope"), "unmount option is a string")
     expect_error(addCardToQCEcardPlacement(NULL, "progress.card.json"), "NOT carry an extension")
 })
 
 test_that("several cards accumulate in order", {
     cs <- addCardToQCEcardPlacement(NULL, "progress")
-    cs <- addCardToQCEcardPlacement(cs, "tally", mount = "entry(block:test)",
-                                    unmount = "exit(block:test)")
+    cs <- addCardToQCEcardPlacement(cs, "tally", mount = QCEanchor("entry", session = "1", block = "test"),
+                                    unmount = QCEanchor("exit", session = "1", block = "test"))
     expect_length(cs, 2)
     expect_equal(cs[[2]]$card, "tally")
-    expect_equal(cs[[2]]$mount, "entry(block:test)")
+    expect_equal(cs[[2]]$mount, QCEanchor("entry", session = "1", block = "test"))
 })
 
 # --- writers -----------------------------------------------------------------
@@ -260,7 +267,7 @@ test_that("several cards accumulate in order", {
 test_that("saveQCEpageFiles writes the map and its sidecars", {
     d <- file.path(tempdir(), "pgtest"); dir.create(d, showWarnings = FALSE)
     on.exit(unlink(d, recursive = TRUE), add = TRUE)
-    p <- addPageToQCEpagePlacement(NULL, "sessionStart", "consent")
+    p <- addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), "consent")
     saveQCEpageFiles(p, "pagesA.json",
                      sidecars = list(consent = buildQCEpageSidecar(contBtn = "agreeBtn")),
                      dir = d)
@@ -273,7 +280,7 @@ test_that("saveQCEpageFiles writes the map and its sidecars", {
 test_that("saveQCEpageFiles catches a sidecar whose name matches no placement", {
     d <- file.path(tempdir(), "pgtest2"); dir.create(d, showWarnings = FALSE)
     on.exit(unlink(d, recursive = TRUE), add = TRUE)
-    p <- addPageToQCEpagePlacement(NULL, "sessionStart", "consent")
+    p <- addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), "consent")
     expect_error(
         saveQCEpageFiles(p, "pagesA.json",
                          sidecars = list(concent = buildQCEpageSidecar(contBtn = "x")),
@@ -516,4 +523,69 @@ test_that("an unset config field (serialized as {}) is not read as a declared sc
     expect_false(grepl("Birth", txt))
     expect_false(grepl("Gender", txt))
     expect_false(grepl("CHECK THIS!", txt))   # no hooks declared
+})
+
+
+# --- ENG-010: an anchor must be able to say WHICH set it means ---------------
+
+test_that("a set anchor cannot be written without its block", {
+    # The defect: a bare set name addressed every block containing a set of that
+    # name, so one placement fired in all of them.
+    expect_error(QCEanchor("entry", session = "1", set = "pref_main"), "names no block")
+    expect_error(QCEanchor("exit", session = "1", set = "pref_main"), "names no block")
+})
+
+test_that("a block anchor cannot be written without its session", {
+    expect_error(QCEanchor("entry", block = "practice"), "names no session")
+})
+
+test_that("unscoped anchors refuse block, set and (for experimentStart) session", {
+    expect_error(QCEanchor("sessionStart", block = "b"), "names no block or set")
+    expect_error(QCEanchor("sessionEnd", set = "s"), "names no block or set")
+    expect_error(QCEanchor("experimentStart", session = "1"), "names a session")
+    # sessionStart/sessionEnd DO take an optional session; absent means every one.
+    expect_silent(QCEanchor("sessionStart", session = "2"))
+    expect_silent(QCEanchor("sessionStart"))
+})
+
+test_that("anchor fields must be single non-NA strings", {
+    expect_error(QCEanchor("entry", session = NA_character_, block = "b"), "single non-NA string")
+    expect_error(QCEanchor("entry", session = c("1", "2"), block = "b"), "single non-NA string")
+})
+
+test_that("the same page file may be placed at several anchors", {
+    p <- addPageToQCEpagePlacement(NULL, QCEanchor("entry", session = "1", block = "b1"), "intro")
+    p <- addPageToQCEpagePlacement(p, QCEanchor("entry", session = "1", block = "b2"), "intro",
+                                   playOnce = TRUE)
+    expect_length(p$placements, 2)
+    expect_equal(p$placements[[1]]$block, "b1")
+    expect_equal(p$placements[[2]]$block, "b2")
+    # Each placement carries its own playOnce.
+    expect_false(p$placements[[1]]$playOnce)
+    expect_true(p$placements[[2]]$playOnce)
+})
+
+test_that("card mount/unmount are rejected when they can coincide", {
+    # Not equality: an unmount naming no session covers the session the mount names.
+    expect_error(
+        addCardToQCEcardPlacement(NULL, "c",
+                                  mount = QCEanchor("sessionStart", session = "1"),
+                                  unmount = QCEanchor("sessionStart")),
+        "same moment")
+    # Different sessions cannot coincide, so this is allowed.
+    expect_silent(addCardToQCEcardPlacement(NULL, "c",
+                                            mount = QCEanchor("sessionStart", session = "1"),
+                                            unmount = QCEanchor("sessionStart", session = "2")))
+})
+
+test_that("saveQCEpageFiles finds placed pages in the placement list", {
+    # Regression: the orphan check iterated names(map), which says nothing about
+    # placed pages once the map is one named element holding a list.
+    p <- addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), "consent")
+    dir <- withr::local_tempdir()
+    expect_silent(saveQCEpageFiles(p, "pagesA.json", dir = dir,
+                                   sidecars = list(consent = buildQCEpageSidecar())))
+    expect_error(saveQCEpageFiles(p, "pagesA.json", dir = dir,
+                                  sidecars = list(ghost = buildQCEpageSidecar())),
+                 "not placed anywhere")
 })

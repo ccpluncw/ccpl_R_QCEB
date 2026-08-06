@@ -8,23 +8,18 @@
 #'
 #' Pages at the same anchor play in the order you add them.
 #'
-#' Anchors are \code{"experimentStart"}, \code{"sessionStart"},
-#' \code{"sessionEnd"}, or entry/exit of a named block or set:
-#' \code{"entry(block:practice)"}, \code{"exit(set:trialSet1)"}. The block or set
-#' name must match the one used when building the trial structure. Cards use the
-#' same vocabulary.
+#' Build the anchor with \code{\link{QCEanchor}}, which documents the five events
+#' and which qualifiers each one takes. Cards use the same vocabulary.
 #'
-#' \code{"experimentStart"} and \code{"sessionStart"} are not interchangeable.
-#' \code{"experimentStart"} plays ONCE for the whole run, before the experiment
-#' instructions -- the position the engine's built-in intake screens occupy, and
-#' the right home for consent, demographics, or anything that must precede the
-#' framing of the study. \code{"sessionStart"} plays at the top of EVERY session,
-#' after that session's instructions.
+#' The SAME page file may be placed more than once -- once per session, or in
+#' several blocks -- by adding it with a different anchor each time. Each
+#' placement carries its own \code{playOnce}, so a page may repeat in one
+#' position and appear only once in another.
 #'
 #' @param QCEpagePlacement An existing placement map to add to, or NULL to start
 #'   a new one. DEFAULT = NULL.
-#' @param anchor A single string naming the event at which the page plays. See
-#'   above for the vocabulary.
+#' @param anchor An anchor built by \code{\link{QCEanchor}}, naming the event at
+#'   which the page plays and which occurrence of it is meant.
 #' @param file A single string: the page's base filename, with no extension. The
 #'   engine loads \code{<file>.html} and \code{<file>.page.json}, so a value of
 #'   "consent" means consent.html plus consent.page.json.
@@ -38,18 +33,32 @@
 #' @export
 #' @examples
 #' pages <- NULL
-#' pages <- addPageToQCEpagePlacement(pages, "sessionStart", "consent")
-#' pages <- addPageToQCEpagePlacement(pages, "sessionStart", "demographics")
-#' pages <- addPageToQCEpagePlacement(pages, "entry(block:practice)", "howToPractice",
-#'                                    playOnce = TRUE)
-#' pages <- addPageToQCEpagePlacement(pages, "sessionEnd", "debrief")
+#' pages <- addPageToQCEpagePlacement(pages, QCEanchor("sessionStart"), "consent")
+#' pages <- addPageToQCEpagePlacement(pages, QCEanchor("sessionStart"), "demographics")
+#' pages <- addPageToQCEpagePlacement(pages,
+#'            QCEanchor("entry", session = "1", block = "practice"),
+#'            "howToPractice", playOnce = TRUE)
+#' # The same page in a second block -- a separate placement, not a shared one.
+#' pages <- addPageToQCEpagePlacement(pages,
+#'            QCEanchor("entry", session = "1", block = "test"), "howToPractice")
+#' pages <- addPageToQCEpagePlacement(pages, QCEanchor("sessionEnd"), "debrief")
 addPageToQCEpagePlacement <- function(QCEpagePlacement = NULL, anchor, file,
                                       playOnce = FALSE) {
 
-  if (missing(anchor) || !isValidQCEanchor(anchor)) {
-    stop("anchor option must be a single string: 'sessionStart', 'sessionEnd', ",
-         "or 'entry(block:<name>)' / 'exit(block:<name>)' / 'entry(set:<name>)' / ",
-         "'exit(set:<name>)'. Got: ", deparse(anchor))
+  if (missing(anchor)) {
+    stop("anchor option is required. Build it with QCEanchor(), e.g. ",
+         "QCEanchor('entry', session = '1', block = 'practice').")
+  }
+  if (is.character(anchor)) {
+    stop("anchor option is a string. Anchors are now built by QCEanchor(), which names ",
+         "the session and block as separate fields: ",
+         "QCEanchor('entry', session = '1', block = 'practice', set = 'warmup'). ",
+         "A string anchor could not say which block a set belonged to, so one set ",
+         "anchor fired in every block sharing that set's name. Got: ", deparse(anchor))
+  }
+  anchorProblem <- qcebAnchorProblem(anchor)
+  if (!is.null(anchorProblem)) {
+    stop("anchor option ", anchorProblem)
   }
 
   if (missing(file) || !isSingleString(file) || nchar(file) == 0) {
@@ -73,14 +82,19 @@ addPageToQCEpagePlacement <- function(QCEpagePlacement = NULL, anchor, file,
     stop("QCEpagePlacement option must be a placement map (output of this function) or NULL.")
   }
 
-  entry <- list(file = file, playOnce = playOnce)
+  # Anchor fields sit BESIDE the page's own fields in one flat entry rather than
+  # nested under a key, so the emitted JSON reads as a list of placements and the
+  # engine matches an entry without unpacking it first.
+  entry <- c(anchor, list(file = file, playOnce = playOnce))
 
-  # Each anchor holds an UNNAMED list, so it serializes as a JSON array of page
-  # entries even when only one page sits there.
-  if (is.null(QCEpagePlacement[[anchor]])) {
-    QCEpagePlacement[[anchor]] <- list(entry)
+  # The map is a single named element holding an UNNAMED list, so it serializes
+  # as {"placements": [ ... ]} -- an array even when only one page is placed.
+  # List order is the order pages were added, which is the order they play at a
+  # shared anchor.
+  if (is.null(QCEpagePlacement$placements)) {
+    QCEpagePlacement$placements <- list(entry)
   } else {
-    QCEpagePlacement[[anchor]] <- c(QCEpagePlacement[[anchor]], list(entry))
+    QCEpagePlacement$placements <- c(QCEpagePlacement$placements, list(entry))
   }
 
   return(QCEpagePlacement)

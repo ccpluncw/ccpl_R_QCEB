@@ -7,8 +7,8 @@
 addCardToQCEcardPlacement(
   QCEcardPlacement = NULL,
   card,
-  mount = "sessionStart",
-  unmount = "sessionEnd",
+  mount = QCEanchor("sessionStart"),
+  unmount = QCEanchor("sessionEnd"),
   position = NULL
 )
 }
@@ -20,11 +20,11 @@ a new one. DEFAULT = NULL.}
 engine loads \code{<card>.card.json} and, if present, an optional
 \code{<card>.html} shell.}
 
-\item{mount}{A single string naming the anchor at which the card appears.
-DEFAULT = "sessionStart".}
+\item{mount}{A \code{\link{QCEanchor}} naming the moment the card appears.
+DEFAULT = \code{QCEanchor("sessionStart")}.}
 
-\item{unmount}{A single string naming the anchor at which it disappears.
-DEFAULT = "sessionEnd".}
+\item{unmount}{A \code{\link{QCEanchor}} naming the moment it disappears.
+DEFAULT = \code{QCEanchor("sessionEnd")}.}
 
 \item{position}{A list describing where the card sits, e.g.
 \code{list(region = "top-right")}. Overrides any position on the sidecar.
@@ -43,9 +43,10 @@ another. Point a group at the finished list with the \code{cards} argument of
 \details{
 Several cards may be on screen at once; each is placed independently.
 
-Anchors use the same vocabulary as pages: \code{"sessionStart"},
-\code{"sessionEnd"}, or entry/exit of a named block or set, e.g.
-\code{"entry(block:test)"}.
+Anchors use the same vocabulary as pages and are built by
+\code{\link{QCEanchor}}: \code{QCEanchor("sessionStart")},
+\code{QCEanchor("sessionEnd")}, or entry/exit of a named block or set, e.g.
+\code{QCEanchor("entry", session = "1", block = "test")}.
 }
 \examples{
 cards <- NULL
@@ -54,8 +55,8 @@ cards <- addCardToQCEcardPlacement(cards, "progress",
                                    position = list(region = "top-right"))
 # A card that only exists during the test block
 cards <- addCardToQCEcardPlacement(cards, "runningScore",
-                                   mount = "entry(block:test)",
-                                   unmount = "exit(block:test)",
+                                   mount = QCEanchor("entry", session = "1", block = "test"),
+                                   unmount = QCEanchor("exit", session = "1", block = "test"),
                                    position = list(region = "bottom-left"))
 }
 \keyword{QCE}
