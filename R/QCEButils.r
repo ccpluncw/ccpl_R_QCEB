@@ -408,3 +408,81 @@ validateQCEwhereFilter <- function(where, label) {
   }
   invisible(TRUE)
 }
+
+# The keys a completionGate may carry. Anything else is almost certainly a
+# misspelling, and a misspelled key is DROPPED SILENTLY -- the gate then runs
+# with a policy nobody wrote. Kept as data so the check cannot drift from the
+# validators beside it.
+.qcebGateKeys <- c("formula", "gateFn", "combinator", "noCreditMsg",
+                   "attemptsAllowed", "retryPrompt", "supersededMsg")
+
+# Validate the attempts half of a completion gate: how many tries the
+# participant gets, and the question that offers the next one.
+#
+# ⚠ ABSENT MEANS ONE. A gate that says nothing about attempts gets a single
+# attempt, matching what the engine and the assignment endpoint both do when the
+# key is missing. So `attemptsAllowed` is never required -- but a value that IS
+# written and is not a whole number of 1 or more is broken rather than silent,
+# and is refused rather than rounded into something plausible.
+#
+# The two cross-checks exist because the two keys are only meaningful together:
+# a gate that allows a second attempt and never asks for one can never grant it,
+# and a gate that asks while allowing one promises the participant something it
+# cannot deliver, at the moment they have just been told they failed.
+#
+# This mirrors the engine's own check, which runs at experiment start. Running it
+# here as well moves the diagnosis to build time, where no participant is waiting
+# on it -- the same reason the formula validators are duplicated.
+validateQCEattemptsPolicy <- function(cfg, label = "completionGate") {
+  if (is.null(cfg) || !is.list(cfg)) return(invisible(TRUE))
+
+  declared <- !is.null(cfg$attemptsAllowed)
+  n <- if (declared) cfg$attemptsAllowed else 1
+  if (declared &&
+      (!is.numeric(n) || length(n) != 1 || !is.finite(n) || n != floor(n) || n < 1)) {
+    stop(sprintf("%s 'attemptsAllowed' must be a whole number of 1 or more.", label))
+  }
+  n <- as.numeric(n)
+
+  prompt <- cfg$retryPrompt
+  hasPrompt <- !is.null(prompt)
+  if (hasPrompt && (!is.list(prompt) || is.null(names(prompt)))) {
+    stop(sprintf("%s 'retryPrompt' must be a named list with 'text', 'yesLabel' and 'noLabel'.",
+                 label))
+  }
+
+  if (n > 1 && !hasPrompt) {
+    stop(sprintf(paste0("%s allows %s attempts but declares no 'retryPrompt', so a ",
+                        "participant who fails could never be asked whether they want ",
+                        "another attempt -- the extra attempts are unreachable. Add ",
+                        "retryPrompt = list(text=, yesLabel=, noLabel=), or set ",
+                        "attemptsAllowed to 1."), label, format(n)))
+  }
+  if (n == 1 && hasPrompt) {
+    # Two different mistakes arrive here and they need different advice. A gate
+    # that WROTE 1 meant one attempt and should drop the prompt; a gate that
+    # wrote nothing probably meant to allow a second and forgot the key. Naming
+    # the wrong one sends the researcher to the wrong edit.
+    stop(sprintf(paste0("%s declares a 'retryPrompt' but %s, so the participant would be ",
+                        "offered a second attempt that cannot be granted. %s"),
+                 label,
+                 if (declared) "allows only 1 attempt"
+                 else "no 'attemptsAllowed', which means one attempt",
+                 if (declared) "Raise attemptsAllowed, or remove retryPrompt."
+                 else "Add attemptsAllowed (2 offers the same material once more), or remove retryPrompt."))
+  }
+  if (hasPrompt) {
+    for (k in c("text", "yesLabel", "noLabel")) {
+      v <- prompt[[k]]
+      if (!isSingleString(v) || nchar(v) == 0) {
+        stop(sprintf("%s 'retryPrompt$%s' must be a single non-empty string.", label, k))
+      }
+    }
+    extra <- setdiff(names(prompt), c("text", "yesLabel", "noLabel"))
+    if (length(extra) > 0) {
+      warning(sprintf("%s 'retryPrompt' has unrecognized entries the engine will ignore: %s.",
+                      label, paste(extra, collapse = ", ")))
+    }
+  }
+  invisible(TRUE)
+}
