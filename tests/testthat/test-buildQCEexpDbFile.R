@@ -248,7 +248,10 @@ test_that("the attempts policy is checked on a formula gate too, not just gateFn
 })
 
 test_that("a stated gate message may not be empty", {
-  for (m in c("noCreditMsg", "supersededMsg")) {
+  # ⚠ duplicateMsg joined the other two: the engine has always read it, so a
+  # study could set it, and it reached the participant on exactly the same
+  # screen with none of the same checking.
+  for (m in c("noCreditMsg", "supersededMsg", "duplicateMsg")) {
     cfg <- list(gateFn = "f"); cfg[[m]] <- ""
     expect_error(buildQCEexpDbFile(expName = "e1", completionGate = cfg), m)
   }
@@ -276,6 +279,39 @@ test_that("a misspelled gate key warns instead of vanishing", {
                             combinator = "any", noCreditMsg = "no",
                             supersededMsg = "already", attemptsAllowed = 2,
                             retryPrompt = .promptOK)))
+})
+
+test_that("duplicateMsg is a KNOWN gate key", {
+  # ⚠⚠ THIS PACKAGE WARNED ABOUT A VALID CONFIG. The engine has read
+  # duplicateMsg since the key existed, but it was missing from the key list
+  # here, so a study that set it was told the engine would ignore it -- advice
+  # that was both wrong and, if followed, would have removed a message the
+  # participant sees.
+  expect_silent(
+    buildQCEexpDbFile(expName = "e1",
+      completionGate = list(gateFn = "f", duplicateMsg = "already credited")))
+  expect_equal(
+    buildQCEexpDbFile(expName = "e1",
+      completionGate = list(gateFn = "f",
+                            duplicateMsg = "already credited"))$completionGate$duplicateMsg,
+    "already credited")
+})
+
+test_that("attemptsAllowed has a floor and no ceiling", {
+  # The budget is any whole number of 1 or more. Nothing in either repo caps it,
+  # and a plan or a test that assumes 2 is the top hides every defect that only
+  # a third attempt can show.
+  for (n in c(1, 2, 3, 7, 40)) {
+    cfg <- list(gateFn = "f", attemptsAllowed = n)
+    if (n > 1) cfg$retryPrompt <- .promptOK
+    expect_equal(buildQCEexpDbFile(expName = "e1",
+                                   completionGate = cfg)$completionGate$attemptsAllowed, n)
+  }
+  expect_error(buildQCEexpDbFile(expName = "e1",
+    completionGate = list(gateFn = "f", attemptsAllowed = 0)), "attemptsAllowed")
+  expect_error(buildQCEexpDbFile(expName = "e1",
+    completionGate = list(gateFn = "f", attemptsAllowed = 2.5, retryPrompt = .promptOK)),
+    "attemptsAllowed")
 })
 
 # --- creditClaimTimeoutMs ---------------------------------------------------

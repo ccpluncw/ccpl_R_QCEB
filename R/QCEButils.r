@@ -414,7 +414,8 @@ validateQCEwhereFilter <- function(where, label) {
 # with a policy nobody wrote. Kept as data so the check cannot drift from the
 # validators beside it.
 .qcebGateKeys <- c("formula", "gateFn", "combinator", "noCreditMsg",
-                   "attemptsAllowed", "retryPrompt", "supersededMsg")
+                   "attemptsAllowed", "retryPrompt", "supersededMsg",
+                   "duplicateMsg")
 
 # Validate the attempts half of a completion gate: how many tries the
 # participant gets, and the question that offers the next one.
