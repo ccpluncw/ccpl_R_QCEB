@@ -205,11 +205,79 @@ test_that("omitting trial_duration leaves the emitted frame byte-identical", {
                  stimulus_duration = 1000, post_trial_gap = 0,
                  choices = c("a", "b"), background = "#FFFFFF")
     withNew <- do.call(addFrameToQCEframeList, args)
-    # The reference shape: every key the builder has always emitted, in order.
+    # The reference shape. cursorVisible is absent because it was not stated:
+    # like trial_duration, the key is emitted only when the researcher sets it.
     expect_equal(names(withNew[[1]]),
                  c("trialType", "frameName", "stimulus", "stimulus_duration",
                    "post_trial_gap", "response_ends_trial", "choices",
+                   "background", "output"))
+})
+
+test_that("a stated cursorVisible is emitted, in its historical position", {
+    fl <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 1000, post_trial_gap = 0, choices = c("a", "b"),
+        background = "#FFFFFF", cursorVisible = TRUE)
+    expect_equal(names(fl[[1]]),
+                 c("trialType", "frameName", "stimulus", "stimulus_duration",
+                   "post_trial_gap", "response_ends_trial", "choices",
                    "background", "cursorVisible", "output"))
+    expect_true(fl[[1]]$cursorVisible)
+
+    # FALSE is a value, not an absence: it must survive as an explicit key, since
+    # it is what overrides a pointer type's own answer.
+    fl2 <- addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 1000, post_trial_gap = 0, choices = c("a", "b"),
+        cursorVisible = FALSE)
+    expect_true("cursorVisible" %in% names(fl2[[1]]))
+    expect_false(fl2[[1]]$cursorVisible)
+})
+
+test_that("a pointer-driven type left unstated omits the key rather than hiding the cursor", {
+    # The regression this three-state form exists for: emitting a default FALSE
+    # here would outrank the engine's own answer and ship a mouse-driven trial
+    # with no pointer.
+    for (tt in c("numberline", "angleline")) {
+        fl <- addFrameToQCEframeList(
+            trialType = tt, frameName = "f", stimulus = "x",
+            stimulus_duration = 1000, post_trial_gap = 0)
+        expect_false("cursorVisible" %in% names(fl[[1]]))
+    }
+})
+
+test_that("hiding the cursor on a pointer-driven type warns", {
+    for (tt in c("numberline", "angleline", "survey")) {
+        expect_warning(
+            addFrameToQCEframeList(
+                trialType = tt, frameName = "f", stimulus = "x",
+                stimulus_duration = 1000, post_trial_gap = 0,
+                cursorVisible = FALSE),
+            "hidden")
+    }
+})
+
+test_that("hiding the cursor on a keyboard-driven type is silent", {
+    # Conforming is silent. A key frame with no pointer is the normal case, and
+    # textbox/mcKeys bring a response surface that is not the mouse -- forceResp
+    # must not be mistaken for usesPointer.
+    for (tt in c("key", "textbox", "mcKeys")) {
+        expect_silent(
+            addFrameToQCEframeList(
+                trialType = tt, frameName = "f", stimulus = "x",
+                stimulus_duration = 1000, post_trial_gap = 0,
+                cursorVisible = FALSE))
+    }
+})
+
+test_that("cursorVisible rejects anything that is neither NULL nor a single logical", {
+    mk <- function(cv) addFrameToQCEframeList(
+        trialType = "key", frameName = "f", stimulus = "x",
+        stimulus_duration = 1000, post_trial_gap = 0, cursorVisible = cv)
+    expect_error(mk("TRUE"), "must be NULL")
+    expect_error(mk(1), "must be NULL")
+    expect_error(mk(c(TRUE, FALSE)), "must be NULL")
+    expect_error(mk(NA), "must be NULL")
 })
 
 test_that("a numeric trial_duration is emitted as given", {

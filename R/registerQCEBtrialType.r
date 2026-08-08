@@ -25,7 +25,11 @@
 #'   \code{stimulusParam}, \code{requiresKeymap}, \code{forceResp}). Stored
 #'   verbatim for introspection. The registry entry is an OPEN object, exactly
 #'   like the engine's, so plugins can carry extra metadata without a QCEB
-#'   change. One field is acted on: \code{forceResp = TRUE} declares that the
+#'   change. Two fields are acted on. \code{usesPointer = TRUE} declares that the
+#'   participant answers this type with the mouse, so a frame that does not state
+#'   \code{cursorVisible} gets the pointer shown, and one that sets it to FALSE is
+#'   warned about. Omit it for a keyboard- or text-driven plugin, whose pointer is
+#'   only a distractor. \code{forceResp = TRUE} declares that the
 #'   plugin always gives the participant a way to respond -- a mouse, a text
 #'   field, a submit button -- independently of the frame's \code{choices}. Such
 #'   a frame is exempt from the check that a frame with no time limit still has
@@ -97,6 +101,20 @@ getRegisteredQCEBtrialTypes <- function() {
   isTRUE(get(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)$forceResp)
 }
 
+# Does this trialType need the pointer on screen? Internal; read by
+# addFrameToQCEframeList to warn about a frame that hides the cursor a
+# mouse-driven plugin depends on. An unregistered or undeclared type answers
+# FALSE, so a custom plugin that says nothing is treated as keyboard-driven and
+# is never warned about.
+.qcebTrialTypeUsesPointer <- function(name) {
+  .seedCoreQCEBtrialTypes()
+  if (!isSingleString(name) ||
+      !exists(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)) {
+    return(FALSE)
+  }
+  isTRUE(get(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)$usesPointer)
+}
+
 # The data columns this trialType's extractor contributes, or NULL when the type
 # has not declared any. Internal; read by buildQCEoutputFieldManifest. NULL and
 # character(0) mean different things: NULL is "this type never said", which the
@@ -135,6 +153,11 @@ getRegisteredQCEBtrialTypes <- function() {
 #                                             Content goes in the frame stimulus as
 #                                             an mc_spec { stem, choices, correctValue }.
 .seedCoreQCEBtrialTypes <- function() {
+  # usesPointer mirrors the same field in the engine's trialTypeRegistry.js and is
+  # the counterpart of requiresKeymap: it declares that the participant answers
+  # this type with the mouse, so the pointer must be on screen. It is NOT implied
+  # by forceResp -- textbox and mcKeys both bring their own response surface and
+  # neither needs a pointer -- so the two are declared independently.
   # forceResp mirrors the same field in the engine's trialTypeRegistry.js. Every
   # core type except "key" brings its own response surface and so can always be
   # ended by the participant; "key" can only be ended by a key in `choices`.
@@ -151,10 +174,13 @@ getRegisteredQCEBtrialTypes <- function() {
     textbox    = list(name = "textbox",    requiresKeymap = FALSE, forceResp = TRUE,
                       outputColumns = c("Key", "FeedBack", "Response")),
     numberline = list(name = "numberline", requiresKeymap = FALSE, forceResp = TRUE,
+                      usesPointer = TRUE,
                       outputColumns = c("Key", "FeedBack", "Response", "Stimulus")),
     angleline  = list(name = "angleline",  requiresKeymap = FALSE, forceResp = TRUE,
+                      usesPointer = TRUE,
                       outputColumns = c("Key", "FeedBack", "Response", "Stimulus")),
     survey     = list(name = "survey",     requiresKeymap = FALSE, forceResp = TRUE,
+                      usesPointer = TRUE,
                       stimulusParam = "survey_json"),
     mcKeys     = list(name = "mcKeys",     requiresKeymap = FALSE, forceResp = TRUE,
                       stimulusParam = "mc_spec",

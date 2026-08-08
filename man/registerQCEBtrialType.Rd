@@ -15,7 +15,11 @@ side (e.g. "survey").}
 \code{stimulusParam}, \code{requiresKeymap}, \code{forceResp}). Stored
 verbatim for introspection. The registry entry is an OPEN object, exactly
 like the engine's, so plugins can carry extra metadata without a QCEB
-change. One field is acted on: \code{forceResp = TRUE} declares that the
+change. Two fields are acted on. \code{usesPointer = TRUE} declares that the
+participant answers this type with the mouse, so a frame that does not state
+\code{cursorVisible} gets the pointer shown, and one that sets it to FALSE is
+warned about. Omit it for a keyboard- or text-driven plugin, whose pointer is
+only a distractor. \code{forceResp = TRUE} declares that the
 plugin always gives the participant a way to respond -- a mouse, a text
 field, a submit button -- independently of the frame's \code{choices}. Such
 a frame is exempt from the check that a frame with no time limit still has

@@ -22,7 +22,7 @@
 #' @param kind A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". Only meaningful when trialType = "textbox"; silently ignored (not emitted to JSON) for other trial types. DEFAULT = "string".
 #' @param pluginParams A named list of plugin-specific parameters passed through to the jsPsych plugin for this frame. For textbox trials, the 'kind' argument (above) is automatically merged into this list — passing 'kind' both as a named argument AND inside pluginParams is an error. For future custom plugins (Cyberball etc.), pass their specific parameters here. DEFAULT = NULL.
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
-#' @param cursorVisible  A boolean that specifies whether the cursor is visible during the frame.  A visible pointer sitting over the stimulus is a distractor on a keyboard-response frame, so the cursor is hidden unless the frame asks for it. Set TRUE for a frame the participant answers with the mouse. DEFAULT = FALSE
+#' @param cursorVisible Three-state, like trial_duration. NULL (the default) omits the key, which tells the engine to decide from the trialType: hidden for a keyboard-response frame, where a pointer sitting over the stimulus is a distractor, and shown for a type that declares usesPointer because the participant answers it with the mouse. TRUE or FALSE overrides that decision for this frame. ⚠ An explicit FALSE on a pointer-driven type hides the cursor the participant needs in order to respond, so it warns. DEFAULT = NULL (let the trialType decide).
 #' @param output A boolean that specifies whether to output the data from the frame into the dataset. Many times frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.
 #' @param trigger Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this frame's boundaries — onset fires in the frame's on_start, offset fires in the frame's on_finish (even for non-response frames like fixation). NULL means no frame-level triggers. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.
 #'
@@ -49,7 +49,7 @@
 #'   stimulus = myStimString, stimulus_duration = 2000, trial_duration = 10000,
 #'   post_trial_gap = 0, choices = c("f", "j"))
 
-addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = FALSE, output = TRUE, trigger = NULL, pluginParams = NULL, trial_duration = NULL) {
+addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = NULL, output = TRUE, trigger = NULL, pluginParams = NULL, trial_duration = NULL) {
 
   # trialType is validated against the QCEB trialType registry (mirrors the
   # engine's trialTypeRegistry.js), NOT a hard-coded list, so custom/third-party
@@ -132,6 +132,26 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
     stop("background option must be a valid color.")
   }
 
+  # cursorVisible is three-state (see the emit site below for why NULL is not
+  # simply FALSE). Only the two stated forms are accepted; anything else is a
+  # mistake worth naming rather than coercing.
+  if(!is.null(cursorVisible) &&
+     !(is.logical(cursorVisible) && length(cursorVisible) == 1 && !is.na(cursorVisible))) {
+    stop("cursorVisible option must be NULL (let the trialType decide), TRUE, or FALSE.")
+  }
+
+  # A pointer-driven type answered with the pointer hidden is a screen the
+  # participant cannot complete, and nothing downstream can detect it: the frame
+  # is valid, the plugin loads, and the trial simply never ends. Warn rather than
+  # stop, because a deliberate FALSE is legitimate for a plugin that draws its
+  # own cursor.
+  if(isTRUE(!is.null(cursorVisible) && cursorVisible == FALSE) &&
+     .qcebTrialTypeUsesPointer(trialType)) {
+    warning("Frame '", frameName, "' sets cursorVisible = FALSE on trialType '", trialType,
+            "', which the participant answers with the mouse. The pointer they need in ",
+            "order to respond will be hidden. Use NULL to let the trialType decide.")
+  }
+
   if(is.null(choices)) {
     choices <- character()
   } else if(length(choices) == 1 && choices %in% c("ALL_KEYS", "NO_KEYS")) {
@@ -164,7 +184,19 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
     finalPluginParams$kind <- kind
   }
 
-  tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, background = background, cursorVisible = cursorVisible, output = output)
+  tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, background = background, output = output)
+  # cursorVisible is emitted ONLY when the researcher set it, for the same reason
+  # trial_duration is: omitting the key is how a frame says "not specified", and
+  # the engine answers that from the trialType's own declaration. Writing a
+  # default here instead would put a literal FALSE on every frame, which OUTRANKS
+  # the engine's answer -- so a mouse-driven frame would ship with its pointer
+  # hidden unless the researcher remembered a key they had no reason to think
+  # about. The key is placed where it has always sat, before `output`, so a frame
+  # that does state it produces the shape it always has.
+  if (!is.null(cursorVisible)) {
+    tmpList <- append(tmpList, list(cursorVisible = cursorVisible),
+                      after = which(names(tmpList) == "background"))
+  }
   # trial_duration is emitted ONLY when the researcher set it. Omitting the key
   # is what tells the engine "not specified -- inherit stimulus_duration", so a
   # frame that never mentions it produces exactly the JSON it always has. The
