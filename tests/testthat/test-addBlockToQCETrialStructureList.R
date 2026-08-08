@@ -390,3 +390,72 @@ test_that("randomizeAllTrials is legal without any fixed set", {
     tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
     expect_true(isTRUE(tsl[[1]]$blockIterator$randomizeAllTrials))
 })
+
+# --- randomizeAllTrials vs a set-level entryInstruction ---------------------
+# A set entry screen needs a moment that is the start of a set. Shuffling across
+# sets removes that moment. Same two builders, same blind spot as above.
+#
+# The SET COUNT is the part worth guarding: one set keeps its boundaries under
+# randomizeAllTrials, so its entry screen is legitimate and must not be refused.
+
+.makeEntryInputs <- function(entryA = NULL, entryB = NULL, randAll = TRUE,
+                             twoSets = TRUE) {
+    fr <- addFrameToQCEframeList(
+        trialType = "key", frameName = "fix", stimulus = "+",
+        stimulus_duration = 500, post_trial_gap = 0
+    )
+    scenarios <- addScenarioToQCEscenarioList(NULL, fr, NULL, list(out = "x"), "setA")
+    setInfo   <- addSetToQCEsetInfoList(NULL, scenarios, "setA", 5,
+                                        selectionType = "randomWithoutReplacement",
+                                        entryInstruction = entryA)
+    if (twoSets) {
+        scenarios <- addScenarioToQCEscenarioList(scenarios, fr, NULL, list(out = "y"), "setB")
+        setInfo   <- addSetToQCEsetInfoList(setInfo, scenarios, "setB", 5,
+                                            selectionType = "randomWithoutReplacement",
+                                            entryInstruction = entryB)
+    }
+    blockIter <- createBlockIteratorList(1, randomizeAllTrials = randAll)
+    list(setInfo = setInfo, blockIter = blockIter)
+}
+
+test_that("randomizeAllTrials with a set entryInstruction throws", {
+    inp <- .makeEntryInputs(entryB = "intro.html")
+    expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter),
+                 "randomizeAllTrials.*conflicts with entryInstruction")
+})
+
+test_that("the error names the block, the set and both exits", {
+    inp <- .makeEntryInputs(entryB = "intro.html")
+    err <- tryCatch(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
+                                                     blockName = "myBlock"),
+                    error = function(e) conditionMessage(e))
+    expect_true(grepl("myBlock", err, fixed = TRUE))
+    expect_true(grepl("\"setB\"", err, fixed = TRUE))
+    expect_true(grepl("createBlockIteratorList", err, fixed = TRUE))
+    expect_true(grepl("this block's", err, fixed = TRUE))
+})
+
+test_that("every set carrying one is named, not just the first", {
+    inp <- .makeEntryInputs(entryA = "a.html", entryB = "b.html")
+    err <- tryCatch(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter),
+                    error = function(e) conditionMessage(e))
+    expect_true(grepl("\"setA\", \"setB\"", err, fixed = TRUE))
+})
+
+test_that("a SINGLE-set block keeps its entryInstruction under randomizeAllTrials", {
+    inp <- .makeEntryInputs(entryA = "a.html", twoSets = FALSE)
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
+    expect_equal(tsl[[1]]$setInfo$setA$entryInstruction, "a.html")
+})
+
+test_that("a set entryInstruction is legal without randomizeAllTrials", {
+    inp <- .makeEntryInputs(entryB = "intro.html", randAll = FALSE)
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
+    expect_equal(tsl[[1]]$setInfo$setB$entryInstruction, "intro.html")
+})
+
+test_that("randomizeAllTrials is legal when no set declares one", {
+    inp <- .makeEntryInputs()
+    tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
+    expect_true(isTRUE(tsl[[1]]$blockIterator$randomizeAllTrials))
+})

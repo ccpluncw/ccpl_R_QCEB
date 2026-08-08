@@ -122,6 +122,43 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
     }
   }
 
+  # A set-level entryInstruction is a screen shown at the moment a set begins.
+  # randomizeAllTrials interleaves every set's trials into one sequence, so no
+  # such moment exists and the screen has nowhere to go: the engine runs the
+  # block without it.
+  #
+  # Only at TWO OR MORE sets. A single-set block keeps its boundaries under
+  # randomizeAllTrials -- the set's extent is the block's, and there is no
+  # cross-set boundary for shuffling to erase -- so it keeps its entry screen
+  # and must not be refused here.
+  #
+  # As with the check above, neither builder can see this on its own:
+  # addSetToQCEsetInfoList holds the instruction and createBlockIteratorList
+  # holds the shuffle. This is the first function holding both.
+  #
+  # The engine refuses the same combination at session start, along with the
+  # other set-boundary features it can see there (boundary-anchored pages and
+  # cards, and a set-end hook). Those three are declared outside this function
+  # and cannot be checked from here, so this is a partial mirror by design: it
+  # catches the one half that is expressible at build time and the engine
+  # remains the authority on the rest.
+  if (isTRUE(unlist(QCEblockIteratorList$randomizeAllTrials)[1]) &&
+      length(QCEsetInfoList) > 1) {
+    entrySets <- names(QCEsetInfoList)[vapply(QCEsetInfoList, function (s) {
+      !is.null(s$entryInstruction)
+    }, logical(1))]
+    if (length(entrySets) > 0) {
+      stop("Block \"", blockName, "\": randomizeAllTrials = TRUE across ",
+           length(QCEsetInfoList), " sets conflicts with entryInstruction on set(s): ",
+           paste0("\"", entrySets, "\"", collapse = ", "), ". ",
+           "Shuffling across sets interleaves their trials, so there is no moment ",
+           "that is the start of a set and the screen cannot be placed. ",
+           "Either set randomizeAllTrials = FALSE in createBlockIteratorList, so the ",
+           "sets keep their boundaries, or pass the screen as this block's ",
+           "entryInstruction here instead of the set's.")
+    }
+  }
+
   tmpList <- list(blockNumber = blockNumber, setInfo = QCEsetInfoList, blockIterator = QCEblockIteratorList, blockName = blockName)
   if (!is.null(trigger)) {
     tmpList$trigger <- trigger
