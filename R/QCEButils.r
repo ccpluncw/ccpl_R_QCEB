@@ -413,7 +413,14 @@ validateQCEwhereFilter <- function(where, label) {
 # misspelling, and a misspelled key is DROPPED SILENTLY -- the gate then runs
 # with a policy nobody wrote. Kept as data so the check cannot drift from the
 # validators beside it.
-.qcebGateKeys <- c("formula", "gateFn", "combinator", "noCreditMsg",
+#
+# ⚠ THIS LIST MUST TRACK THE ENGINE, or the warning it feeds accuses valid
+# configs: a key the engine reads but this list omits is reported as one "the
+# engine will ignore", and a builder who believes that removes a working part
+# of their gate. That happened -- creditMsg, unscoredMsg and scoredBy were
+# all engine-read and all missing here.
+.qcebGateKeys <- c("formula", "gateFn", "combinator", "scoredBy",
+                   "creditMsg", "noCreditMsg", "unscoredMsg",
                    "attemptsAllowed", "retryPrompt", "supersededMsg",
                    "duplicateMsg")
 

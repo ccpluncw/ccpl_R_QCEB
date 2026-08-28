@@ -250,13 +250,46 @@ test_that("the attempts policy is checked on a formula gate too, not just gateFn
 test_that("a stated gate message may not be empty", {
   # ⚠ duplicateMsg joined the other two: the engine has always read it, so a
   # study could set it, and it reached the participant on exactly the same
-  # screen with none of the same checking.
-  for (m in c("noCreditMsg", "supersededMsg", "duplicateMsg")) {
+  # screen with none of the same checking. creditMsg and unscoredMsg joined
+  # for the same reason -- every message the engine can show is checked the
+  # same way, because every one reaches a participant at the moment they are
+  # being told what happened to their credit.
+  for (m in c("creditMsg", "noCreditMsg", "unscoredMsg",
+              "supersededMsg", "duplicateMsg")) {
     cfg <- list(gateFn = "f"); cfg[[m]] <- ""
     expect_error(buildQCEexpDbFile(expName = "e1", completionGate = cfg), m)
   }
-  # Absent is fine -- the engine supplies its own default.
+  # Absent is fine -- the engine supplies its own default (or, for creditMsg,
+  # shows no grant screen at all).
   expect_silent(buildQCEexpDbFile(expName = "e1", completionGate = list(gateFn = "f")))
+})
+
+test_that("creditMsg, unscoredMsg and scoredBy are KNOWN gate keys", {
+  # ⚠⚠ THE SAME DEFECT AS duplicateMsg, CAUGHT THE SAME WAY, ONE ROW DOWN.
+  # The engine reads all three, but they were missing from the key list here,
+  # so a study that set creditMsg was told the engine would ignore it --
+  # advice that, if followed, deletes the screen telling a passing
+  # participant they passed. The key list must track the ENGINE's reads, not
+  # the subset this package has had reason to validate.
+  cfg <- list(gateFn = "f", creditMsg = "you passed",
+              unscoredMsg = "left for review", scoredBy = "client")
+  expect_silent(buildQCEexpDbFile(expName = "e1", completionGate = cfg))
+  built <- buildQCEexpDbFile(expName = "e1", completionGate = cfg)$completionGate
+  expect_equal(built$creditMsg,   "you passed")
+  expect_equal(built$unscoredMsg, "left for review")
+  expect_equal(built$scoredBy,    "client")
+})
+
+test_that("scoredBy accepts only the two values the engine accepts", {
+  for (ok in c("client", "server")) {
+    expect_silent(buildQCEexpDbFile(expName = "e1",
+      completionGate = list(gateFn = "f", scoredBy = ok)))
+  }
+  for (bad in list("Server", "auto", 1, c("client", "server"))) {
+    cfg <- list(gateFn = "f"); cfg$scoredBy <- bad
+    expect_error(buildQCEexpDbFile(expName = "e1", completionGate = cfg),
+                 "scoredBy")
+  }
 })
 
 test_that("a misspelled gate key warns instead of vanishing", {
@@ -276,7 +309,9 @@ test_that("a misspelled gate key warns instead of vanishing", {
   expect_silent(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "mean", column = "rt", op = ">=", value = 1)),
-                            combinator = "any", noCreditMsg = "no",
+                            combinator = "any", scoredBy = "client",
+                            creditMsg = "yes", noCreditMsg = "no",
+                            unscoredMsg = "pending",
                             supersededMsg = "already", attemptsAllowed = 2,
                             retryPrompt = .promptOK)))
 })
