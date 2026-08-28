@@ -1,7 +1,7 @@
 # QCEB Builder Reference
 
 > **Targets:** QCEP engine **v9.1** · QCEP engine specification (`QCEP_SPEC.md`
-> in the QCEP repository) **v0.1** · QCEB package **0.0.1**.
+> in the QCEP repository) **v0.2** · QCEB package **0.0.3**.
 > If any of those move, regenerate and re-verify this document.
 
 This is the reference for building QCEP experiment configurations with the
