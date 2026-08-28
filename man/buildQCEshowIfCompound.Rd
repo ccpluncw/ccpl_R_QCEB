@@ -11,9 +11,8 @@ buildQCEshowIfCompound(kind, conditions)
 (at least one child must be true).}
 
 \item{conditions}{A list() of conditions or compounds. Each element must
-  have the right shape (output of buildQCEshowIfCondition or
-  buildQCEshowIfCompound). At least one element required.
-'}
+have the right shape (output of buildQCEshowIfCondition or
+buildQCEshowIfCompound). At least one element required.}
 }
 \value{
 A list of the form list(all = list(c1, c2, ...)) or

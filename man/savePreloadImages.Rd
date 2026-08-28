@@ -2,19 +2,18 @@
 % Please edit documentation in R/savePreloadImages.r
 \name{savePreloadImages}
 \alias{savePreloadImages}
-\title{This  function is used to save the QCEdbFileList to dbfile.json}
+\title{This function is used to write an image-only preload manifest to preloadFile.json}
 \usage{
 savePreloadImages(imageFileArray)
 }
 \arguments{
-\item{imageFileArray}{An array of the image filenames (plus paths) that need to be preloaded.
-'}
+\item{imageFileArray}{An array of the image filenames (plus paths) that need to be preloaded.}
 }
 \value{
 the json data
 }
 \description{
-Function that save the QCEdbFileList to dbfile.json.
+Function that writes the list of image files the experiment should preload to preloadFile.json in the working directory. LEGACY FORMAT WRITER: the output is wrapped in a JavaScript assignment (`var preloadImages =`) rather than being plain JSON, so an engine that requires plain JSON cannot load it. Use savePreloadFiles() for current engines.
 }
 \examples{
 savePreloadImages (imageFileArray)

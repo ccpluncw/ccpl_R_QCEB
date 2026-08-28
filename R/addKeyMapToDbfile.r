@@ -26,7 +26,7 @@
 #'   reference this keyMap (via the new `keyMapName` argument on
 #'   addBlockToQCETrialStructureList).
 #' @param entry A keyMap entry list (output of buildQCEkeyMapEntry).
-#''
+#'
 #' @return The updated QCEdbfile, with the new keyMap registered under
 #'   `$keyMaps[[name]]`.
 #' @keywords QCE keyMap dbfile dynamic

@@ -12,8 +12,7 @@ buildQCEswitchThreshold(values, rule = "fixed")
 exactly 2 for "randomIntBetween" (interpreted as [lo, hi]).}
 
 \item{rule}{Single string. One of "fixed", "randomFromList",
-  "randomIntBetween". DEFAULT = "fixed".
-'}
+"randomIntBetween". DEFAULT = "fixed".}
 }
 \value{
 A list of the form list(values, rule), shape-validated.

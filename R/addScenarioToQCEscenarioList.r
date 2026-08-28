@@ -1,14 +1,15 @@
 #' This  function is used to create or modify a QCEScenarioList
 #'
 #' Function that creates or modifys an QCEScenarioList by adding scenarios to the list one at a time.
-#' @param QCEScenarioList A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEScenarioList that you are adding an effect to. DEFAULT = NULL
+#' @param QCEScenarioList A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).  REQUIRED -- this argument has no default: pass NULL explicitly to start a new list, or pass the QCEScenarioList you are adding this scenario to.
 #' @param QCEframeList A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.
+#' @param QCEfeebackList A feedback list, from createFeedbackList(), giving the feedback shown for this scenario's response. Note the spelling of the argument name, which is retained for backward compatibility. Pass createFeedbackList() with no keys added for a scenario that shows no feedback.
 #' @param QCEoutvariableList A list of variable names and their contents that will be output in the datafile for this trial.  DEFAULT = NULL.
 #' @param setName A string that specifies the name of the set that this scenario belongs to.  Set names are used for selecting scenarios to show participants.  The rules are set in trialStructure.json.
 #' @param trigger Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this trial's boundaries -- onset fires on the scenario's first frame; offset fires on the response frame. NULL means no trial-level triggers. Recommended code range: 1000-9999 (4 digits). DEFAULT = NULL.
 #' @param stimRef Optional single string -- a data-lookup tag for this scenario. When this scenario completes at runtime, its trial data is recorded under this tag in qceState.conditions.dataIndex. Other scenarios/sets/blocks with a `showIf` referencing this stimRef will read that data. Most scenarios don't need a stimRef; only tag the ones whose data drives downstream conditional logic. DEFAULT = NULL.
 #' @param showIf Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this scenario runs at all. Evaluated at trial entry -- if FALSE, the scenario is skipped entirely. NULL means always show. DEFAULT = NULL.
-#''
+#'
 #' @return the updated QCEScenarioList
 #' @keywords QCE QCEScenarioList update add scenario
 #' @export

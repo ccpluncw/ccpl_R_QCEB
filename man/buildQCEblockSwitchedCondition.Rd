@@ -11,8 +11,7 @@ buildQCEblockSwitchedCondition(blockRef, operator)
 switch status the condition reads. Must match a `blockName` declared
 on an earlier addBlockToQCETrialStructureList call.}
 
-\item{operator}{Single string. One of: switchFired, switchNotFired.
-'}
+\item{operator}{Single string. One of: switchFired, switchNotFired.}
 }
 \value{
 A list of the form list(blockRef, operator), shape-compatible

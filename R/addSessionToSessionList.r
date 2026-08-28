@@ -6,9 +6,9 @@
 #' @param sessionName A string used to label this session.  It is output in the dataFile.  DEFAULT = "unspecified".
 #' @param dbFile A string that specifies the name of the dbfile that contains necessary information for this session. DEFAULT = "dbfile.txt".
 #' @param tsFile A string that specifies the name of the trial structure file for this session. DEFAULT = "tsFile.txt".
-#' @param stimFile A string that specifies the name of the stimFile (that contains the scenarios) for this session. DEFAULT = "stimFile.txt".
+#' @param stimFile A string that specifies the name of the stimFile (that contains the scenarios) for this session. DEFAULT = "stimulus.txt".
 #' @param plugins Optional character vector of custom plugin names to load for this session (e.g. c("survey")). Each name must correspond to a plugin registered in the deployment's pluginManifest.json; the engine's validateTrialTypes confirms at session start that every non-core trialType used by the session is covered by a loaded plugin. Emitted as the session's "plugins" array only when provided, so legacy sessions produce byte-identical JSON. DEFAULT = NULL (no custom plugins).
-#''
+#'
 #' @return the updated QCEsessionList
 #' @keywords QCE QCEsessionList update add
 #' @export

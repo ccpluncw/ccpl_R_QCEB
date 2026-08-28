@@ -7,8 +7,7 @@
 buildKeyMap(dfKeys)
 }
 \arguments{
-\item{dfKeys}{A dataframe in which each column specifies a key definition.  The column name is the keyMeaning and the column contents contains caracters representing the keys that map to that meaning.  The number of columns indicates the number of defined keys.
-'}
+\item{dfKeys}{A dataframe in which each column specifies a key definition.  The column name is the keyMeaning and the column contents contains caracters representing the keys that map to that meaning.  The number of columns indicates the number of defined keys.}
 }
 \value{
 the  QCEkeyMap

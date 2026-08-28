@@ -7,8 +7,7 @@
 isColor(input)
 }
 \arguments{
-\item{input}{A variable to be tested.
-'}
+\item{input}{A variable to be tested.}
 }
 \value{
 a boolean (TRUE or FALSE) identifying whether the input contains a valid color (TRUE) or not (FALSE)

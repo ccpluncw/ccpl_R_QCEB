@@ -24,8 +24,7 @@ addSetToQCEsetInfoListOldDep(
 
 \item{selectionType}{One of "randomWithoutReplacement" (default), "randomWithReplacement", "fixed".}
 
-\item{trigger}{Optional named list of trigger objects keyed by setName.
-'}
+\item{trigger}{Optional named list of trigger objects keyed by setName.}
 }
 \value{
 The updated QCEsetInfoList.

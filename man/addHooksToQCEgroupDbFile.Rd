@@ -23,12 +23,11 @@ the hooks will write to `qceState.custom`, used for static validation of
 warns rather than errors on unknown stateRefs). DEFAULT = NULL.}
 
 \item{customHooksColumns}{Optional character vector of the data columns the
-  hooks will write via `dataAnnotations`. Declaring them lets
-  buildQCEoutputFieldManifest report them and missingQCEoutputFields fail a
-  build when `fields.txt` does not carry one -- without this the columns are
-  invisible to every check, because they exist only inside JavaScript.
-  NULL means undeclared. DEFAULT = NULL.
-'}
+hooks will write via `dataAnnotations`. Declaring them lets
+buildQCEoutputFieldManifest report them and missingQCEoutputFields fail a
+build when `fields.txt` does not carry one -- without this the columns are
+invisible to every check, because they exist only inside JavaScript.
+NULL means undeclared. DEFAULT = NULL.}
 }
 \value{
 The updated QCEdbfile, with `$customHooksFile` set (and

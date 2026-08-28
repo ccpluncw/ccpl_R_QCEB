@@ -10,7 +10,7 @@
 #' @param conditions A list() of conditions or compounds. Each element must
 #'   have the right shape (output of buildQCEshowIfCondition or
 #'   buildQCEshowIfCompound). At least one element required.
-#''
+#'
 #' @return A list of the form list(all = list(c1, c2, ...)) or
 #'   list(any = list(c1, c2, ...)).
 #' @keywords QCE showIf condition compound dynamic

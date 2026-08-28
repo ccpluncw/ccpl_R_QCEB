@@ -15,8 +15,7 @@ addBlockToQCETrialStructureListDep(
 
 \item{QCEsetInfoList}{A list that specifies the the setInfo information.  This includes, for each setName, : N (the number of trials per set) and selection (the method of selecting the scenarios from the QCEScenarioList).}
 
-\item{QCEblockIteratorList}{A list that specifies the the block iteration information.  This includes, for each block, the number of times to repeat each block, and the presentation order of the sets and trials.
-'}
+\item{QCEblockIteratorList}{A list that specifies the the block iteration information.  This includes, for each block, the number of times to repeat each block, and the presentation order of the sets and trials.}
 }
 \value{
 the updated QCETrialStructureList

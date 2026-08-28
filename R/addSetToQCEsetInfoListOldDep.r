@@ -15,7 +15,7 @@
 #' @param numberOfTrialsPerSet Single integer or vector parallel to setName.
 #' @param selectionType One of "randomWithoutReplacement" (default), "randomWithReplacement", "fixed".
 #' @param trigger Optional named list of trigger objects keyed by setName.
-#''
+#'
 #' @return The updated QCEsetInfoList.
 #' @keywords QCE QCEsetInfoList deprecated
 #' @export

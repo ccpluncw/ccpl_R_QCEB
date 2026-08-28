@@ -2,7 +2,7 @@
 % Please edit documentation in R/savePreloadFiles.r
 \name{savePreloadFiles}
 \alias{savePreloadFiles}
-\title{This  function is used to save the QCEdbFileList to dbfile.json}
+\title{This function is used to write the preload manifest to preloadFile.json}
 \usage{
 savePreloadFiles(
   imageFileArray = NULL,
@@ -15,17 +15,16 @@ savePreloadFiles(
 
 \item{videoFileArray}{An array of the video filenames (plus paths) that need to be preloaded.}
 
-\item{audioFileArray}{An array of the audio filenames (plus paths) that need to be preloaded.
-'}
+\item{audioFileArray}{An array of the audio filenames (plus paths) that need to be preloaded.}
 }
 \value{
 the json data
 }
 \description{
-Function that save the QCEdbFileList to dbfile.json.
+Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory.
 }
 \examples{
-savePreloadImages (imageFileArray)
+savePreloadFiles (imageFileArray, videoFileArray, audioFileArray)
 }
 \keyword{QCE}
 \keyword{images}

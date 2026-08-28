@@ -7,8 +7,7 @@
 createQCEoutputVariableList(dfVars)
 }
 \arguments{
-\item{dfKeys}{A dataframe in which each column specifies an column and value to output into the datafile for this trial.  The column name is the column name used in the datafile.  The column contents is the value inserted in the datafile.  These output variables are convenient ways to code your trials and stimuli because the stimuli are not output in the datafile.
-'}
+\item{dfVars}{A dataframe in which each column specifies an column and value to output into the datafile for this trial.  The column name is the column name used in the datafile.  The column contents is the value inserted in the datafile.  These output variables are convenient ways to code your trials and stimuli because the stimuli are not output in the datafile.}
 }
 \value{
 the  QCEoutputVariableList

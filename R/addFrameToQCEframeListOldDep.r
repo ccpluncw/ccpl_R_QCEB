@@ -11,7 +11,7 @@
 #' @param choices A vector of characters or keyCodes that specifies the allowable keys to be accepted as a response.  If “choices” is NULL, then all keys are allowed.  “choices” should be NULL if trialType = textbox.  choices does not control the keys that can be pressed to input a value into the textbox.  That is controlled by the html input code used to create the textbox.  DEFAULT = NULL.
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
 #' @param outut a boolean that specifies whether to output the data from the frame into the dataset. Manytimes frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.
-#''
+#'
 #' (DEPRECATED — pre-v7) Use addFrameToQCEframeList() instead. This name is preserved for archival reference only; the active canonical is addFrameToQCEframeList() (unsuffixed), which has a superset of this signature.
 #'
 #' @return the updated QCEframeList

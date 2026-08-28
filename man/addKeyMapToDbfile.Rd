@@ -13,8 +13,7 @@ addKeyMapToDbfile(QCEdbfile, name, entry)
 reference this keyMap (via the new `keyMapName` argument on
 addBlockToQCETrialStructureList).}
 
-\item{entry}{A keyMap entry list (output of buildQCEkeyMapEntry).
-'}
+\item{entry}{A keyMap entry list (output of buildQCEkeyMapEntry).}
 }
 \value{
 The updated QCEdbfile, with the new keyMap registered under

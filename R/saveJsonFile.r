@@ -1,12 +1,13 @@
-#' This  function is used to save the QCEdbFileList to dbfile.json
+#' This function writes any QCEB configuration list to a JSON file
 #'
-#' Function that save the QCEdbFileList to dbfile.json.
-#' @param myQCEScenarioList A list that specifies the experiment level options of QCEB.
-#''
+#' Function that serializes a QCEB configuration list to plain JSON and writes it to a named file. This is the writer for every configuration file a build produces -- Stimfile, Tsfile, group dbfile, experiment dbfile and expInfo alike.
+#' @param data The list to serialize. Any QCEB configuration list.
+#' @param filename A string giving the path of the file to write. The file is overwritten.
+#'
 #' @return the json data
-#' @keywords QCE QCEdbFileList save dbFile
+#' @keywords QCE save json
 #' @export
-#' @examples saveDbFile (myQCEdbFileList)
+#' @examples saveJsonFile (myQCEdbFileList, "expDBfile.json")
 
 saveJsonFile <- function (data, filename) {
 

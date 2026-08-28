@@ -28,14 +28,13 @@ increments only on scenarios containing a key-response frame.
 NULL means no reminders. DEFAULT = NULL.}
 
 \item{instructionFile}{Optional single string -- filename of an HTML
-  page describing this keyMap to the participant. The engine pushes
-  this as a jsPsychExternalHtml trial at the first block that uses
-  this keyMap (and at any subsequent block that switches TO this
-  keyMap from a different one). The HTML file must contain a button
-  with id="continue" (legacy convention; Phase 5.5 forms refactor
-  will harmonize). When NULL, the engine generates a basic table from
-  the map -- usable but limited. DEFAULT = NULL.
-'}
+page describing this keyMap to the participant. The engine pushes
+this as a jsPsychExternalHtml trial at the first block that uses
+this keyMap (and at any subsequent block that switches TO this
+keyMap from a different one). The HTML file must contain a button
+with id="continue" (legacy convention; Phase 5.5 forms refactor
+will harmonize). When NULL, the engine generates a basic table from
+the map -- usable but limited. DEFAULT = NULL.}
 }
 \value{
 A named-keyMap entry list of the shape consumed by

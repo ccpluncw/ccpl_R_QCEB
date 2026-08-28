@@ -7,8 +7,7 @@
 readQCEBjsonFileToList(filename)
 }
 \arguments{
-\item{filename}{A string specifying the name of the QCEB json file.
-'}
+\item{filename}{A string specifying the name of the QCEB json file.}
 }
 \value{
 the json data in a list structure

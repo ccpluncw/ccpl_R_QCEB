@@ -20,6 +20,8 @@ addFixationToQCEframeList(
 \arguments{
 \item{QCEframeList}{A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEframeList that you are adding an effect to. DEFAULT = NULL}
 
+\item{frameSymbol}{A string that specifies the character symbol to use for the fixation. DEFAULT = "+"}
+
 \item{fixationFontSize}{A string that specifies the font size of the fixation. Font size is specified by an integer followed by px. For example, "50px" DEFAULT = "50px"}
 
 \item{fixationColor}{an RGB color, specified in hexadecimal, that controls the color of the fixation symbol. DEFAULT = "#FF6464" (reddish).}
@@ -32,14 +34,9 @@ addFixationToQCEframeList(
 
 \item{background}{an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).}
 
-\item{trigger}{Optional list produced by buildQCETriggerList() specifying fNIRS trigger codes that fire at the fixation frame's boundaries — onset in on_start, offset in on_finish. Rarely used at this level for fNIRS (analysts usually mark the stimulus frame, not fixation), but provided for parity with addFrameToQCEframeList. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.
-'}
+\item{output}{a boolean that specifies whether to output the data from the frame into the dataset. Often fixation frames do not need to be output. DEFAULT = FALSE.}
 
-\item{fixationSymbol}{A string that specifies the character symbol to use for the fixation. DEFAULT = "+"}
-
-\item{stimulis}{A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of anykind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and     <input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.}
-
-\item{outut}{a boolean that specifies whether to output the data from the frame into the dataset. Often fixation frames do not need to be output. DEFAULT = FALSE.}
+\item{trigger}{Optional list produced by buildQCETriggerList() specifying fNIRS trigger codes that fire at the fixation frame's boundaries — onset in on_start, offset in on_finish. Rarely used at this level for fNIRS (analysts usually mark the stimulus frame, not fixation), but provided for parity with addFrameToQCEframeList. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.}
 }
 \value{
 the updated QCEframeList

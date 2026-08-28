@@ -11,7 +11,7 @@
 #' @param stimTableWidth An integer specifying the width of the stimuli in the other frames.  This is generally not necessary. Rather, the fixation will be centered on the screen.  DEFAULT = 100.
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
 #' @param outut a boolean that specifies whether to output the data from the frame into the dataset. Often fixation frames do not need to be output. DEFAULT = FALSE.
-#''
+#'
 #' (DEPRECATED — pre-v7) Use addFixationToQCEframeList() instead. This name is preserved for archival reference only; the active canonical is addFixationToQCEframeList() (unsuffixed), which has a superset of this signature.
 #'
 #' @return the updated QCEframeList

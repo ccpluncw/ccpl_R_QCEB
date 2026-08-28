@@ -7,8 +7,7 @@
 getKeyChoicesFromKeyMap(QCEkeyMap)
 }
 \arguments{
-\item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment.
-'}
+\item{QCEkeyMap}{A list that specifies the maping of the keys to their meaning for the experiment.}
 }
 \value{
 the vector of all the allowable keys in the QCEkeyMap

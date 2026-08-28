@@ -21,7 +21,7 @@
 #' @param filename Single string ending in `.js` -- the output filename.
 #'   DEFAULT = "customHooks.js". Must match the name passed to
 #'   addHooksToQCEgroupDbFile.
-#''
+#'
 #' @return (invisibly) the filename written.
 #' @keywords QCE hooks template dynamic
 #' @export

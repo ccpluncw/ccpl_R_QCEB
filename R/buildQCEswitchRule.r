@@ -67,7 +67,7 @@
 #'   uniformly via buildSetNode. If passed, this argument now emits a
 #'   .Deprecated() warning and is dropped from the output rule (not
 #'   serialized to JSON). DEFAULT = NULL.
-#''
+#'
 #' @return A list of the form list(threshold, countResponse, switchToSet, ...)
 #'   with only the supplied fields included (NULL defaults are omitted).
 #' @keywords QCE switchRule dynamic

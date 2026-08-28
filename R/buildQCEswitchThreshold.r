@@ -19,7 +19,7 @@
 #'   exactly 2 for "randomIntBetween" (interpreted as [lo, hi]).
 #' @param rule Single string. One of "fixed", "randomFromList",
 #'   "randomIntBetween". DEFAULT = "fixed".
-#''
+#'
 #' @return A list of the form list(values, rule), shape-validated.
 #' @keywords QCE switchRule threshold dynamic
 #' @export

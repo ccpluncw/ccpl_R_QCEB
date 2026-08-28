@@ -29,16 +29,15 @@ setInfo (the engine validates this at session start). NULL means
 "early-stop without redirect" (Decision 3). DEFAULT = NULL.}
 
 \item{switchInstruction}{DEPRECATED 2026-05-24 (Phase 3.5 Chunk F /
-  Decision 7 close-out). The QCEP engine no longer reads
-  rule.switchInstruction; the field has been removed from the runtime
-  path (rule.fire no longer pushes an instruction trial). The
-  replacement is to declare entryInstruction on the DESTINATION SET via
-  addSetToQCEsetInfoList(..., entryInstruction = c("file.html")). That
-  declaration covers both rule-fire and natural-fallthrough paths
-  uniformly via buildSetNode. If passed, this argument now emits a
-  .Deprecated() warning and is dropped from the output rule (not
-  serialized to JSON). DEFAULT = NULL.
-'}
+Decision 7 close-out). The QCEP engine no longer reads
+rule.switchInstruction; the field has been removed from the runtime
+path (rule.fire no longer pushes an instruction trial). The
+replacement is to declare entryInstruction on the DESTINATION SET via
+addSetToQCEsetInfoList(..., entryInstruction = c("file.html")). That
+declaration covers both rule-fire and natural-fallthrough paths
+uniformly via buildSetNode. If passed, this argument now emits a
+.Deprecated() warning and is dropped from the output rule (not
+serialized to JSON). DEFAULT = NULL.}
 }
 \value{
 A list of the form list(threshold, countResponse, switchToSet, ...)

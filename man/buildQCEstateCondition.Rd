@@ -15,8 +15,7 @@ buildQCEstateCondition(stateRef, operator, value = NULL)
 lessThan, greaterThanOrEqual, lessThanOrEqual, contains, isSet, isNotSet.}
 
 \item{value}{The value to compare against. Required for value-comparison
-  operators; ignored for isSet/isNotSet. DEFAULT = NULL.
-'}
+operators; ignored for isSet/isNotSet. DEFAULT = NULL.}
 }
 \value{
 A list of the form list(stateRef, operator, value) for

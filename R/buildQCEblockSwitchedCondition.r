@@ -29,7 +29,7 @@
 #'   switch status the condition reads. Must match a `blockName` declared
 #'   on an earlier addBlockToQCETrialStructureList call.
 #' @param operator Single string. One of: switchFired, switchNotFired.
-#''
+#'
 #' @return A list of the form list(blockRef, operator), shape-compatible
 #'   with QCEP's evaluateCondition blockRef leaf branch.
 #' @keywords QCE showIf condition blockRef dynamic

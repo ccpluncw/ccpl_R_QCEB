@@ -37,7 +37,7 @@
 #'   lessThan, greaterThanOrEqual, lessThanOrEqual, contains, isSet, isNotSet.
 #' @param value The value to compare against. Required for value-comparison
 #'   operators; ignored for isSet/isNotSet. DEFAULT = NULL.
-#''
+#'
 #' @return A list of the form list(stateRef, operator, value) for
 #'   value-comparison operators, or list(stateRef, operator) for
 #'   isSet/isNotSet.

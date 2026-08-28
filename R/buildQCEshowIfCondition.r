@@ -26,7 +26,7 @@
 #'   stimRef's trial data to read for comparison (e.g., "Response", "RT").
 #'   Required for value-comparison operators; ignored for
 #'   wasShown/wasNotShown. DEFAULT = NULL.
-#''
+#'
 #' @return A list of the form list(stimRef, operator, value, field) for
 #'   value-comparison operators, or list(stimRef, operator) for
 #'   wasShown/wasNotShown.

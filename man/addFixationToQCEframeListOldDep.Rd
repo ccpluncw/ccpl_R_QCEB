@@ -36,7 +36,7 @@ addFixationToQCEframeListOldDep(
 \item{stimulis}{A string that specifies the stimulus to be presented on this frame.  The stimulus must be in html format.  You can use any html codes. IMPORTANT: if the trialType = "key" you cannot have an input box of anykind.  If the trialType is "textbox" you must contain a textbox input field specified in html.  The fields for the html textbox MUST contain the following: <label id = TIN for="Text_In"> and     <input id ="Text_In" …> DEFAULT = NULL. A NULL will present a blank screen.}
 
 \item{outut}{a boolean that specifies whether to output the data from the frame into the dataset. Often fixation frames do not need to be output. DEFAULT = FALSE.
-'
+
 (DEPRECATED — pre-v7) Use addFixationToQCEframeList() instead. This name is preserved for archival reference only; the active canonical is addFixationToQCEframeList() (unsuffixed), which has a superset of this signature.}
 }
 \value{

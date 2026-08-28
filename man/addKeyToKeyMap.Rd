@@ -11,8 +11,7 @@ addKeyToKeyMap(QCEkeyMap = NULL, keyMeaning, keys)
 
 \item{keyMeaning}{A single string that specifies the meaning of the keys. For example, in a target present/target absent experiment, the keyMeaning for one set of keys may be "targetPresent". DEFAULT = NULL}
 
-\item{keys}{A vector of characters that specifies the keys that map to the keyMeaning.  Often these are a single key and it's capital. For example, c("d", "D"). DEFAULT = NULL
-'}
+\item{keys}{A vector of characters that specifies the keys that map to the keyMeaning.  Often these are a single key and it's capital. For example, c("d", "D"). DEFAULT = NULL}
 }
 \value{
 the updated QCEkeyMap

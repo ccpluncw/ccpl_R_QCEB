@@ -21,7 +21,7 @@
 #' @param belowThresholdMessageOutput A string that will be output in the datafile when the current trial's RT is below the RT threshold. DEFAULT = "below".
 #' @param belowStimulusDuration An integer specifying the time, in ms, that the feedback message should be presented when the current trial's RT is below the RT threshold. DEFAULT = NUll.  If NULL, then belowStimulusDuration = 500 if speedThresholdUp = FALSE and belowStimulusDuration = 1 if speedThresholdUp = TRUE.
 #' @param belowPostTrialGap An integer specifying the time, in ms, between the feedback message and the next frame when the current trial's RT is above the RT threshold. DEFAULT = NUll.  If NULL, then belowPostTrialGap = 500 if speedThresholdUp = FALSE and belowPostTrialGap = 1 if speedThresholdUp = TRUE.
-#''
+#'
 #' @return the speedFeedbackList
 #' @keywords QCE speed feedback speedFeedback
 #' @export

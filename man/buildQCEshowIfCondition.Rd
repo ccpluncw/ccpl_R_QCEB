@@ -19,10 +19,9 @@ wasNotShown.}
 operators; ignored for wasShown/wasNotShown. DEFAULT = NULL.}
 
 \item{field}{Single string -- the name of the data field on the referenced
-  stimRef's trial data to read for comparison (e.g., "Response", "RT").
-  Required for value-comparison operators; ignored for
-  wasShown/wasNotShown. DEFAULT = NULL.
-'}
+stimRef's trial data to read for comparison (e.g., "Response", "RT").
+Required for value-comparison operators; ignored for
+wasShown/wasNotShown. DEFAULT = NULL.}
 }
 \value{
 A list of the form list(stimRef, operator, value, field) for

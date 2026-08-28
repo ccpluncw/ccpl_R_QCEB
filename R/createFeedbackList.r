@@ -5,7 +5,7 @@
 #' @param showFeedback A boolean that specifies whether to show feedback to the participant after each trial. DEFAULT = FALSE.
 #' @param stimulus_duration  An integer that specifies how long to present the feedback in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = 500
 #' @param post_trial_gap  An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = 500
-#''
+#'
 #' @return the QCEfeebackList
 #' @keywords QCE feedback list
 #' @export

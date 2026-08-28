@@ -7,8 +7,7 @@
 reverseTwoChoiceFeedbackKey(feedback_key)
 }
 \arguments{
-\item{feedback_key}{A list that specifies the maping of the keys to their feedback text to display to the subject and the feedback text to print in the data file. This is the list that will be returned with the keys and output reversed
-'}
+\item{feedback_key}{A list that specifies the maping of the keys to their feedback text to display to the subject and the feedback text to print in the data file. This is the list that will be returned with the keys and output reversed}
 }
 \value{
 the reversed feedback_key

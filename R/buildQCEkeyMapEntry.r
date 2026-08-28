@@ -37,7 +37,7 @@
 #'   with id="continue" (legacy convention; Phase 5.5 forms refactor
 #'   will harmonize). When NULL, the engine generates a basic table from
 #'   the map -- usable but limited. DEFAULT = NULL.
-#''
+#'
 #' @return A named-keyMap entry list of the shape consumed by
 #'   addKeyMapToDbfile / buildQCEgroupDbFile's keyMaps argument.
 #' @keywords QCE keyMap dbfile dynamic

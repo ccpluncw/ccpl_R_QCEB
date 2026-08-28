@@ -66,8 +66,7 @@ buildSpeedFeedbackList(
 
 \item{belowStimulusDuration}{An integer specifying the time, in ms, that the feedback message should be presented when the current trial's RT is below the RT threshold. DEFAULT = NUll.  If NULL, then belowStimulusDuration = 500 if speedThresholdUp = FALSE and belowStimulusDuration = 1 if speedThresholdUp = TRUE.}
 
-\item{belowPostTrialGap}{An integer specifying the time, in ms, between the feedback message and the next frame when the current trial's RT is above the RT threshold. DEFAULT = NUll.  If NULL, then belowPostTrialGap = 500 if speedThresholdUp = FALSE and belowPostTrialGap = 1 if speedThresholdUp = TRUE.
-'}
+\item{belowPostTrialGap}{An integer specifying the time, in ms, between the feedback message and the next frame when the current trial's RT is above the RT threshold. DEFAULT = NUll.  If NULL, then belowPostTrialGap = 500 if speedThresholdUp = FALSE and belowPostTrialGap = 1 if speedThresholdUp = TRUE.}
 }
 \value{
 the speedFeedbackList

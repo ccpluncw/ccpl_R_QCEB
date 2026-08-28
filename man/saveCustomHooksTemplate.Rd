@@ -8,9 +8,8 @@ saveCustomHooksTemplate(filename = "customHooks.js")
 }
 \arguments{
 \item{filename}{Single string ending in `.js` -- the output filename.
-  DEFAULT = "customHooks.js". Must match the name passed to
-  addHooksToQCEgroupDbFile.
-'}
+DEFAULT = "customHooks.js". Must match the name passed to
+addHooksToQCEgroupDbFile.}
 }
 \value{
 (invisibly) the filename written.

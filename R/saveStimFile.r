@@ -1,8 +1,8 @@
 #' This  function is used to save the QCEScenarioList to stimFile.json
 #'
-#' Function that save the QCEScenarioList to stimFile.json.
+#' Function that save the QCEScenarioList to stimFile.json. LEGACY FORMAT WRITER: the output is wrapped in a JavaScript assignment (`var scenarios =`) rather than being plain JSON, and the output filename is fixed, so an engine that requires plain JSON cannot load what this writes. Use saveJsonFile(data, filename) for current engines.
 #' @param QCEScenarioList A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).
-#''
+#'
 #' @return the json data
 #' @keywords QCE QCEScenarioList update add scenario
 #' @export

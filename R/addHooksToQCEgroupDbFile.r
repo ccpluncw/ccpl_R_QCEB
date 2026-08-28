@@ -45,7 +45,7 @@
 #'   build when `fields.txt` does not carry one -- without this the columns are
 #'   invisible to every check, because they exist only inside JavaScript.
 #'   NULL means undeclared. DEFAULT = NULL.
-#''
+#'
 #' @return The updated QCEdbfile, with `$customHooksFile` set (and
 #'   `$customHooksStateKeys` / `$customHooksColumns` set when supplied).
 #' @keywords QCE hooks dbfile dynamic

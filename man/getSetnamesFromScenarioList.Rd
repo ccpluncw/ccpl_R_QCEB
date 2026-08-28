@@ -7,8 +7,7 @@
 getSetnamesFromScenarioList(QCEScenarioList = NULL)
 }
 \arguments{
-\item{QCEScenarioList}{A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).
-'}
+\item{QCEScenarioList}{A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).}
 }
 \value{
 a vector containing setnames

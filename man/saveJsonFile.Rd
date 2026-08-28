@@ -2,24 +2,24 @@
 % Please edit documentation in R/saveJsonFile.r
 \name{saveJsonFile}
 \alias{saveJsonFile}
-\title{This  function is used to save the QCEdbFileList to dbfile.json}
+\title{This function writes any QCEB configuration list to a JSON file}
 \usage{
 saveJsonFile(data, filename)
 }
 \arguments{
-\item{myQCEScenarioList}{A list that specifies the experiment level options of QCEB.
-'}
+\item{data}{The list to serialize. Any QCEB configuration list.}
+
+\item{filename}{A string giving the path of the file to write. The file is overwritten.}
 }
 \value{
 the json data
 }
 \description{
-Function that save the QCEdbFileList to dbfile.json.
+Function that serializes a QCEB configuration list to plain JSON and writes it to a named file. This is the writer for every configuration file a build produces -- Stimfile, Tsfile, group dbfile, experiment dbfile and expInfo alike.
 }
 \examples{
-saveDbFile (myQCEdbFileList)
+saveJsonFile (myQCEdbFileList, "expDBfile.json")
 }
 \keyword{QCE}
-\keyword{QCEdbFileList}
-\keyword{dbFile}
+\keyword{json}
 \keyword{save}

@@ -9,8 +9,7 @@ isValidFilename(filename, extension)
 \arguments{
 \item{filename}{A variable to be tested.}
 
-\item{extension}{A string that represents the file extension you are testing against (e.g. "html").
-'}
+\item{extension}{A string that represents the file extension you are testing against (e.g. "html").}
 }
 \value{
 a boolean (TRUE or FALSE) identifying whether the input is a valid filename (TRUE) or not (FALSE)

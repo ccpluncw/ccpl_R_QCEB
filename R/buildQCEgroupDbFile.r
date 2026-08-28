@@ -2,7 +2,7 @@
 #'
 #' Function that create a QCEB dbfile.
 #' @param condName A string specifying the condition of that this dbfile represents. It is really just a placeholder that you can use to code anything that you want. It will be output in a column in the datafile. DEFAULT = "defaultCond"
-#' @param QCEkeyMap A list that specifies the maping of the keys to their meaning for the experiment. Create this lise using the buildKeyMap() and addKeytoKeyMap() functions. DEFAULT = NULL
+#' @param keyMap A list that specifies the mapping of the keys to their meaning for the experiment. Create this list using the buildKeyMap() and addKeyToKeyMap() functions. DEFAULT = NULL
 #' @param randomizeKeyMap a Boolean that specifies whether the maping of the keys to their meaning should be randomized everytime the experiment is run. This is useful if you want to randomize the key to meaning mapping for every subject on a single session experiment. DEFAULT = FALSE.
 #' @param presentKeyMapAfterTrialNumbers An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = -1.  If -1, then no reminder will be shown.
 #' @param defaultBackgroundColor an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).
@@ -22,7 +22,7 @@
 #' @param customHooksFile Optional single filename ending in `.js` -- the Phase 5 researcher-authored custom-hooks file (defines the global `QCEPHooks` object). NULL means no hooks (legacy experiments take the byte-identical no-hooks code path). Use saveCustomHooksTemplate() to scaffold the file, and copy it into the experiment directory. For incremental construction, use addHooksToQCEgroupDbFile after this function returns. DEFAULT = NULL.
 #' @param customHooksColumns Optional character vector of the data columns the hooks will write via `dataAnnotations`. Declaring them lets buildQCEoutputFieldManifest report them and missingQCEoutputFields fail a build when fields.txt does not carry one; they are invisible to every check otherwise, existing only inside JavaScript. Only meaningful when customHooksFile is set. DEFAULT = NULL.
 #' @param customHooksStateKeys Optional character vector of state-key names the hooks will write to `qceState.custom`, used by the engine to statically validate `stateRef` showIf conditions (built with buildQCEstateCondition) -- an undeclared stateRef errors at session start as a likely typo. Only meaningful when customHooksFile is set. NULL means no declared keys (engine warns rather than errors on unknown stateRefs). DEFAULT = NULL.
-#''
+#'
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export

@@ -16,9 +16,11 @@ addScenarioToQCEscenarioList(
 )
 }
 \arguments{
-\item{QCEScenarioList}{A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEScenarioList that you are adding an effect to. DEFAULT = NULL}
+\item{QCEScenarioList}{A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial.  It is composed of a series of frames, some potential response, and maybe feedback.  Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).  REQUIRED -- this argument has no default: pass NULL explicitly to start a new list, or pass the QCEScenarioList you are adding this scenario to.}
 
 \item{QCEframeList}{A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.}
+
+\item{QCEfeebackList}{A feedback list, from createFeedbackList(), giving the feedback shown for this scenario's response. Note the spelling of the argument name, which is retained for backward compatibility. Pass createFeedbackList() with no keys added for a scenario that shows no feedback.}
 
 \item{QCEoutvariableList}{A list of variable names and their contents that will be output in the datafile for this trial.  DEFAULT = NULL.}
 
@@ -28,8 +30,7 @@ addScenarioToQCEscenarioList(
 
 \item{stimRef}{Optional single string -- a data-lookup tag for this scenario. When this scenario completes at runtime, its trial data is recorded under this tag in qceState.conditions.dataIndex. Other scenarios/sets/blocks with a `showIf` referencing this stimRef will read that data. Most scenarios don't need a stimRef; only tag the ones whose data drives downstream conditional logic. DEFAULT = NULL.}
 
-\item{showIf}{Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this scenario runs at all. Evaluated at trial entry -- if FALSE, the scenario is skipped entirely. NULL means always show. DEFAULT = NULL.
-'}
+\item{showIf}{Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this scenario runs at all. Evaluated at trial entry -- if FALSE, the scenario is skipped entirely. NULL means always show. DEFAULT = NULL.}
 }
 \value{
 the updated QCEScenarioList

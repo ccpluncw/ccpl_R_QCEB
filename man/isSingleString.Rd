@@ -7,8 +7,7 @@
 isSingleString(input)
 }
 \arguments{
-\item{input}{A variable to be tested.
-'}
+\item{input}{A variable to be tested.}
 }
 \value{
 a boolean (TRUE or FALSE) identifying whether the input contains a single string (TRUE) or not (FALSE)

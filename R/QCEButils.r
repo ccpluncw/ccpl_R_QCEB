@@ -2,7 +2,7 @@
 #'
 #' Function tests whether a variable contains a single string.
 #' @param input A variable to be tested.
-#''
+#'
 #' @return a boolean (TRUE or FALSE) identifying whether the input contains a single string (TRUE) or not (FALSE)
 #' @keywords is string single
 #' @export
@@ -17,7 +17,7 @@ isSingleString <- function(input) {
 #'
 #' Function tests whether a variable contains a single numeric.
 #' @param input A variable to be tested.
-#''
+#'
 #' @return a boolean (TRUE or FALSE) identifying whether the input contains a single numeric (TRUE) or not (FALSE)
 #' @keywords is numeric single
 #' @export
@@ -31,7 +31,7 @@ isSingleNumeric <- function(input) {
 #'
 #' Function tests whether a variable contains a valid color.
 #' @param input A variable to be tested.
-#''
+#'
 #' @return a boolean (TRUE or FALSE) identifying whether the input contains a valid color (TRUE) or not (FALSE)
 #' @keywords is color valid
 #' @export
@@ -48,7 +48,7 @@ isColor <- function(input)
 #' Function tests whether a variable is a valid filename.
 #' @param filename A variable to be tested.
 #' @param extension A string that represents the file extension you are testing against (e.g. "html").
-#''
+#'
 #' @return a boolean (TRUE or FALSE) identifying whether the input is a valid filename (TRUE) or not (FALSE)
 #' @keywords is filename valid
 #' @export

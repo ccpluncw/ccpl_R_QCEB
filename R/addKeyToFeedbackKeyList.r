@@ -5,7 +5,7 @@
 #' @param QCEkeyMapKey A single key definition from the QCEkeyMap.  This is the key that the feedback information will be defined for.  For example, QCEkeyMap[[1]] will define the feedback information for the first key in the keyMap. This option must be input.
 #' @param displayText A string that specifies the text to be displayed to the participant if they press this key in a trial containing this feedback_key list.   The stimulus must be in html format.  You can use any html codes. DEFAULT = NULL
 #' @param outputText A single string that specifies the text to be printed in the datafile to code for the pressing of this key and it's meaning in relation to the trial. For example, in a target present/target absent experiment, the output for pressing this key might be, "correct" whereas the other key might be "incorrect" DEFAULT = NULL.  NULL will result in the keyMeaning being output in the datafile.
-#''
+#'
 #' @return the updated feedback_key
 #' @keywords QCE feedback_key key feedback
 #' @export

@@ -2,7 +2,7 @@
 #'
 #' Function  builds a QCEkeyMap from a dataframe.
 #' @param dfKeys A dataframe in which each column specifies a key definition.  The column name is the keyMeaning and the column contents contains caracters representing the keys that map to that meaning.  The number of columns indicates the number of defined keys.
-#''
+#'
 #' @return the  QCEkeyMap
 #' @keywords QCE QCEkeyMap key definition
 #' @export
