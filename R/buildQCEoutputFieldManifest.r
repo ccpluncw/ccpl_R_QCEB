@@ -18,6 +18,12 @@
 #' config declares a hooks file, the manifest says so explicitly rather than
 #' implying the list is complete.
 #'
+#' Alongside each trial type's columns, the report notes registry metadata worth
+#' seeing at build time: a type registered as mouse-driven (\code{usesPointer})
+#' is flagged, since its frames must leave the cursor visible (see
+#' \code{cursorVisible} on \code{\link{addFrameToQCEframeList}}). These notes are
+#' comment lines only and never enter the \code{fields.txt} comparison.
+#'
 #' @param dir The experiment directory holding the JSON config files.
 #' @param outFile Filename to write the manifest to, inside \code{dir}. Pass NULL
 #'   to return the report without writing it. DEFAULT = "output_fields_manifest.txt".
@@ -203,6 +209,15 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   undeclared <- character(0)
   for (tt in typesUsed) {
     cols <- .qcebTrialTypeOutputColumns(tt)
+    # usesPointer is not a column, but it rides along here so the manifest
+    # reflects the whole registry entry for each type in use: a mouse-driven
+    # type is one whose frames must not hide the cursor (see cursorVisible on
+    # addFrameToQCEframeList). Comment-only, so it can never enter the
+    # fields.txt comparison.
+    if (.qcebTrialTypeUsesPointer(tt)) {
+      typeLines <- c(typeLines,
+                     sprintf("# [%s] is mouse-driven (usesPointer) -- the pointer is shown on its frames unless cursorVisible overrides", tt))
+    }
     if (is.null(cols) && identical(tt, "survey") && length(surveyCols) > 0) {
       # Not undeclared, just not declarable: the columns are the question names,
       # listed under "survey questions" below.

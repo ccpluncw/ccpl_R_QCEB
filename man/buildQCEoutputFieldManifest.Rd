@@ -47,6 +47,12 @@ it means the manifest cannot quietly disagree with the files on disk.
 What it CANNOT see: any column a custom hook writes at run time. When the
 config declares a hooks file, the manifest says so explicitly rather than
 implying the list is complete.
+
+Alongside each trial type's columns, the report notes registry metadata worth
+seeing at build time: a type registered as mouse-driven (\code{usesPointer})
+is flagged, since its frames must leave the cursor visible (see
+\code{cursorVisible} on \code{\link{addFrameToQCEframeList}}). These notes are
+comment lines only and never enter the \code{fields.txt} comparison.
 }
 \examples{
 # After writing an experiment's config files:
