@@ -27,7 +27,7 @@ addSessionToSessionList(
 
 \item{stimFile}{A string that specifies the name of the stimFile (that contains the scenarios) for this session. DEFAULT = "stimulus.txt".}
 
-\item{plugins}{Optional character vector of custom plugin names to load for this session (e.g. c("survey")). Each name must correspond to a plugin registered in the deployment's pluginManifest.json; the engine's validateTrialTypes confirms at session start that every non-core trialType used by the session is covered by a loaded plugin. Emitted as the session's "plugins" array only when provided, so legacy sessions produce byte-identical JSON. DEFAULT = NULL (no custom plugins).}
+\item{plugins}{Optional character vector of custom plugin names to load for this session (e.g. c("survey")). Each name must correspond to a plugin registered in the deployment's central pluginManifest.json, or in the experiment's own pluginManifest.local.json (see \code{savePluginManifestLocal}); a name present in both loads the central entry. The engine's validateTrialTypes confirms at session start that every non-core trialType used by the session is covered by a loaded plugin. Emitted as the session's "plugins" array only when provided, so legacy sessions produce byte-identical JSON. DEFAULT = NULL (no custom plugins).}
 }
 \value{
 the updated QCEsessionList

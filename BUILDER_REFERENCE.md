@@ -1,7 +1,8 @@
 # QCEB Builder Reference
 
-> **Targets:** QCEP engine **v9.1** · QCEP engine specification (`QCEP_SPEC.md`
-> in the QCEP repository) **v0.2** · QCEB package **0.0.3**.
+> **Targets:** QCEP engine **v10.0** (v9.1 is frozen and identical except that
+> it has no experiment-local plugin manifest) · QCEP engine specification
+> (`QCEP_SPEC.md` in the QCEP repository) **v0.4** · QCEB package **0.0.4**.
 > If any of those move, regenerate and re-verify this document.
 
 This is the reference for building QCEP experiment configurations with the
@@ -79,6 +80,36 @@ builds.
 
 The worked examples below show the full pattern end to end.
 
+### Experiment-local plugins (optional; engine 10 only)
+
+A study that needs a trial type the deployment's central plugin manifest does
+not provide can ship the plugin inside its own experiment directory. **This
+requires the engine 10 launcher (`QCEB.10.0.php`)** — the frozen 9.x engines
+ignore the local manifest file, so every plugin it declares fails as unknown
+(the preflight refuses that combination outright). Build the manifest with
+the two builders and declare the plugin name on the session:
+
+```r
+savePluginManifestLocal(list(
+  myTrialType = buildQCElocalPluginEntry(
+    "myTrialTypeRegister.js",              # calls registerTrialType()
+    scriptAssets = c("myTrialTypeBundle.js"),
+    cssAssets    = c("myTrialType.css")
+  )
+))
+# ...and on the session that uses it:
+addSessionToSessionList(..., plugins = c("myTrialType"))
+```
+
+The JS files themselves are deployed alongside the experiment's JSON. The
+engine contract for what those files must implement, and the rules a local
+manifest lives under (additive only — a name that exists centrally loads the
+central entry; every path confined to the experiment directory; no external
+URLs), is in the engine specification's extension-contract section — this
+package only writes the manifest. `savePluginManifestLocal()` serializes
+unboxed on purpose; do not write this file with `saveJsonFile()`, whose boxed
+scalars the engine's manifest reader refuses.
+
 ## Hard rules (violating any of these produces a config the engine misreads or rejects)
 
 1. **Never hand-edit the emitted JSON.** Serialization is part of the
@@ -107,7 +138,7 @@ The worked examples below show the full pattern end to end.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-08-28 — 73 exported functions (66 current, 7 deprecated).*
+*Generated from `man/` on 2026-08-29 — 75 exported functions (68 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -1362,7 +1393,7 @@ Function that creates or modifys an QCEsessionList by adding sessions to the lis
 - `dbFile` — A string that specifies the name of the dbfile that contains necessary information for this session. DEFAULT = "dbfile.txt".
 - `tsFile` — A string that specifies the name of the trial structure file for this session. DEFAULT = "tsFile.txt".
 - `stimFile` — A string that specifies the name of the stimFile (that contains the scenarios) for this session. DEFAULT = "stimulus.txt".
-- `plugins` — Optional character vector of custom plugin names to load for this session (e.g. c("survey")). Each name must correspond to a plugin registered in the deployment's pluginManifest.json; the engine's validateTrialTypes confirms at session start that every non-core trialType used by the session is covered by a loaded plugin. Emitted as the session's "plugins" array only when provided, so legacy sessions produce byte-identical JSON. DEFAULT = NULL (no custom plugins).
+- `plugins` — Optional character vector of custom plugin names to load for this session (e.g. c("survey")). Each name must correspond to a plugin registered in the deployment's central pluginManifest.json, or in the experiment's own pluginManifest.local.json (see `savePluginManifestLocal`); a name present in both loads the central entry. The engine's validateTrialTypes confirms at session start that every non-core trialType used by the session is covered by a loaded plugin. Emitted as the session's "plugins" array only when provided, so legacy sessions produce byte-identical JSON. DEFAULT = NULL (no custom plugins).
 
 **Returns.** the updated QCEsessionList
 
@@ -2122,6 +2153,48 @@ characters -- nothing here has to be escaped or avoided.
 
 **Returns.** A validated anchor list, to be passed to a placement function.
 
+## Other exported functions
+
+### `buildQCElocalPluginEntry`
+
+This function builds one entry for an experiment-local plugin manifest
+
+```r
+buildQCElocalPluginEntry(
+  registerScript,
+  scriptAssets = NULL,
+  cssAssets = NULL,
+  description = NULL
+)
+```
+
+Function that assembles the manifest entry for a plugin that ships inside the experiment directory itself (see `savePluginManifestLocal`). The engine confines every path in a local entry to the experiment directory: each one must be a plain relative path with forward slashes -- no URL, no absolute path, no drive letter, no '..' segment -- and the engine refuses (with a console error) any path that breaks those rules or does not resolve to an existing file inside the directory.
+
+- `registerScript` — A string giving the experiment-relative path of the register script. This script must call `registerTrialType()`; it is loaded after the entry's assets.
+- `scriptAssets` — An optional character vector of experiment-relative paths of script files to load before the register script (a plugin's library bundle, for example), in order.
+- `cssAssets` — An optional character vector of experiment-relative paths of stylesheet files. The engine imports each into its vendor cascade layer, below the experiment's own stylesheet.
+- `description` — An optional string describing the plugin, carried in the manifest for the next reader.
+
+**Returns.** a list holding the manifest entry, ready for `savePluginManifestLocal`
+
+### `savePluginManifestLocal`
+
+This function writes an experiment-local plugin manifest
+
+```r
+savePluginManifestLocal(plugins, filename = "pluginManifest.local.json")
+```
+
+Function that writes `pluginManifest.local.json` into the working directory. The engine loads this file additively beside its central plugin manifest: an experiment can ADD plugins of its own here, but a name that also exists in the central manifest loads the central entry and the local one is ignored with a console error -- a local manifest can never shadow or alter a shared plugin. Declare the plugin name in a session's `plugins` array (see `addSessionToSessionList`) exactly as for a central plugin.
+
+- `plugins` — A named list of manifest entries, one per plugin, each built by `buildQCElocalPluginEntry`. The names are the plugin names sessions declare.
+- `filename` — A string giving the file to write. Defaults to `"pluginManifest.local.json"`, the only name the engine reads; override only to stage the file somewhere else before deployment.
+
+**Details.** 
+The file is serialized with scalars unboxed: the engine reads this manifest directly (no unwrapping layer), so a value written as a one-element array would be refused at run time.
+
+**Returns.** the json data
+
 ## Deprecated — do not use in new code
 
 These remain exported for backward compatibility with existing build
@@ -2323,3 +2396,8 @@ Rules that keep either structure safe:
    self-check, and add `stop()` guards for any invariant your design depends
    on (matched set sizes, referenced HTML files existing, serialization
    round-trips).
+
+## Acknowledgments
+
+*This document was drafted with assistance from Claude (Anthropic). All
+technical content reflects the authors' design decisions and domain expertise.*
