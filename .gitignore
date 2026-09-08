@@ -12,3 +12,6 @@
 # Build artefacts
 *.tar.gz
 *.Rcheck/
+
+# Derived documentation (rendered from BUILDER_REFERENCE.md; never committed)
+BUILDER_REFERENCE.pdf

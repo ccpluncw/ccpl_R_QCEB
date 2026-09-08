@@ -14,12 +14,41 @@
 # (name ending in Dep/OldDep/_7, or a title announcing deprecation) are
 # quarantined in a terminal "do not use" list rather than omitted, so a reader
 # meeting one in an old script can identify it and find the replacement.
+#
+# The script can also render the finished document to PDF. Rendering is
+# OPTIONAL and is delegated to an external renderer, so the package depends on
+# no particular document toolchain. Name one either way:
+#
+#   Rscript tools/generate_api_reference.R --pdf-renderer=<path> [package_root]
+#   QCEB_PDF_RENDERER=<path> Rscript tools/generate_api_reference.R
+#
+# The renderer must be an executable taking exactly two arguments:
+#
+#   <renderer> <input.md> <output.pdf>
+#
+# With no renderer named, nothing is rendered and the script says so. The PDF
+# is a derived artefact written beside the markdown; it is excluded from the
+# package build and from version control, and is never edited by hand.
 
 BEGIN_MARKER <- "<!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->"
 END_MARKER   <- "<!-- END GENERATED API -->"
 
+RENDERER_FLAG <- "--pdf-renderer="
+
 args <- commandArgs(trailingOnly = TRUE)
-pkg_root <- if (length(args) >= 1) args[[1]] else "."
+
+# The renderer flag may appear in any position; the sole remaining positional
+# argument, if there is one, is the package root. A flag on the command line
+# wins over the environment variable.
+is_renderer_flag <- startsWith(args, RENDERER_FLAG)
+renderer <- if (any(is_renderer_flag)) {
+  substring(args[is_renderer_flag][[1]], nchar(RENDERER_FLAG) + 1L)
+} else {
+  Sys.getenv("QCEB_PDF_RENDERER", unset = "")
+}
+positional <- args[!is_renderer_flag]
+
+pkg_root <- if (length(positional) >= 1) positional[[1]] else "."
 man_dir  <- file.path(pkg_root, "man")
 ns_file  <- file.path(pkg_root, "NAMESPACE")
 out_file <- file.path(pkg_root, "BUILDER_REFERENCE.md")
@@ -238,3 +267,45 @@ new_doc <- c(doc[1:begin_at], "", section, doc[end_at:length(doc)])
 writeLines(new_doc, out_file)
 cat(sprintf("Wrote %s: %d current + %d deprecated exported functions.\n",
             out_file, length(live), length(dep)))
+
+## ---- optional PDF render ----------------------------------------------------
+
+# Total pages, read out of the PDF itself: the page-tree root carries a /Count
+# of every page beneath it, so the largest /Count in the file is the document
+# total. Nul bytes are replaced with spaces first so the binary can be scanned
+# as text, and the scan is byte-wise because the rest of the binary is not
+# valid text in any encoding.
+pdf_page_count <- function(path) {
+  bytes <- readBin(path, what = "raw", n = file.info(path)$size)
+  bytes[bytes == as.raw(0)] <- as.raw(32)
+  text <- rawToChar(bytes)
+  hits <- regmatches(
+    text, gregexpr("/Count[ \t\r\n]+[0-9]+", text, useBytes = TRUE))[[1]]
+  if (length(hits) == 0) return(NA_integer_)
+  max(as.integer(sub("^/Count[ \t\r\n]+", "", hits)))
+}
+
+if (!nzchar(renderer)) {
+  cat("No PDF renderer named (", RENDERER_FLAG, "<path> or QCEB_PDF_RENDERER)",
+      " - PDF not rendered.\n", sep = "")
+} else {
+  # Accept either a path to an executable or a name to be found on PATH.
+  resolved <- if (file.exists(renderer)) renderer else unname(Sys.which(renderer))
+  if (!nzchar(resolved)) stop("PDF renderer not found: ", renderer)
+
+  pdf_file <- sub("\\.md$", ".pdf", out_file)
+  # system2() quotes the command for the shell but NOT the arguments, so the
+  # two paths are quoted here and the renderer is passed as-is. Quoting it
+  # again would hand the shell a filename with the quotes inside it.
+  status <- system2(resolved, c(shQuote(out_file), shQuote(pdf_file)))
+  if (status != 0) {
+    stop("PDF renderer exited with status ", status, ": ", resolved)
+  }
+  if (!file.exists(pdf_file)) {
+    stop("PDF renderer reported success but wrote no file: ", pdf_file)
+  }
+
+  pages <- pdf_page_count(pdf_file)
+  cat(sprintf("Wrote %s: %s pages.\n", pdf_file,
+              if (is.na(pages)) "page count unavailable" else pages))
+}
