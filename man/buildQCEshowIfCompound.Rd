@@ -22,7 +22,7 @@ A list of the form list(all = list(c1, c2, ...)) or
 Wraps a list of conditions (each from buildQCEshowIfCondition or another
 buildQCEshowIfCompound for nesting) under an `all` or `any` aggregator,
 matching the compound shape consumed by evaluateCondition in
-customScripts/v9/dynamicEngine.js.
+customScripts/v10/dynamicEngine.js.
 }
 \examples{
 # all-of: smoker AND over18

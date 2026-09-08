@@ -1,7 +1,7 @@
 #' Build a switch-rule threshold specification for QCEP dynamic experiments
 #'
 #' Creates a threshold spec in the shape consumed by the QCEP engine's
-#' resolveThreshold (see customScripts/v9/dynamicEngine.js). The returned
+#' resolveThreshold (see customScripts/v10/dynamicEngine.js). The returned
 #' list is passed to the `threshold` parameter of buildQCEswitchRule.
 #'
 #' Three resolution rules are supported:

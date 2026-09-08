@@ -38,7 +38,7 @@ A list of the form list(watchBlock, threshold, countResponse|countWhen,
 }
 \description{
 Creates a block-switch-rule list in the shape consumed by the QCEP engine's
-executeBlockSwitch (see customScripts/v9.1/dynamicEngine.js, Phase 4 Step 2).
+executeBlockSwitch (see customScripts/v10/dynamicEngine.js).
 The returned list is passed alongside other rules to the `switchRules`
 parameter of \code{\link{addBlockSwitchRulesToQCETrialStructureList}}, which
 attaches them at the TOP LEVEL of the trial structure (not on a block).

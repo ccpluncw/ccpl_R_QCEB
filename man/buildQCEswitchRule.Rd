@@ -45,7 +45,7 @@ A list of the form list(threshold, countResponse, switchToSet, ...)
 }
 \description{
 Creates a switch-rule list in the shape consumed by the QCEP engine's
-executeSwitch (see customScripts/v9/dynamicEngine.js). The returned list
+executeSwitch (see customScripts/v10/dynamicEngine.js). The returned list
 is passed alongside other rules to the `switchRules` parameter of
 addBlockToQCETrialStructureList.
 }
@@ -53,7 +53,7 @@ addBlockToQCETrialStructureList.
 Switch rules govern intra-block flow: when a configurable count condition
 has been met `threshold` times within the currently-watching set, the
 rule fires -- it ends the current set early and (optionally) jumps to a
-destination set. See `customScripts/v9/dynamicEngine.js` for runtime
+destination set. See `customScripts/v10/dynamicEngine.js` for runtime
 semantics; the locked design decisions are summarized in
 `DYNAMIC_EXPERIMENTS_PLAN.md` "JSON Schema Additions".
 

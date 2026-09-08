@@ -1,7 +1,7 @@
 #' Build a single showIf condition for QCEP dynamic experiments
 #'
 #' Creates a condition list in the shape consumed by the QCEP engine's
-#' evaluateCondition (see customScripts/v9/dynamicEngine.js). The returned
+#' evaluateCondition (see customScripts/v10/dynamicEngine.js). The returned
 #' list is passed to the `showIf` parameter of builder functions
 #' (addScenarioToQCEscenarioList, addSetToQCEsetInfoList,
 #' addBlockToQCETrialStructureList) or wrapped by buildQCEshowIfCompound

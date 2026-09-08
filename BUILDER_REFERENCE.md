@@ -138,7 +138,7 @@ scalars the engine's manifest reader refuses.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-08-29 — 75 exported functions (68 current, 7 deprecated).*
+*Generated from `man/` on 2026-09-08 — 75 exported functions (68 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -643,7 +643,7 @@ buildQCEblockSwitchRule(
 ```
 
 Creates a block-switch-rule list in the shape consumed by the QCEP engine's
-executeBlockSwitch (see customScripts/v9.1/dynamicEngine.js, Phase 4 Step 2).
+executeBlockSwitch (see customScripts/v10/dynamicEngine.js).
 The returned list is passed alongside other rules to the `switchRules`
 parameter of `addBlockSwitchRulesToQCETrialStructureList`, which
 attaches them at the TOP LEVEL of the trial structure (not on a block).
@@ -719,7 +719,7 @@ buildQCEshowIfCompound(kind, conditions)
 Wraps a list of conditions (each from buildQCEshowIfCondition or another
 buildQCEshowIfCompound for nesting) under an `all` or `any` aggregator,
 matching the compound shape consumed by evaluateCondition in
-customScripts/v9/dynamicEngine.js.
+customScripts/v10/dynamicEngine.js.
 
 - `kind` — Single string: "all" (every child must be true) or "any" (at least one child must be true).
 - `conditions` — A list() of conditions or compounds. Each element must have the right shape (output of buildQCEshowIfCondition or buildQCEshowIfCompound). At least one element required.
@@ -735,7 +735,7 @@ buildQCEshowIfCondition(stimRef, operator, value = NULL, field = NULL)
 ```
 
 Creates a condition list in the shape consumed by the QCEP engine's
-evaluateCondition (see customScripts/v9/dynamicEngine.js). The returned
+evaluateCondition (see customScripts/v10/dynamicEngine.js). The returned
 list is passed to the `showIf` parameter of builder functions
 (addScenarioToQCEscenarioList, addSetToQCEsetInfoList,
 addBlockToQCETrialStructureList) or wrapped by buildQCEshowIfCompound
@@ -816,7 +816,7 @@ buildQCEswitchRule(
 ```
 
 Creates a switch-rule list in the shape consumed by the QCEP engine's
-executeSwitch (see customScripts/v9/dynamicEngine.js). The returned list
+executeSwitch (see customScripts/v10/dynamicEngine.js). The returned list
 is passed alongside other rules to the `switchRules` parameter of
 addBlockToQCETrialStructureList.
 
@@ -830,7 +830,7 @@ addBlockToQCETrialStructureList.
 Switch rules govern intra-block flow: when a configurable count condition
 has been met `threshold` times within the currently-watching set, the
 rule fires -- it ends the current set early and (optionally) jumps to a
-destination set. See `customScripts/v9/dynamicEngine.js` for runtime
+destination set. See `customScripts/v10/dynamicEngine.js` for runtime
 semantics; the locked design decisions are summarized in
 `DYNAMIC_EXPERIMENTS_PLAN.md` "JSON Schema Additions".
 
@@ -879,7 +879,7 @@ buildQCEswitchThreshold(values, rule = "fixed")
 ```
 
 Creates a threshold spec in the shape consumed by the QCEP engine's
-resolveThreshold (see customScripts/v9/dynamicEngine.js). The returned
+resolveThreshold (see customScripts/v10/dynamicEngine.js). The returned
 list is passed to the `threshold` parameter of buildQCEswitchRule.
 
 - `values` — Numeric vector. Length depends on rule: 1+ for "fixed" (only first element is used) and "randomFromList"; exactly 2 for "randomIntBetween" (interpreted as [lo, hi]).

@@ -30,7 +30,7 @@ A list of the form list(stimRef, operator, value, field) for
 }
 \description{
 Creates a condition list in the shape consumed by the QCEP engine's
-evaluateCondition (see customScripts/v9/dynamicEngine.js). The returned
+evaluateCondition (see customScripts/v10/dynamicEngine.js). The returned
 list is passed to the `showIf` parameter of builder functions
 (addScenarioToQCEscenarioList, addSetToQCEsetInfoList,
 addBlockToQCETrialStructureList) or wrapped by buildQCEshowIfCompound

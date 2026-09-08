@@ -3,7 +3,7 @@
 #' Wraps a list of conditions (each from buildQCEshowIfCondition or another
 #' buildQCEshowIfCompound for nesting) under an `all` or `any` aggregator,
 #' matching the compound shape consumed by evaluateCondition in
-#' customScripts/v9/dynamicEngine.js.
+#' customScripts/v10/dynamicEngine.js.
 #'
 #' @param kind Single string: "all" (every child must be true) or "any"
 #'   (at least one child must be true).
