@@ -8,7 +8,7 @@
 #' simply never called.
 #'
 #' The template documents, against the engine as built, each hook's exact
-#' arguments, the shared `ctx` object ({qceState, scenarios, dbConfig}), the
+#' arguments, the shared `ctx` object (\{qceState, scenarios, dbConfig\}), the
 #' recognized return values, and the hook->state->showIf channel (write
 #' `ctx.qceState.custom[key]`, then gate a scenario/set/block with
 #' buildQCEstateCondition). It also includes the stimulus-summary onBlockEnd
