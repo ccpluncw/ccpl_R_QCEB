@@ -26,9 +26,10 @@
 #
 #   <renderer> <input.md> <output.pdf>
 #
-# With no renderer named, nothing is rendered and the script says so. The PDF
-# is a derived artefact written beside the markdown; it is excluded from the
-# package build and from version control, and is never edited by hand.
+# With no renderer named, nothing is rendered and the script says so; the flag
+# present but EMPTY is an error rather than a way to say that. The PDF is a
+# derived artefact written beside the markdown; it is excluded from the package
+# build and from version control, and is never edited by hand.
 
 BEGIN_MARKER <- "<!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->"
 END_MARKER   <- "<!-- END GENERATED API -->"
@@ -42,7 +43,16 @@ args <- commandArgs(trailingOnly = TRUE)
 # wins over the environment variable.
 is_renderer_flag <- startsWith(args, RENDERER_FLAG)
 renderer <- if (any(is_renderer_flag)) {
-  substring(args[is_renderer_flag][[1]], nchar(RENDERER_FLAG) + 1L)
+  named <- substring(args[is_renderer_flag][[1]], nchar(RENDERER_FLAG) + 1L)
+  # An empty value is refused rather than treated as "skip rendering". It is
+  # far more often a mis-expanded shell variable than an intention, and
+  # accepting it would let a broken command line silently override a perfectly
+  # good QCEB_PDF_RENDERER. Omitting the flag is how you ask for no PDF.
+  if (!nzchar(named)) {
+    stop(RENDERER_FLAG, " was given with an empty value. Name a renderer, or ",
+         "omit the flag entirely to skip rendering.")
+  }
+  named
 } else {
   Sys.getenv("QCEB_PDF_RENDERER", unset = "")
 }
@@ -294,6 +304,15 @@ if (!nzchar(renderer)) {
   if (!nzchar(resolved)) stop("PDF renderer not found: ", renderer)
 
   pdf_file <- sub("\\.md$", ".pdf", out_file)
+
+  # Remove any earlier PDF BEFORE rendering, so every check below tests what
+  # this run produced. A renderer that exits 0 without writing anything would
+  # otherwise leave the previous PDF standing, satisfy the existence check, and
+  # report a stale document as freshly rendered.
+  if (file.exists(pdf_file) && unlink(pdf_file) != 0) {
+    stop("Could not remove the previous PDF: ", pdf_file)
+  }
+
   # system2() quotes the command for the shell but NOT the arguments, so the
   # two paths are quoted here and the renderer is passed as-is. Quoting it
   # again would hand the shell a filename with the quotes inside it.
@@ -305,7 +324,13 @@ if (!nzchar(renderer)) {
     stop("PDF renderer reported success but wrote no file: ", pdf_file)
   }
 
+  # A file whose page tree cannot be read is not a PDF this script will vouch
+  # for. Reporting the count as unavailable would announce a successful render
+  # of something unreadable, so it is a failure instead. The unreadable file is
+  # left on disk for diagnosis; the next run removes it before rendering.
   pages <- pdf_page_count(pdf_file)
-  cat(sprintf("Wrote %s: %s pages.\n", pdf_file,
-              if (is.na(pages)) "page count unavailable" else pages))
+  if (is.na(pages)) {
+    stop("PDF renderer wrote a file with no readable page count: ", pdf_file)
+  }
+  cat(sprintf("Wrote %s: %d pages.\n", pdf_file, pages))
 }
