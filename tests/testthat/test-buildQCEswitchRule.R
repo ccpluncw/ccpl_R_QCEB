@@ -35,7 +35,7 @@ test_that("countWhen full form produces threshold + countWhen", {
     expect_null(r$switchToSet)
 })
 
-# test removed 2026-05-24 -- Phase 3.5 Chunk F removed switchInstruction
+# test removed -- switchInstruction was removed from the engine
 # from engine, Chunk G deprecated the arg on this builder. New deprecation
 # tests appended at the bottom of the file.
 
@@ -250,7 +250,7 @@ test_that("JSON round-trip preserves countWhen-form rule shape", {
 })
 
 
-# --- Phase 3.5 Chunk F: switchInstruction deprecation ---
+# --- switchInstruction deprecation ---
 
 test_that("switchInstruction: passing it emits .Deprecated warning", {
     expect_warning(
@@ -258,7 +258,7 @@ test_that("switchInstruction: passing it emits .Deprecated warning", {
                             threshold = buildQCEswitchThreshold(values = 5, rule = "fixed"),
                             switchToSet = "SetB",
                             switchInstruction = "switch_instruct.html"),
-        "Phase 3.5 Chunk F"
+        "removed from the QCEP engine"
     )
 })
 

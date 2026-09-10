@@ -26,10 +26,9 @@ DEFAULT = NULL.}
 \item{switchToSet}{Optional single non-empty string -- the destination
 set name. Must reference a setName declared in the same block's
 setInfo (the engine validates this at session start). NULL means
-"early-stop without redirect" (Decision 3). DEFAULT = NULL.}
+"early-stop without redirect". DEFAULT = NULL.}
 
-\item{switchInstruction}{DEPRECATED 2026-05-24 (Phase 3.5 Chunk F /
-Decision 7 close-out). The QCEP engine no longer reads
+\item{switchInstruction}{DEPRECATED. The QCEP engine no longer reads
 rule.switchInstruction; the field has been removed from the runtime
 path (rule.fire no longer pushes an instruction trial). The
 replacement is to declare entryInstruction on the DESTINATION SET via
@@ -54,10 +53,9 @@ Switch rules govern intra-block flow: when a configurable count condition
 has been met `threshold` times within the currently-watching set, the
 rule fires -- it ends the current set early and (optionally) jumps to a
 destination set. See `customScripts/v10/dynamicEngine.js` for runtime
-semantics; the locked design decisions are summarized in
-`DYNAMIC_EXPERIMENTS_PLAN.md` "JSON Schema Additions".
+semantics.
 
-Count condition: pick exactly one of two forms (Decision 1 / hybrid):
+Count condition: pick exactly one of two forms:
   - `countResponse` (sugar): a single string. Sugar for
     `countWhen = list(field="Key", operator="equals", value=<x>)`.
     Use this for the common 2AFC pattern ("count when participant
@@ -68,7 +66,7 @@ Count condition: pick exactly one of two forms (Decision 1 / hybrid):
     contains). Use this for non-Key-based or non-equality counting
     (e.g., RT < 500ms, NumberLine value > 5).
 
-Decision 3 — terminal behavior:
+Terminal behavior:
   - `switchToSet` present: rule fires, current set ends, destination set
     is built + pushed. Block continues with the new set.
   - `switchToSet` absent (NULL): rule fires, current set ends early; no
@@ -76,11 +74,11 @@ Decision 3 — terminal behavior:
     (early-stop). Useful for "run training until criterion, then proceed
     normally."
 
-Decision 6 (Semantic C) — `excludePreviouslyPresented` is NOT a switch-rule
+`excludePreviouslyPresented` is NOT a switch-rule
 parameter; it is a property of the destination set's pool, declared on
 the set via `addSetToQCEsetInfoList(..., excludePreviouslyPresented = TRUE)`.
 
-Rule sequencing (Decision 3 amendment, Bug Fix #20): Rules are sequential.
+Rule sequencing: Rules are sequential.
 The order rules appear in `switchRules` is the order in which they watch
 the natural set sequence: rule[1] watches the first set, rule[2] watches
 the second, etc. A rule expires when its watched set ends -- either
@@ -105,7 +103,7 @@ r2 <- buildQCEswitchRule(
   threshold = buildQCEswitchThreshold(values = 10, rule = "fixed")
 )
 
-# With transition screen between sets (Phase 3.5 Chunk F replacement):
+# With a transition screen between sets:
 # declare entryInstruction on the destination set, not on the rule.
 setInfo <- addSetToQCEsetInfoList(setInfo, scenarios, "SetB", 10,
   entryInstruction = c("switch_instruct.html"))
