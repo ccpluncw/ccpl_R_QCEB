@@ -17,7 +17,7 @@ buildQCETriggerList(onset = NULL, offset = NULL, ...)
 A list of the form `list(onset=X, offset=Y, ...)`, or NULL if all args are NULL.
 }
 \description{
-Creates a list in the unified shape used by QCEP engine v9 for fNIRS trigger
+Creates a list in the unified shape used by the QCEP engine for fNIRS trigger
 codes at any level (block, set, trial, or frame). The returned list is passed
 to the `trigger` parameter of builder functions (addBlockToQCETrialStructureList,
 addSetToQCEsetInfoList, addScenarioToQCEscenarioList, addFrameToQCEframeList).
