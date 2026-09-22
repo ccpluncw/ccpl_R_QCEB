@@ -28,13 +28,14 @@
 #' @param warnOnLeave Optional single Boolean gating the browser's leave-the-page confirmation during a run. When enabled (the engine default), closing the tab or navigating away raises the browser's own "leave site?" dialog, so a participant does not discard an in-progress run with one stray click. The guard is armed only once the experiment itself begins -- the preliminary screens and the file loading are free to leave, and guarding them is noise that teaches participants to dismiss the dialog -- and it is released when the run ends, so it never fires on the final screens. The dialog's wording is fixed by the browser and cannot be set from configuration; this option only turns it on or off. Set FALSE to opt a run out. NULL uses the engine default (enabled). DEFAULT = NULL.
 #' @param strictGroupAssignment Optional single Boolean controlling what a multi-group experiment does when it cannot obtain a group assignment from the server. Server-side assignment is what makes the chosen group durable across a reload and what lets the server withhold groups a participant has already completed. When strict, a run that cannot obtain one refuses to start and tells the participant that nothing has been recorded and they may try again; when not strict (the engine default), it falls back to drawing a group in the browser, which is how multi-group experiments behaved before assignment existed but leaves the choice recorded nowhere. Has no effect on a single-group experiment, which never asks the server. Strict is forced on regardless of this setting for repeat-session links, where the recorded group is part of the credit key. Set TRUE to opt in. NULL uses the engine default (not strict). DEFAULT = NULL.
 #' @param creditClaimTimeoutMs Optional single number, at least 1000: the timeout in milliseconds on the credit claim, the one request that writes the credit record and returns the grant-or-deny verdict at the end of a gated run. NULL uses the engine default (10000), which is the right choice unless a deployment is known to be slow. ⚠ A value the browser cannot use does not relax the timeout, it REMOVES it -- the underlying field treats zero as "no limit" -- and an unbounded claim against a server that accepts the connection and never answers leaves the participant on a blank screen with the final save unrun. A very small value fails the other way: every claim times out, and the claim fails open, so credit is granted with no record written. Both are refused here. DEFAULT = NULL.
+#' @param reservationMinutes Optional single positive number of minutes: how long an assigned run with no recorded completion still counts toward its group when the server assigns groups in balance. Inside the window the assignment holds a place, so a run still under way is not counted twice over by the next participant's draw; past it the run is treated as abandoned and releases the place, so a participant who walked away does not hold one for ever. Read only when the experiment's groups declare \code{nPerBlock}; an experiment whose groups do not is unaffected by it. NULL uses the server's own window of 90 minutes. Default \code{NULL}.
 #'
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
 #' @examples buildQCEdbFile (expName = "myExp", addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
-buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL, warnOnLeave = NULL, strictGroupAssignment = NULL, creditClaimTimeoutMs = NULL) {
+buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL, warnOnLeave = NULL, strictGroupAssignment = NULL, creditClaimTimeoutMs = NULL, reservationMinutes = NULL) {
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
@@ -327,6 +328,15 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
       stop("creditClaimTimeoutMs must be a single finite number of milliseconds of at least 1000.")
     }
     tmpList$creditClaimTimeoutMs <- creditClaimTimeoutMs
+  }
+
+  #how long an assigned run with no completion still holds a place in its group
+  if (!is.null(reservationMinutes)) {
+    if (!is.numeric(reservationMinutes) || length(reservationMinutes) != 1 ||
+        !is.finite(reservationMinutes) || reservationMinutes <= 0) {
+      stop("reservationMinutes must be a single positive number of minutes.")
+    }
+    tmpList$reservationMinutes <- reservationMinutes
   }
 
   return(tmpList)

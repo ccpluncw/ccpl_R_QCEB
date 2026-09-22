@@ -9,7 +9,8 @@ addSessionListToQCEGroupList(
   QCEsessionList,
   groupName = "groupName",
   pages = NULL,
-  cards = NULL
+  cards = NULL,
+  nPerBlock = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ addSessionListToQCEGroupList(
 \item{pages}{A single string naming this group's page placement file (e.g. "pagesA.json", written by \code{\link{saveQCEpageFiles}}). Positionable HTML pages play at event anchors -- consent, demographics, a debrief. Each group may point at a different file, so groups can differ in the pages they show. NULL means this group shows no pages. DEFAULT = NULL.}
 
 \item{cards}{A single string naming this group's card placement file (e.g. "cards1.json", written by \code{\link{saveQCEcardFiles}}). Cards are persistent panels that stay on screen across trials. NULL means this group shows no cards. DEFAULT = NULL.}
+
+\item{nPerBlock}{A single positive whole number giving this group's share of one assignment block, read by the server when it assigns groups in balance rather than by a uniform draw. Groups that share a \code{groupName} form one arm, and that arm's total is the sum of \code{nPerBlock} over those groups, so a ratio is stated by the numbers themselves (equal numbers balance the arms; 2 against 1 fills the first twice as fast). The number is a share, not a cap: when a block fills, assignment carries on in the same ratio, and no group ever closes. Every group in the experiment must declare it or none may -- a set declared on some groups only is a configuration error the server refuses at assignment time, and nothing in this package can see the other groups to catch it here. NULL leaves the key out, which is how an unbalanced experiment is written. Default \code{NULL}.}
 }
 \value{
 the updated QCEGroupList
@@ -35,6 +38,10 @@ addSessionListToQCEGroupList (QCEGroupList, QCEsessionList, "ponys")
 # A group that shows intake pages and a persistent progress card
 addSessionListToQCEGroupList (QCEGroupList, QCEsessionList, "ponys",
                               pages = "pagesA.json", cards = "cards1.json")
+
+# Two groups taking equal shares of every assignment block
+addSessionListToQCEGroupList (QCEGroupList, QCEsessionList, "ponys",
+                              nPerBlock = 1)
 }
 \keyword{QCE}
 \keyword{QCEGroupList}
