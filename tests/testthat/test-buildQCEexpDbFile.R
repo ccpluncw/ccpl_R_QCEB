@@ -393,6 +393,9 @@ test_that("reservationMinutes rejects non-positive / non-scalar / unusable", {
   expect_error(mk(NA), "positive number")
   expect_error(mk(NA_real_), "positive number")
   expect_error(mk(Inf), "positive number")
+  #a Boolean passes is.finite and is.finite alone would let it through
+  expect_error(mk(TRUE), "positive number")
+  expect_error(mk(FALSE), "positive number")
 })
 
 test_that("reservationMinutes survives the JSON round trip as a one-element array", {
