@@ -368,3 +368,36 @@ test_that("creditClaimTimeoutMs accepts a usable value and refuses an unusable o
   expect_error(buildQCEexpDbFile(expName = "e1", creditClaimTimeoutMs = 5), "at least 1000")
   expect_error(buildQCEexpDbFile(expName = "e1", creditClaimTimeoutMs = Inf), "at least 1000")
 })
+
+#--- reservationMinutes ------------------------------------------------------
+
+test_that("reservationMinutes is absent unless stated", {
+  expect_false("reservationMinutes" %in% names(buildQCEexpDbFile(expName = "e1")))
+  expect_null(buildQCEexpDbFile(expName = "e1")$reservationMinutes)
+})
+
+test_that("a stated reservation window is carried through verbatim", {
+  expect_equal(buildQCEexpDbFile(expName = "e1",
+                 reservationMinutes = 90)$reservationMinutes, 90)
+  #fractions are allowed: the window is a duration, not a count
+  expect_equal(buildQCEexpDbFile(expName = "e1",
+                 reservationMinutes = 45.5)$reservationMinutes, 45.5)
+})
+
+test_that("reservationMinutes rejects non-positive / non-scalar / unusable", {
+  mk <- function(v) buildQCEexpDbFile(expName = "e1", reservationMinutes = v)
+  expect_error(mk(0), "positive number")
+  expect_error(mk(-5), "positive number")
+  expect_error(mk("90"), "positive number")
+  expect_error(mk(c(30, 60)), "positive number")
+  expect_error(mk(NA), "positive number")
+  expect_error(mk(NA_real_), "positive number")
+  expect_error(mk(Inf), "positive number")
+})
+
+test_that("reservationMinutes survives the JSON round trip as a one-element array", {
+  db <- buildQCEexpDbFile(expName = "e1", reservationMinutes = 90)
+  back <- jsonlite::fromJSON(jsonlite::toJSON(db), simplifyVector = FALSE)
+  expect_equal(length(back$reservationMinutes), 1)
+  expect_equal(back$reservationMinutes[[1]], 90)
+})
