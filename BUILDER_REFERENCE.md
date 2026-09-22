@@ -135,10 +135,16 @@ scalars the engine's manifest reader refuses.
    unrecognized list keys through to the JSON verbatim (with a warning where
    validation exists). A key reaching the file does not mean the engine reads
    it; the specification is the authority on what the engine reads.
+9. **`nPerBlock` is all-or-none across groups.** Declaring a share of the
+   assignment block on some groups and not others is refused by the server at
+   assignment time, after the study is deployed. No builder can catch it: a
+   group is added one call at a time and cannot see the others. Keep the rule
+   in the build script -- set `nPerBlock` in the same loop that adds the
+   groups, or set it on none of them.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-09-08 — 75 exported functions (68 current, 7 deprecated).*
+*Generated from `man/` on 2026-09-22 — 75 exported functions (68 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -823,18 +829,17 @@ addBlockToQCETrialStructureList.
 - `threshold` — A threshold spec, typically from buildQCEswitchThreshold. Required.
 - `countResponse` — Single non-empty string. Sugar for matching the trial's Key field. Mutually exclusive with countWhen. DEFAULT = NULL.
 - `countWhen` — A list `list(field, operator, value)` describing a more general count condition. Mutually exclusive with countResponse. DEFAULT = NULL.
-- `switchToSet` — Optional single non-empty string -- the destination set name. Must reference a setName declared in the same block's setInfo (the engine validates this at session start). NULL means "early-stop without redirect" (Decision 3). DEFAULT = NULL.
-- `switchInstruction` — DEPRECATED 2026-05-24 (Phase 3.5 Chunk F / Decision 7 close-out). The QCEP engine no longer reads rule.switchInstruction; the field has been removed from the runtime path (rule.fire no longer pushes an instruction trial). The replacement is to declare entryInstruction on the DESTINATION SET via addSetToQCEsetInfoList(..., entryInstruction = c("file.html")). That declaration covers both rule-fire and natural-fallthrough paths uniformly via buildSetNode. If passed, this argument now emits a .Deprecated() warning and is dropped from the output rule (not serialized to JSON). DEFAULT = NULL.
+- `switchToSet` — Optional single non-empty string -- the destination set name. Must reference a setName declared in the same block's setInfo (the engine validates this at session start). NULL means "early-stop without redirect". DEFAULT = NULL.
+- `switchInstruction` — DEPRECATED. The QCEP engine no longer reads rule.switchInstruction; the field has been removed from the runtime path (rule.fire no longer pushes an instruction trial). The replacement is to declare entryInstruction on the DESTINATION SET via addSetToQCEsetInfoList(..., entryInstruction = c("file.html")). That declaration covers both rule-fire and natural-fallthrough paths uniformly via buildSetNode. If passed, this argument now emits a .Deprecated() warning and is dropped from the output rule (not serialized to JSON). DEFAULT = NULL.
 
 **Details.** 
 Switch rules govern intra-block flow: when a configurable count condition
 has been met `threshold` times within the currently-watching set, the
 rule fires -- it ends the current set early and (optionally) jumps to a
 destination set. See `customScripts/v10/dynamicEngine.js` for runtime
-semantics; the locked design decisions are summarized in
-`DYNAMIC_EXPERIMENTS_PLAN.md` "JSON Schema Additions".
+semantics.
 
-Count condition: pick exactly one of two forms (Decision 1 / hybrid):
+Count condition: pick exactly one of two forms:
 - `countResponse` (sugar): a single string. Sugar for
 `countWhen = list(field="Key", operator="equals", value=<x>)`.
 Use this for the common 2AFC pattern ("count when participant
@@ -845,7 +850,7 @@ greaterThan, lessThan, greaterThanOrEqual, lessThanOrEqual,
 contains). Use this for non-Key-based or non-equality counting
 (e.g., RT < 500ms, NumberLine value > 5).
 
-Decision 3 — terminal behavior:
+Terminal behavior:
 - `switchToSet` present: rule fires, current set ends, destination set
 is built + pushed. Block continues with the new set.
 - `switchToSet` absent (NULL): rule fires, current set ends early; no
@@ -853,11 +858,11 @@ redirect. Block falls through to the next set in natural order
 (early-stop). Useful for "run training until criterion, then proceed
 normally."
 
-Decision 6 (Semantic C) — `excludePreviouslyPresented` is NOT a switch-rule
+`excludePreviouslyPresented` is NOT a switch-rule
 parameter; it is a property of the destination set's pool, declared on
 the set via `addSetToQCEsetInfoList(..., excludePreviouslyPresented = TRUE)`.
 
-Rule sequencing (Decision 3 amendment, Bug Fix #20): Rules are sequential.
+Rule sequencing: Rules are sequential.
 The order rules appear in `switchRules` is the order in which they watch
 the natural set sequence: rule[1] watches the first set, rule[2] watches
 the second, etc. A rule expires when its watched set ends -- either
@@ -1219,7 +1224,8 @@ buildQCEexpDbFile(
   saveUnavailableMsg = NULL,
   warnOnLeave = NULL,
   strictGroupAssignment = NULL,
-  creditClaimTimeoutMs = NULL
+  creditClaimTimeoutMs = NULL,
+  reservationMinutes = NULL
 )
 ```
 
@@ -1252,6 +1258,7 @@ Function that create a QCEB dbfile.
 - `warnOnLeave` — Optional single Boolean gating the browser's leave-the-page confirmation during a run. When enabled (the engine default), closing the tab or navigating away raises the browser's own "leave site?" dialog, so a participant does not discard an in-progress run with one stray click. The guard is armed only once the experiment itself begins -- the preliminary screens and the file loading are free to leave, and guarding them is noise that teaches participants to dismiss the dialog -- and it is released when the run ends, so it never fires on the final screens. The dialog's wording is fixed by the browser and cannot be set from configuration; this option only turns it on or off. Set FALSE to opt a run out. NULL uses the engine default (enabled). DEFAULT = NULL.
 - `strictGroupAssignment` — Optional single Boolean controlling what a multi-group experiment does when it cannot obtain a group assignment from the server. Server-side assignment is what makes the chosen group durable across a reload and what lets the server withhold groups a participant has already completed. When strict, a run that cannot obtain one refuses to start and tells the participant that nothing has been recorded and they may try again; when not strict (the engine default), it falls back to drawing a group in the browser, which is how multi-group experiments behaved before assignment existed but leaves the choice recorded nowhere. Has no effect on a single-group experiment, which never asks the server. Strict is forced on regardless of this setting for repeat-session links, where the recorded group is part of the credit key. Set TRUE to opt in. NULL uses the engine default (not strict). DEFAULT = NULL.
 - `creditClaimTimeoutMs` — Optional single number, at least 1000: the timeout in milliseconds on the credit claim, the one request that writes the credit record and returns the grant-or-deny verdict at the end of a gated run. NULL uses the engine default (10000), which is the right choice unless a deployment is known to be slow. ⚠ A value the browser cannot use does not relax the timeout, it REMOVES it -- the underlying field treats zero as "no limit" -- and an unbounded claim against a server that accepts the connection and never answers leaves the participant on a blank screen with the final save unrun. A very small value fails the other way: every claim times out, and the claim fails open, so credit is granted with no record written. Both are refused here. DEFAULT = NULL.
+- `reservationMinutes` — Optional single positive number of minutes: how long an assigned run with no recorded completion still counts toward its group when the server assigns groups in balance. Inside the window the assignment holds a place, so a run still under way is not counted twice over by the next participant's draw; past it the run is treated as abandoned and releases the place, so a participant who walked away does not hold one for ever. Read only when the experiment's groups declare `nPerBlock`; an experiment whose groups do not is unaffected by it. NULL uses the server's own window of 90 minutes. Default `NULL`.
 
 **Returns.** the QCEBdbfileList
 
@@ -1319,7 +1326,7 @@ Build a trigger-object list for fNIRS event markers
 buildQCETriggerList(onset = NULL, offset = NULL, ...)
 ```
 
-Creates a list in the unified shape used by QCEP engine v9 for fNIRS trigger
+Creates a list in the unified shape used by the QCEP engine for fNIRS trigger
 codes at any level (block, set, trial, or frame). The returned list is passed
 to the `trigger` parameter of builder functions (addBlockToQCETrialStructureList,
 addSetToQCEsetInfoList, addScenarioToQCEscenarioList, addFrameToQCEframeList).
@@ -1355,7 +1362,8 @@ addSessionListToQCEGroupList(
   QCEsessionList,
   groupName = "groupName",
   pages = NULL,
-  cards = NULL
+  cards = NULL,
+  nPerBlock = NULL
 )
 ```
 
@@ -1366,6 +1374,7 @@ Function that creates or modifys a QCEGroupList by adding QCEsessionList to the 
 - `groupName` — A string that specifies the name of the name of the between subjects group that contains these sessions. This will be output in the datafile.
 - `pages` — A single string naming this group's page placement file (e.g. "pagesA.json", written by `saveQCEpageFiles`). Positionable HTML pages play at event anchors -- consent, demographics, a debrief. Each group may point at a different file, so groups can differ in the pages they show. NULL means this group shows no pages. DEFAULT = NULL.
 - `cards` — A single string naming this group's card placement file (e.g. "cards1.json", written by `saveQCEcardFiles`). Cards are persistent panels that stay on screen across trials. NULL means this group shows no cards. DEFAULT = NULL.
+- `nPerBlock` — A single positive whole number giving this group's share of one assignment block, read by the server when it assigns groups in balance rather than by a uniform draw. Groups that share a `groupName` form one arm, and that arm's total is the sum of `nPerBlock` over those groups, so a ratio is stated by the numbers themselves (equal numbers balance the arms; 2 against 1 fills the first twice as fast). The number is a share, not a cap: when a block fills, assignment carries on in the same ratio, and no group ever closes. Every group in the experiment must declare it or none may -- a set declared on some groups only is a configuration error the server refuses at assignment time, and nothing in this package can see the other groups to catch it here. NULL leaves the key out, which is how an unbalanced experiment is written. Default `NULL`.
 
 **Returns.** the updated QCEGroupList
 
@@ -2311,6 +2320,8 @@ expDb <- buildQCEexpDbFile(expName = "wordJudgment",
            welcomeMsg = "<p>Welcome! Press any key to begin.</p>",
            endOfExpMsg = "<p>That is the end of the study. Thank you!</p>",
            saveDataEveryNTrials = 25)
+# optional: reservationMinutes = 120 widens the window an unfinished run holds
+# its place under balanced assignment; absent, the server uses 90 minutes.
 saveJsonFile(expDb, file.path(OUT_DIR, "expDBfile.json"))
 
 ## ---- 6. Sessions -> groups (expInfo) ----------------------------------------
@@ -2322,7 +2333,10 @@ for (g in c("groupA", "groupB")) {
             dbFile = paste0(g, "_Dbfile.json"),
             tsFile = "task_Tsfile.json",
             stimFile = "task_Stimfile.json")
-  expInfo <- addSessionListToQCEGroupList(expInfo, sess, groupName = g)
+  # equal nPerBlock balances the two groups: a share of each assignment block,
+  # not a cap, so neither group ever closes.
+  expInfo <- addSessionListToQCEGroupList(expInfo, sess, groupName = g,
+                                          nPerBlock = 1)
 }
 saveJsonFile(expInfo, file.path(OUT_DIR, "expInfo.json"))
 
