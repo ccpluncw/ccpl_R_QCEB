@@ -6,7 +6,7 @@
 #' @param groupName A string that specifies the name of the name of the between subjects group that contains these sessions.  This will be output in the datafile.
 #' @param pages A single string naming this group's page placement file (e.g. "pagesA.json", written by \code{\link{saveQCEpageFiles}}). Positionable HTML pages play at event anchors -- consent, demographics, a debrief. Each group may point at a different file, so groups can differ in the pages they show. NULL means this group shows no pages. DEFAULT = NULL.
 #' @param cards A single string naming this group's card placement file (e.g. "cards1.json", written by \code{\link{saveQCEcardFiles}}). Cards are persistent panels that stay on screen across trials. NULL means this group shows no cards. DEFAULT = NULL.
-#' @param nPerBlock A single positive whole number giving this group's share of one assignment block, read by the server when it assigns groups in balance rather than by a uniform draw. Groups that share a \code{groupName} form one arm, and that arm's total is the sum of \code{nPerBlock} over those groups, so a ratio is stated by the numbers themselves (equal numbers balance the arms; 2 against 1 fills the first twice as fast). The number is a share, not a cap: when a block fills, assignment carries on in the same ratio, and no group ever closes. Every group in the experiment must declare it or none may -- a set declared on some groups only is a configuration error the server refuses at assignment time, and nothing in this package can see the other groups to catch it here. NULL leaves the key out, which is how an unbalanced experiment is written. Default \code{NULL}.
+#' @param nPerBlock A single positive whole number giving this group's share of one assignment block, read by the server when it assigns groups in balance rather than by a uniform draw. Groups that share a \code{groupName} form one arm, and that arm's total is the sum of \code{nPerBlock} over those groups, so a ratio is stated by the numbers themselves (equal numbers balance the arms; 2 against 1 fills the first twice as fast). The number is a share, not a cap: when a block fills, assignment carries on in the same ratio, and no group ever closes. Every group in the experiment must declare it or none may: a group added to a \code{QCEGroupList} whose groups disagree with it is refused here, naming the groups on each side, and the server refuses a set that reaches it mismatched anyway -- which a hand-edited file still can, since only the server sees the finished file. NULL leaves the key out, which is how an unbalanced experiment is written. Default \code{NULL}.
 #'
 #' @return the updated QCEGroupList
 #' @keywords QCE QCEGroupList QCEsessionList update add session pages cards
@@ -34,9 +34,25 @@ addSessionListToQCEGroupList <- function (QCEGroupList = NULL, QCEsessionList, g
   }
   if (!is.null(nPerBlock) &&
       (!is.numeric(nPerBlock) || length(nPerBlock) != 1 || !is.finite(nPerBlock) ||
-       nPerBlock <= 0 || !isTRUE(nPerBlock == as.integer(nPerBlock)))) {
+       nPerBlock <= 0 || nPerBlock > .Machine$integer.max ||
+       nPerBlock != round(nPerBlock))) {
     stop("nPerBlock option must be a single positive whole number giving this ",
          "group's share of one assignment block, or NULL.")
+  }
+
+  #nPerBlock is all-or-none across the groups of one experiment
+  if (length(QCEGroupList) > 0) {
+    declared <- vapply(QCEGroupList, function(g) !is.null(g$nPerBlock), logical(1))
+    if (!all(declared == !is.null(nPerBlock))) {
+      labels <- c(vapply(seq_along(QCEGroupList), function(i) {
+        nm <- QCEGroupList[[i]]$groupName
+        if (isSingleString(nm) && nchar(nm) > 0) nm else names(QCEGroupList)[i]
+      }, character(1)), if (isSingleString(groupName)) groupName else "the new group")
+      states <- c(declared, !is.null(nPerBlock))
+      stop("nPerBlock must be declared on every group of an experiment or on ",
+           "none. Declared: ", paste(labels[states], collapse = ", "),
+           ". Not declared: ", paste(labels[!states], collapse = ", "), ".")
+    }
   }
 
   tmpList <- list(sessions = QCEsessionList, groupName = groupName)
