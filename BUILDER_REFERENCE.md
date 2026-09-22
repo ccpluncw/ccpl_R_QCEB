@@ -136,11 +136,14 @@ scalars the engine's manifest reader refuses.
    validation exists). A key reaching the file does not mean the engine reads
    it; the specification is the authority on what the engine reads.
 9. **`nPerBlock` is all-or-none across groups.** Declaring a share of the
-   assignment block on some groups and not others is refused by the server at
-   assignment time, after the study is deployed. No builder can catch it: a
-   group is added one call at a time and cannot see the others. Keep the rule
-   in the build script -- set `nPerBlock` in the same loop that adds the
-   groups, or set it on none of them.
+   assignment block on some groups and not others is refused twice over.
+   `addSessionListToQCEGroupList` refuses a group that disagrees with the
+   groups already in the list it is handed, naming the groups on each side;
+   and the server refuses a mismatched set again at assignment time, after the
+   study is deployed. Neither refusal makes the other redundant: the builder
+   sees only the list it is given, so the first group commits to nothing and a
+   hand-edited `expInfo.json` bypasses the builder entirely. Set `nPerBlock` in
+   the same loop that adds the groups, or set it on none of them.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
@@ -1374,7 +1377,7 @@ Function that creates or modifys a QCEGroupList by adding QCEsessionList to the 
 - `groupName` — A string that specifies the name of the name of the between subjects group that contains these sessions. This will be output in the datafile.
 - `pages` — A single string naming this group's page placement file (e.g. "pagesA.json", written by `saveQCEpageFiles`). Positionable HTML pages play at event anchors -- consent, demographics, a debrief. Each group may point at a different file, so groups can differ in the pages they show. NULL means this group shows no pages. DEFAULT = NULL.
 - `cards` — A single string naming this group's card placement file (e.g. "cards1.json", written by `saveQCEcardFiles`). Cards are persistent panels that stay on screen across trials. NULL means this group shows no cards. DEFAULT = NULL.
-- `nPerBlock` — A single positive whole number giving this group's share of one assignment block, read by the server when it assigns groups in balance rather than by a uniform draw. Groups that share a `groupName` form one arm, and that arm's total is the sum of `nPerBlock` over those groups, so a ratio is stated by the numbers themselves (equal numbers balance the arms; 2 against 1 fills the first twice as fast). The number is a share, not a cap: when a block fills, assignment carries on in the same ratio, and no group ever closes. Every group in the experiment must declare it or none may -- a set declared on some groups only is a configuration error the server refuses at assignment time, and nothing in this package can see the other groups to catch it here. NULL leaves the key out, which is how an unbalanced experiment is written. Default `NULL`.
+- `nPerBlock` — A single positive whole number giving this group's share of one assignment block, read by the server when it assigns groups in balance rather than by a uniform draw. Groups that share a `groupName` form one arm, and that arm's total is the sum of `nPerBlock` over those groups, so a ratio is stated by the numbers themselves (equal numbers balance the arms; 2 against 1 fills the first twice as fast). The number is a share, not a cap: when a block fills, assignment carries on in the same ratio, and no group ever closes. Every group in the experiment must declare it or none may: a group added to a `QCEGroupList` whose groups disagree with it is refused here, naming the groups on each side, and the server refuses a set that reaches it mismatched anyway -- which a hand-edited file still can, since only the server sees the finished file. NULL leaves the key out, which is how an unbalanced experiment is written. Default `NULL`.
 
 **Returns.** the updated QCEGroupList
 
