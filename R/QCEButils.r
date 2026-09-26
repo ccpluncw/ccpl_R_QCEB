@@ -68,7 +68,7 @@ isValidFilename <- function (filename, extension) {
   strN <- stringi::stri_length(extension)
 
   if(isSingleString(filename)) {
-    if(stringr::str_sub(filename,-1*strN) == extension) {
+    if(stringi::stri_sub(filename,-1*strN) == extension) {
       out <- TRUE
     }
   }
