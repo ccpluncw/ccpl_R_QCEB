@@ -24,7 +24,7 @@ savePreloadFiles(
 the json data
 }
 \description{
-Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. The files of any stimulus sets passed in \code{stimSets} are added by media type, as their stimulus-endpoint addresses; a set drawn at random per participant preloads every item that could be drawn. Text sets add nothing.
+Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. Each list is written as an array, empty when nothing of that kind is preloaded. The files of any stimulus sets passed in \code{stimSets} are added by media type, as their stimulus-endpoint addresses; a set drawn at random per participant preloads every item that could be drawn. Text sets add nothing.
 }
 \examples{
 savePreloadFiles (imageFileArray, videoFileArray, audioFileArray)

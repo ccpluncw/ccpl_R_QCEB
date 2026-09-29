@@ -160,3 +160,15 @@ test_that("savePreloadFiles adds a set's files by media type and leaves text set
   savePreloadFiles(stimSets = faces)
   expect_equal(length(jsonlite::fromJSON("preloadFile.json")$images), 2)
 })
+
+test_that("an empty preload list is written as an empty array, which the engine can count", {
+  old <- setwd(tempdir())
+  on.exit(setwd(old))
+  savePreloadFiles(imageFileArray = c("img/a.png"))
+  txt <- paste(readLines("preloadFile.json"), collapse = "")
+  expect_match(txt, "\"video\": \\[\\]")
+  expect_match(txt, "\"audio\": \\[\\]")
+  savePreloadFiles()
+  pr <- jsonlite::fromJSON("preloadFile.json", simplifyVector = FALSE)
+  expect_equal(lengths(pr), c(images = 0L, video = 0L, audio = 0L))
+})
