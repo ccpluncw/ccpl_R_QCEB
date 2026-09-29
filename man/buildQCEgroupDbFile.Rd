@@ -37,7 +37,7 @@ buildQCEgroupDbFile(
 
 \item{presentKeyMapAfterTrialNumbers}{An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = -1.  If -1, then no reminder will be shown.}
 
-\item{defaultBackgroundColor}{an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).}
+\item{defaultBackgroundColor}{a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's \code{expStyle.css} may change that), and a frame's background is its own \code{background}. Default \code{"#000000"}.}
 
 \item{restTrials}{An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown.}
 

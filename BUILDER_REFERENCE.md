@@ -147,7 +147,7 @@ scalars the engine's manifest reader refuses.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-09-22 — 75 exported functions (68 current, 7 deprecated).*
+*Generated from `man/` on 2026-09-29 — 75 exported functions (68 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -220,7 +220,7 @@ Function that creates or modifies a QCEframeList by adding frames to the list on
 - `response_ends_trial` — A boolean that specifies whether the key response ends the trial. A frame must have SOME way to end: if this is FALSE, the frame needs a stimulus_duration or a trial_duration to end it. The same applies when choices is NULL, empty, or "NO_KEYS", since those leave no key to press. Trial types whose plugin supplies its own response surface (textbox, numberline, angleline, survey, mcKeys) can always be ended by the participant and are exempt. DEFAULT = TRUE
 - `choices` — Specifies the keyboard keys accepted as a response. Interpretation depends on trialType. For trialType = "key": a character vector of allowed key names (e.g., c("a", "b", " ", "Enter")), or the sentinel "ALL_KEYS" to accept any key. NULL or an empty vector disables the keyboard response path entirely — the trial then advances on stimulus_duration only. For trialType = "textbox" with kind = "string" or "number": the default "ALL_KEYS" is appropriate (the plugin handles character filtering internally via the kind argument). For trialType = "textbox" with kind = "other": you MUST provide a character vector of specific allowed keys (e.g., c("y", "n")). The sentinel "ALL_KEYS" will NOT work in this case — the plugin tests membership against the vector, so "ALL_KEYS" would match nothing. For trialType = "numberline" or "angleline": ignored (these plugins handle their own interaction model). choices does not control what can be typed into an html textbox input field — that is controlled by the html input code plus the kind argument. DEFAULT = "ALL_KEYS".
 - `kind` — A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". Only meaningful when trialType = "textbox"; silently ignored (not emitted to JSON) for other trial types. DEFAULT = "string".
-- `background` — an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
+- `background` — a colour, in hexadecimal, painted behind the page while this frame is shown. Screens that are not frames (pages and messages) are white with black text. Default `"#000000"` (black).
 - `cursorVisible` — Three-state, like trial_duration. NULL (the default) omits the key, which tells the engine to decide from the trialType: hidden for a keyboard-response frame, where a pointer sitting over the stimulus is a distractor, and shown for a type that declares usesPointer because the participant answers it with the mouse. TRUE or FALSE overrides that decision for this frame. ⚠ An explicit FALSE on a pointer-driven type hides the cursor the participant needs in order to respond, so it warns. DEFAULT = NULL (let the trialType decide).
 - `output` — A boolean that specifies whether to output the data from the frame into the dataset. Many times frames such as fixation and mask frames do not need to be output. DEFAULT = TRUE.
 - `trigger` — Optional list produced by buildQCETriggerList() specifying the fNIRS trigger codes that fire at this frame's boundaries — onset fires in the frame's on_start, offset fires in the frame's on_finish (even for non-response frames like fixation). NULL means no frame-level triggers. Recommended code range: 10000-99999 (5 digits). DEFAULT = NULL.
@@ -1236,7 +1236,7 @@ Function that create a QCEB dbfile.
 
 - `expName` — A string specifying the name of the experiment. It will be output in a column in the datafile. DEFAULT = "defaultExpName"
 - `addQualtricsCode` — a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.
-- `defaultBackgroundColor` — an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black). INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- the background color of every screen comes from that frame's own `background`.
+- `defaultBackgroundColor` — a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's `expStyle.css` may change that), and a frame's background is its own `background`. Default `"#000000"`.
 - `restAfterEveryNTrials` — An integer or vector of integers that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1. If -1, then no break will be shown. INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- rest breaks are configured at the block level.
 - `instructionFile` — A string or vector of strings that specifies the name of the html file(s) that contains the instructions. It will be shown at the begining of the experiment. If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.
 - `getUserNameFile` — A string that specifies the name of the html file that collects the user's identifying information (e.g., a random number). DEFAULT = NULL. INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- no such screen is presented.
@@ -1301,7 +1301,7 @@ Function that create a QCEB dbfile.
 - `keyMap` — A list that specifies the mapping of the keys to their meaning for the experiment. Create this list using the buildKeyMap() and addKeyToKeyMap() functions. DEFAULT = NULL
 - `randomizeKeyMap` — a Boolean that specifies whether the maping of the keys to their meaning should be randomized everytime the experiment is run. This is useful if you want to randomize the key to meaning mapping for every subject on a single session experiment. DEFAULT = FALSE.
 - `presentKeyMapAfterTrialNumbers` — An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option. So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = -1. If -1, then no reminder will be shown.
-- `defaultBackgroundColor` — an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).
+- `defaultBackgroundColor` — a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's `expStyle.css` may change that), and a frame's background is its own `background`. Default `"#000000"`.
 - `restTrials` — An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1. If -1, then no break will be shown.
 - `speedFeedbackParams` — A speedFeedbackList that specifies the parameters of the speed Feedback. Create this list using the buildSpeedFeedbackList() function. DEFAULT = NULL. If NULL, no speed feedback will be provided.
 - `instructionFile` — A string or vector of strings that specifies the name of the html file(s) that contains the instructions. It will be shown at the begining of the experiment. If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.
@@ -2311,7 +2311,6 @@ for (g in c("groupA", "groupB")) {
   dbf <- buildQCEgroupDbFile(condName = g,
            keyMap = km, randomizeKeyMap = (g == "groupB"),
            presentKeyMapAfterTrialNumbers = -1,
-           defaultBackgroundColor = "#000000",
            instructionFile = "instructions.html")
   saveJsonFile(dbf, file.path(OUT_DIR, paste0(g, "_Dbfile.json")))
 }
@@ -2319,7 +2318,6 @@ for (g in c("groupA", "groupB")) {
 ## ---- 5. Experiment dbfile ---------------------------------------------------
 
 expDb <- buildQCEexpDbFile(expName = "wordJudgment",
-           defaultBackgroundColor = "#000000",
            welcomeMsg = "<p>Welcome! Press any key to begin.</p>",
            endOfExpMsg = "<p>That is the end of the study. Thank you!</p>",
            saveDataEveryNTrials = 25)
@@ -2345,9 +2343,9 @@ saveJsonFile(expInfo, file.path(OUT_DIR, "expInfo.json"))
 
 ## ---- 7. Hand assets + save whitelist ----------------------------------------
 
-writeLines(c("<div style='color:white;'><p>Press the key for your judgment of",
+writeLines(c("<div><p>Press the key for your judgment of",
              "each word as quickly and accurately as you can.</p>",
-             "<p>Press any key to continue.</p></div>"),
+             "<button id='Go' type='button'>Continue</button></div>"),
            file.path(OUT_DIR, "instructions.html"))
 
 # fields.txt is the save whitelist: a column not listed here is silently

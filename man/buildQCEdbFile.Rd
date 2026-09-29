@@ -44,7 +44,7 @@ buildQCEdbFile(
 
 \item{addQualtricsCode}{a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.}
 
-\item{defaultBackgroundColor}{an rgb color that specifies the default background color of the experiment pages. DEFAULT = "#000000" (black).}
+\item{defaultBackgroundColor}{a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's \code{expStyle.css} may change that), and a frame's background is its own \code{background}. Default \code{"#000000"}.}
 
 \item{restAfterEveryNTrials}{An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown.}
 

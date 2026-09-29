@@ -46,7 +46,7 @@ choices does not control what can be typed into an html textbox input field — 
 
 \item{kind}{A string that specifies the type of allowable input in a textbox. Use "string" to allow all input, "number" to allow numbers, and "other" to restrict the textbox to the subset of keys specified in "choices". Only meaningful when trialType = "textbox"; silently ignored (not emitted to JSON) for other trial types. DEFAULT = "string".}
 
-\item{background}{an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).}
+\item{background}{a colour, in hexadecimal, painted behind the page while this frame is shown. Screens that are not frames (pages and messages) are white with black text. Default \code{"#000000"} (black).}
 
 \item{cursorVisible}{Three-state, like trial_duration. NULL (the default) omits the key, which tells the engine to decide from the trialType: hidden for a keyboard-response frame, where a pointer sitting over the stimulus is a distractor, and shown for a type that declares usesPointer because the participant answers it with the mouse. TRUE or FALSE overrides that decision for this frame. ⚠ An explicit FALSE on a pointer-driven type hides the cursor the participant needs in order to respond, so it warns. DEFAULT = NULL (let the trialType decide).}
 
