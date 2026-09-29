@@ -2245,7 +2245,7 @@ suppressPackageStartupMessages({
   library(jsonlite)
 })
 
-OUT_DIR <- file.path(getwd(), "prog")
+OUT_DIR <- "prog"
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 
 ## ---- 1. Key map -------------------------------------------------------------
@@ -2343,10 +2343,10 @@ saveJsonFile(expInfo, file.path(OUT_DIR, "expInfo.json"))
 
 ## ---- 7. Hand assets + save whitelist ----------------------------------------
 
-writeLines(c("<div><p>Press the key for your judgment of",
-             "each word as quickly and accurately as you can.</p>",
-             "<button id='Go' type='button'>Continue</button></div>"),
-           file.path(OUT_DIR, "instructions.html"))
+cat("<div><p>Press the key for your judgment of",
+    "each word as quickly and accurately as you can.</p>",
+    "<button id='Go' type='button'>Continue</button></div>",
+    file = file.path(OUT_DIR, "instructions.html"), sep = "\n")
 
 # fields.txt is the save whitelist: a column not listed here is silently
 # dropped at write time. List the engine columns you keep plus every column
@@ -2358,7 +2358,7 @@ fields <- c("sn", "Exp_Name", "Group", "Trial", "TrialInSession", "BlockNum",
             "rt", "Key", "Response", "Cond_Name", "Sess_Name",
             "SessionKey", "BlockKey",
             "Word", "ExpectedAnswer")
-writeLines(fields, file.path(OUT_DIR, "fields.txt"))
+cat(fields, file = file.path(OUT_DIR, "fields.txt"), sep = "\n")
 
 ## ---- 8. Self-check ----------------------------------------------------------
 
