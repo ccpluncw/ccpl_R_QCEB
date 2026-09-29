@@ -176,6 +176,8 @@ parse_one <- function(path) {
 categories <- list(
   list(title = "Stimfile — scenarios and frames",
        pattern = "^(addFrameToQCEframeList|addFixationToQCEframeList|addSurveyFrameToQCEframeList|addScenarioToQCEscenarioList|getSetnamesFromScenarioList)$"),
+  list(title = "Stimulus sets",
+       pattern = "^(buildQCEstimSetRef|addStimSetToQCEscenarioList)$"),
   list(title = "Survey models",
        pattern = "^(surveyModel|surveyPage|surveyQuestion|surveyTypeCatalog|surveyUniversalProperties)$"),
   list(title = "Tsfile — blocks, sets, and trial order",

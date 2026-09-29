@@ -7,21 +7,24 @@
 savePreloadFiles(
   imageFileArray = NULL,
   videoFileArray = NULL,
-  audioFileArray = NULL
+  audioFileArray = NULL,
+  stimSets = NULL
 )
 }
 \arguments{
-\item{imageFileArray}{An array of the image filenames (plus paths) that need to be preloaded.}
+\item{imageFileArray}{An array of the image filenames (plus paths) that need to be preloaded. Default \code{NULL}.}
 
-\item{videoFileArray}{An array of the video filenames (plus paths) that need to be preloaded.}
+\item{videoFileArray}{An array of the video filenames (plus paths) that need to be preloaded. Default \code{NULL}.}
 
-\item{audioFileArray}{An array of the audio filenames (plus paths) that need to be preloaded.}
+\item{audioFileArray}{An array of the audio filenames (plus paths) that need to be preloaded. Default \code{NULL}.}
+
+\item{stimSets}{A stimulus-set reference from \code{buildQCEstimSetRef}, or a list of them, whose files are preloaded too. Default \code{NULL}.}
 }
 \value{
 the json data
 }
 \description{
-Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory.
+Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. The files of any stimulus sets passed in \code{stimSets} are added by media type, as their stimulus-endpoint addresses; a set drawn at random per participant preloads every item that could be drawn. Text sets add nothing.
 }
 \examples{
 savePreloadFiles (imageFileArray, videoFileArray, audioFileArray)
