@@ -396,7 +396,7 @@ Function that expands a stimulus-set reference from `buildQCEstimSetRef` into sc
 - `trigger` — Optional trial-level triggers from `buildQCETriggerList`, given to every scenario. Default `NULL`.
 
 **Details.** 
-Every scenario records `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per declared attribute (empty when the item has no value) in the data. A file's address is the engine's stimulus endpoint, `stimFile.php?set=<set>&id=<id>`, relative to the page; the endpoint serves the file only to a running session of the study.
+Every scenario records `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per declared attribute (empty when the item has no value) in the data; a number is written in fixed notation with up to 15 significant digits, never in scientific notation. An attribute value or a text item holding a tab, line break or other control character is refused, since it would split a row of the data file. A file's address is the engine's stimulus endpoint, `stimFile.php?set=<set>&id=<id>&v=<version>`, relative to the page; the endpoint serves the file only to a running session of the study, and the version in the address keeps a browser from showing a cached file of an earlier version.
 
 **Returns.** the updated QCEScenarioList
 
@@ -423,7 +423,7 @@ Function that reads a locked stimulus set's `manifest.json` and selects the item
 - `engineVersion` — A string naming the engine the study runs. Sets are refused before engine 10.0, which has no stimulus endpoint. Default `"10.0"`.
 
 **Details.** 
-A filter keeps an item when every named attribute matches: a single value is an equality test, and `list(min = , max = )` (either bound may be left out) is a range test on a number attribute. An item with no value for a filtered attribute does not match.
+A filter keeps an item when every named attribute matches: a single value is an equality test (numeric, to within rounding, for a number attribute), and `list(min = , max = )` (either bound may be left out) is a range test on a number attribute. An item with no value for a filtered attribute does not match.
 
 **Returns.** A list describing the reference: `stimSet`, the set's name; `version`, its locked version; `kind`, `"files"` or `"text"`; `attributes`, the declared attributes, each a list with `name`, `type` and, for a category, `levels`; `items`, the matching items, each a list with `id`, `attrs` and either `file` and `mediaType` or `text`; `n`, how many of them each participant sees; `where`, the filter as given.
 

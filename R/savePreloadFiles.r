@@ -23,7 +23,7 @@ savePreloadFiles <- function (imageFileArray = NULL, videoFileArray = NULL, audi
     }
     if (identical(ref$kind, "text")) next
     for (it in ref$items) {
-      url <- paste0("stimFile.php?set=", ref$stimSet, "&id=", it$id)
+      url <- paste0("stimFile.php?set=", ref$stimSet, "&id=", it$id, "&v=", ref$version)
       family <- sub("/.*$", "", it$mediaType)
       if (family == "image") imageFileArray <- c(imageFileArray, url)
       if (family == "video") videoFileArray <- c(videoFileArray, url)

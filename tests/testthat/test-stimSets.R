@@ -102,7 +102,7 @@ test_that("a files set expands into one scenario per item with its columns and t
   expect_equal(ov$Task, "rate")
   expect_equal(sc[[1]]$set, "faceSet")
   expect_equal(sc[[2]]$frame[[1]]$stimulus,
-               "<div><img src=\"stimFile.php?set=faces&amp;id=d003\" alt=\"\"></div>")
+               "<div><img src=\"stimFile.php?set=faces&amp;id=d003&amp;v=3\" alt=\"\"></div>")
 })
 
 test_that("a text set expands into escaped text, and a missing attribute is an empty column", {
@@ -122,7 +122,7 @@ test_that("the stimulusUrl placeholder gives the path alone, for a files set onl
                                     .frames("<img class='x' src='{{stimulusUrl}}'>"),
                                     createFeedbackList(), "s")
   expect_equal(sc[[1]]$frame[[1]]$stimulus,
-               "<img class='x' src='stimFile.php?set=faces&amp;id=d001'>")
+               "<img class='x' src='stimFile.php?set=faces&amp;id=d001&amp;v=3'>")
   words <- buildQCEstimSetRef("words", stimuliDir = root)
   expect_error(addStimSetToQCEscenarioList(NULL, words, .frames("{{stimulusUrl}}"),
                                            createFeedbackList(), "s"), "text set")
@@ -155,8 +155,8 @@ test_that("savePreloadFiles adds a set's files by media type and leaves text set
   words <- buildQCEstimSetRef("words", stimuliDir = root)
   savePreloadFiles(imageFileArray = c("img/a.png"), stimSets = list(faces, words))
   pr <- jsonlite::fromJSON("preloadFile.json")
-  expect_equal(pr$images, c("img/a.png", "stimFile.php?set=faces&id=d002",
-                            "stimFile.php?set=faces&id=d004"))
+  expect_equal(pr$images, c("img/a.png", "stimFile.php?set=faces&id=d002&v=3",
+                            "stimFile.php?set=faces&id=d004&v=3"))
   savePreloadFiles(stimSets = faces)
   expect_equal(length(jsonlite::fromJSON("preloadFile.json")$images), 2)
 })
@@ -210,4 +210,12 @@ test_that("number attributes are written in full without scientific notation and
   }
   expect_equal(buildQCEstimSetRef("nums", where = list(frequency = 100000L),
                                   stimuliDir = root)$items[[1]]$id, "b")
+})
+
+test_that("a missing bound is refused with the function's own message", {
+  root <- .stimRoot()
+  expect_error(buildQCEstimSetRef("faces", where = list(rating = list(min = NA_real_)),
+                                  stimuliDir = root), "must be list\\(min = <number>")
+  expect_error(buildQCEstimSetRef("faces", where = list(rating = list(max = NA)),
+                                  stimuliDir = root), "must be list\\(min = <number>")
 })

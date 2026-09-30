@@ -74,7 +74,7 @@ buildQCEstimSetRef <- function(stimSet, where = NULL, n = NULL, stimuliDir = "st
           stop("where$", nm, ": a min/max range fits only a number attribute; \"", nm, "\" is a ", a$type, ".")
         }
         if (length(f) == 0 || !all(names(f) %in% c("min", "max")) ||
-            !all(vapply(f, isSingleNumeric, TRUE))) {
+            !all(vapply(f, function(b) isSingleNumeric(b) && !is.na(b), TRUE))) {
           stop("where$", nm, " must be list(min = <number>, max = <number>), either bound optional.")
         }
       } else {
