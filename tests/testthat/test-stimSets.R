@@ -119,6 +119,13 @@ test_that("a text set expands into marked, escaped text, and a missing attribute
   expect_equal(sc[[4]]$outputVariables$stim_frequency, "")
 })
 
+test_that("an item's own opening bracket is written so it never reads as a placeholder", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  ref$items[[1]]$text <- "the pair \u27e6ab:cd\u27e7"
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("{{stimulus}}"), createFeedbackList(), "s")
+  expect_equal(sc[[1]]$frame[[1]]$stimulus, paste0(.mk("words:w001"), "the pair &#10214;ab:cd\u27e7</span>"))
+})
+
 test_that("a token read from a stripped manifest is written into the marked element as it is", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
   ref$items[[1]]$text <- "\u27e6words:w001\u27e7"
