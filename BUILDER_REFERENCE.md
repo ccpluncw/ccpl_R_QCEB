@@ -199,7 +199,7 @@ scalars the engine's manifest reader refuses.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-09-30 — 77 exported functions (70 current, 7 deprecated).*
+*Generated from `man/` on 2026-09-30 — 78 exported functions (71 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -2322,6 +2322,21 @@ Function that writes `pluginManifest.local.json` into the working directory. The
 The file is serialized with scalars unboxed: the engine reads this manifest directly (no unwrapping layer), so a value written as a one-element array would be refused at run time.
 
 **Returns.** the json data
+
+### `saveQCEunplacedPages`
+
+Declare the pages a study shows without a placement
+
+```r
+saveQCEunplacedPages(pages, dir = ".")
+```
+
+Writes `unplacedPages.json`, the list of a study's pages that no page placement, card placement or configuration file names -- a page a hook opens (a debrief chosen by condition) or a page another page links to. A platform that sets aside pages nothing uses keeps every page this list names. The engine does not read the file.
+
+- `pages` — A character vector of page names, each a file name in the study's directory, with or without its `.html` extension, for example `c("debrief_full", "debrief_short")`.
+- `dir` — A single string naming the directory to write into: the one the configuration files go to. Default `"."`.
+
+**Returns.** Invisibly, the path written.
 
 ## Deprecated — do not use in new code
 
