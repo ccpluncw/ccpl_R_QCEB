@@ -219,3 +219,21 @@ test_that("a missing bound is refused with the function's own message", {
   expect_error(buildQCEstimSetRef("faces", where = list(rating = list(max = NA)),
                                   stimuliDir = root), "must be list\\(min = <number>")
 })
+
+test_that("a set with no attributes expands with only the set columns", {
+  root <- file.path(tempfile("stim"), "stimuli")
+  dir.create(file.path(root, "plain"), recursive = TRUE)
+  writeLines(paste0('{"manifestVersion":1,"set":{"name":"plain","version":2,"kind":"text",',
+                    '"lockedAt":"2026-01-01T00:00:00Z","contentHash":"sha256:x",',
+                    '"source":{"description":"t","basis":"own","identifiablePeople":false}},',
+                    '"attributes":[],"items":[{"id":"a","text":"one"},{"id":"b","text":"two"}]}'),
+             file.path(root, "plain", "manifest.json"))
+  ref <- buildQCEstimSetRef("plain", stimuliDir = root)
+  expect_equal(length(ref$attributes), 0)
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s")
+  expect_equal(length(sc), 2)
+  expect_equal(names(sc[[1]]$outputVariables), c("stimSet", "stimSetVersion", "stimId"))
+  expect_equal(sc[[2]]$outputVariables$stimId, "b")
+  expect_error(buildQCEstimSetRef("plain", where = list(x = 1), stimuliDir = root),
+               "its attributes are none")
+})

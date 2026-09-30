@@ -42,7 +42,9 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
   }
 
   attrNames <- vapply(stimSetRef$attributes, function(a) a$name, "")
-  stimCols <- c("stimSet", "stimSetVersion", "stimId", paste0("stim_", attrNames))
+  #paste0 of an empty vector gives "stim_", so a set with no attributes names none
+  attrCols <- if (length(attrNames)) paste0("stim_", attrNames) else character(0)
+  stimCols <- c("stimSet", "stimSetVersion", "stimId", attrCols)
   clash <- intersect(names(QCEoutvariableList), stimCols)
   if (length(clash)) {
     stop("QCEoutvariableList repeats the stimulus column(s) ", paste(clash, collapse = ", "),
@@ -99,12 +101,12 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
       #fixed notation, so a column never holds 1e-04
       if (is.numeric(v)) format(v, digits = 15, scientific = FALSE, trim = TRUE) else as.character(v)
     }, "")
-    attrCols <- as.list(vals)
-    names(attrCols) <- paste0("stim_", attrNames)
+    attrVals <- as.list(unname(vals))
+    names(attrVals) <- attrCols
     ov <- c(list(stimSet = stimSetRef$stimSet,
                  stimSetVersion = as.character(stimSetRef$version),
                  stimId = it$id),
-            attrCols, QCEoutvariableList)
+            attrVals, QCEoutvariableList)
     QCEScenarioList <- addScenarioToQCEscenarioList(QCEScenarioList, frames, QCEfeebackList,
                                                     ov, setName, trigger = trigger)
   }
