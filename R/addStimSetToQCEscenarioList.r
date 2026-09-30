@@ -42,7 +42,7 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
   }
 
   attrNames <- vapply(stimSetRef$attributes, function(a) a$name, "")
-  #paste0 of an empty vector gives "stim_", so a set with no attributes names none
+  #paste0 turns an empty vector into "stim_"
   attrCols <- if (length(attrNames)) paste0("stim_", attrNames) else character(0)
   stimCols <- c("stimSet", "stimSetVersion", "stimId", attrCols)
   clash <- intersect(names(QCEoutvariableList), stimCols)
