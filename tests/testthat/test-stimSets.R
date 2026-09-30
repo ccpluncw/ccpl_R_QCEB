@@ -190,9 +190,9 @@ test_that("an attribute value holding a tab or line break is refused before it r
   expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s"),
                "item d002: \"gender\" holds a tab, line break or other control character")
   ref <- buildQCEstimSetRef("words", stimuliDir = root)
-  ref$items[[1]]$text <- "two\nlines"
+  ref$items[[1]]$text <- "bell\u0007"
   expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s"),
-               "item w001: the text holds a tab, line break or other control character")
+               "item w001: the text holds a control character other than a line break or a tab")
 })
 
 test_that("number attributes are written in full without scientific notation and filter numerically", {
@@ -258,6 +258,15 @@ test_that("a Unicode line or paragraph separator or a C1 control is refused like
     ref <- buildQCEstimSetRef("words", stimuliDir = root)
     ref$items[[3]]$text <- bad
     expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s"),
-                 "the text holds a tab, line break or other control character")
+                 "the text holds a control character other than a line break or a tab")
   }
+})
+
+test_that("a text item's line breaks and tabs are written as markup", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  ref$items[[1]]$text <- "Alex found an error.\r\n\r\nAlex said nothing.\nThe end\there."
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus}}</p>"), createFeedbackList(), "s")
+  expect_equal(sc[[1]]$frame[[1]]$stimulus,
+               paste0("<p><span data-qcep-item=\"words:w001\">Alex found an error.<br><br>",
+                      "Alex said nothing.<br>The end&#9;here.</span></p>"))
 })

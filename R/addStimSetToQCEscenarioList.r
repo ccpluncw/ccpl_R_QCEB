@@ -2,7 +2,7 @@
 #'
 #' Function that expands a stimulus-set reference from \code{buildQCEstimSetRef} into scenarios: one per selected item, all in the set named \code{setName}, each a copy of \code{QCEframeList} with the item written into every frame's stimulus. Two placeholders mark where: \code{\{\{stimulus\}\}} becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element \code{<span data-qcep-item="<set>:<id>">} holding the escaped text, a line break written as \code{<br>}, a blank line as \code{<br><br>} and a tab as \code{&#9;} -- and \code{\{\{stimulusUrl\}\}} becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
 #'
-#' Every scenario records \code{stimSet}, \code{stimSetVersion}, \code{stimId} and one \code{stim_<attribute>} column per declared attribute (empty when the item has no value) in the data; a number is written in fixed notation with up to 15 significant digits, never in scientific notation. An attribute value or a text item holding a tab, line break, other control character or Unicode line or paragraph separator is refused, since it would split a row of the data file. A file's address is the engine's stimulus endpoint, \code{stimFile.php?set=<set>&id=<id>&v=<version>}, relative to the page; the endpoint serves the file only to a running session of the study, and the version in the address keeps a browser from showing a cached file of an earlier version.
+#' Every scenario records \code{stimSet}, \code{stimSetVersion}, \code{stimId} and one \code{stim_<attribute>} column per declared attribute (empty when the item has no value) in the data; a number is written in fixed notation with up to 15 significant digits, never in scientific notation. An attribute value holding a tab, line break, other control character or Unicode line or paragraph separator is refused, since it would split a row of the data file; a text item may hold line breaks and tabs, and any other control character or separator is refused. A file's address is the engine's stimulus endpoint, \code{stimFile.php?set=<set>&id=<id>&v=<version>}, relative to the page; the endpoint serves the file only to a running session of the study, and the version in the address keeps a browser from showing a cached file of an earlier version.
 #' @param QCEScenarioList The QCEScenarioList to add to, or \code{NULL} to start a new one.
 #' @param stimSetRef A reference from \code{buildQCEstimSetRef}.
 #' @param QCEframeList The frames each scenario shows, from \code{addFrameToQCEframeList}, with a placeholder in at least one frame's stimulus.
@@ -68,6 +68,8 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
 
   #a tab or newline in a value splits a row of the data file
   control <- "[\\p{Cc}\\p{Zl}\\p{Zp}]"
+  #a text item is markup, where only its line breaks and tabs may stand
+  textControl <- "[\\p{Zl}\\p{Zp}]|(?![\\t\\n\\r])\\p{Cc}"
   for (it in stimSetRef$items) {
     for (a in attrNames) {
       v <- it$attrs[[a]]
@@ -76,9 +78,8 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
              "a value is one line of plain text.")
       }
     }
-    if (isText && any(grepl(control, enc2utf8(it$text), perl = TRUE))) {
-      stop("item ", it$id, ": the text holds a tab, line break or other control character; ",
-           "a text item is one line of plain text.")
+    if (isText && any(grepl(textControl, enc2utf8(it$text), perl = TRUE))) {
+      stop("item ", it$id, ": the text holds a control character other than a line break or a tab.")
     }
     if (isText) {
       shown <- paste0("<span data-qcep-item=\"", stimSetRef$stimSet, ":", it$id, "\">",
