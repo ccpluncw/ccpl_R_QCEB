@@ -105,14 +105,24 @@ test_that("a files set expands into one scenario per item with its columns and t
                "<div><img src=\"stimFile.php?set=faces&amp;id=d003&amp;v=3\" alt=\"\"></div>")
 })
 
-test_that("a text set expands into escaped text, and a missing attribute is an empty column", {
+test_that("a text set expands into marked, escaped text, and a missing attribute is an empty column", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
   sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus}}</p>"),
                                     createFeedbackList(), "wordSet")
-  expect_equal(sc[[1]]$frame[[1]]$stimulus, "<p>a &amp; b</p>")
-  expect_equal(sc[[2]]$frame[[1]]$stimulus, "<p>&lt;tag&gt;</p>")
-  expect_equal(sc[[4]]$frame[[1]]$stimulus, "<p>quote &quot;x&quot;</p>")
+  expect_equal(sc[[1]]$frame[[1]]$stimulus, "<p><span data-qcep-item=\"words:w001\">a &amp; b</span></p>")
+  expect_equal(sc[[2]]$frame[[1]]$stimulus, "<p><span data-qcep-item=\"words:w002\">&lt;tag&gt;</span></p>")
+  expect_equal(sc[[4]]$frame[[1]]$stimulus,
+               "<p><span data-qcep-item=\"words:w004\">quote &quot;x&quot;</span></p>")
   expect_equal(sc[[4]]$outputVariables$stim_frequency, "")
+})
+
+test_that("a token read from a stripped manifest is written into the marked element as it is", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  ref$items[[1]]$text <- "\u27e6words:w001\u27e7"
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus}}</p>"),
+                                    createFeedbackList(), "wordSet")
+  expect_equal(sc[[1]]$frame[[1]]$stimulus,
+               "<p><span data-qcep-item=\"words:w001\">\u27e6words:w001\u27e7</span></p>")
 })
 
 test_that("the stimulusUrl placeholder gives the path alone, for a files set only", {

@@ -111,12 +111,19 @@ savePreloadFiles(stimSets = list(faces))
   every match. Pass `ref$n` as `numberOfTrialsPerSet`.
 - `addStimSetToQCEscenarioList()` writes one scenario per selected item into
   the set `setName`. In the frames, `{{stimulus}}` becomes the item — an
-  image, sound or video element for a file, the escaped text for a word set —
+  image, sound or video element for a file, and for a word set a marked
+  element `<span data-qcep-item="<set>:<id>">` holding the escaped text —
   and `{{stimulusUrl}}` the file's address alone. Every scenario writes
   `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per
   attribute into the data. List them in `fields.txt` (a generated study's
   `fields.txt` is derived from the configuration, so they are added for it).
 - `savePreloadFiles(stimSets = ...)` preloads the sets' files.
+
+The platform may give the build a copy of a set whose words are placeholders
+(`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<attribute>⟧` for a text attribute's value)
+and put the words in after the build. Write a text item only through
+`{{stimulus}}`, and never test, print or copy an item's `text`: anywhere else
+the placeholder stays as it is and the study is refused.
 
 A set's files are served to a running session only, through the engine's
 stimulus endpoint, so the addresses work on engine 10.0 and later; an earlier
@@ -385,7 +392,7 @@ addStimSetToQCEscenarioList(
 )
 ```
 
-Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Two placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, the escaped text for a text item -- and `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
+Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Two placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element `<span data-qcep-item="<set>:<id>">` holding the escaped text, a line break written as `<br>`, a blank line as `<br><br>` and a tab as `&#9;` -- and `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
 
 - `QCEScenarioList` — The QCEScenarioList to add to, or `NULL` to start a new one.
 - `stimSetRef` — A reference from `buildQCEstimSetRef`.
