@@ -371,3 +371,44 @@ test_that("a survey frame shows a text item and a text value as plain words insi
   #the other frame is marked as before
   expect_true(grepl("data-qcep-item='words:w001'", sc[[1]]$frame[[2]]$stimulus, fixed = TRUE))
 })
+
+test_that("saveQCEstimSetList writes every item a hook needs: text, html, length and attributes", {
+  root <- .stimRoot()
+  ref <- buildQCEstimSetRef("words", stimuliDir = root, n = 2)
+  ref$attributes <- c(ref$attributes, list(list(name = "gloss", type = "text")))
+  ref$items[[1]]$attrs$gloss <- "a 'gloss'"
+  ref$items[[2]]$text <- "⟦words:w002⟧"
+  ref$items[[2]]$chars <- 5L
+  dir <- tempfile("list")
+  dir.create(dir)
+  path <- saveQCEstimSetList(ref, "wordList.json", dir = dir)
+  expect_equal(path, file.path(dir, "wordList.json"))
+  doc <- jsonlite::read_json(path)
+  expect_equal(doc$stimSetList, list(set = "words", version = "3", kind = "text"))
+  expect_length(doc$items, 4)
+  expect_equal(doc$items[[1]]$text, "a & b")
+  expect_equal(doc$items[[1]]$chars, 5)
+  expect_equal(doc$items[[1]]$html, paste0(.mk("words:w001"), "a &amp; b</span>"))
+  expect_equal(doc$items[[1]]$attrs, list(frequency = 10, gloss = "a 'gloss'"))
+  #a placeholder is written as it is, for the platform to fill
+  expect_equal(doc$items[[2]]$text, "⟦words:w002⟧")
+  expect_equal(doc$items[[2]]$chars, 5)
+  expect_equal(doc$items[[2]]$html, paste0(.mk("words:w002"), "⟦words:w002⟧</span>"))
+  expect_equal(doc$items[[4]]$attrs, setNames(list(), character(0)))
+  saveQCEstimSetList(ref, "freq.json", attributes = "frequency", dir = dir)
+  doc <- jsonlite::read_json(file.path(dir, "freq.json"))
+  expect_equal(doc$items[[1]]$attrs, list(frequency = 10))
+})
+
+test_that("saveQCEstimSetList lists a files set by id and attributes, and refuses a bad name or attribute", {
+  root <- .stimRoot()
+  faces <- buildQCEstimSetRef("faces", stimuliDir = root)
+  dir <- tempfile("list")
+  dir.create(dir)
+  doc <- jsonlite::read_json(saveQCEstimSetList(faces, "faces.json", attributes = "gender", dir = dir))
+  expect_equal(doc$items[[1]], list(id = "d001", attrs = list(gender = "f")))
+  expect_error(saveQCEstimSetList(faces, "faces.txt", dir = dir), "ending in .json")
+  expect_error(saveQCEstimSetList(faces, "sub/faces.json", dir = dir), "with no directory")
+  expect_error(saveQCEstimSetList(faces, "f.json", attributes = "age", dir = dir), "has no attribute \"age\"; its attributes are rating, gender")
+  expect_error(saveQCEstimSetList(list(), "f.json"), "must be a reference")
+})

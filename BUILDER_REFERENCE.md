@@ -135,6 +135,12 @@ trial's data (`stim_<attribute>`, or a column added to `outputVariables`),
 never from its own code. Never test, change or print a placeholder: it is not
 the words.
 
+A hook that needs the whole list — free recall scored against it, a foil
+drawn for a recognition test — gets it from `saveQCEstimSetList(ref,
+"wordList.json", dir = OUT_DIR)`, which writes the set's items (and the
+platform fills their words): the hook fetches the file in the trial that uses
+it, compares with each item's `text` and shows one with its `html`.
+
 A set's files are served to a running session only, through the engine's
 stimulus endpoint, so the addresses work on engine 10.0 and later; an earlier
 engine is refused. A balanced draw — say six items from each of two levels —
@@ -209,7 +215,7 @@ scalars the engine's manifest reader refuses.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-09-30 — 78 exported functions (71 current, 7 deprecated).*
+*Generated from `man/` on 2026-09-30 — 79 exported functions (72 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -2332,6 +2338,23 @@ Function that writes `pluginManifest.local.json` into the working directory. The
 The file is serialized with scalars unboxed: the engine reads this manifest directly (no unwrapping layer), so a value written as a one-element array would be refused at run time.
 
 **Returns.** the json data
+
+### `saveQCEstimSetList`
+
+Write a stimulus set's items to a file a hook can load
+
+```r
+saveQCEstimSetList(stimSetRef, fileName, attributes = NULL, dir = ".")
+```
+
+Writes a JSON file listing the items of a stimulus-set reference from `buildQCEstimSetRef`, for a custom hook that needs the whole list rather than its own trial's item: to score free recall against it, or to draw a foil for a recognition test. The file holds `stimSetList`, with the set's `set` name, `version` and `kind`, and `items`, one per item of the reference, each with its `id` and `attrs` (every attribute, or those named in `attributes`) and, for a text item, `text`, its words, `chars`, their length in characters, and `html`, the item as the marked element a frame shows. A platform that gives the build a copy of the set whose words are placeholders puts the words into `text`, `html` and each text value after the build. A hook loads the file with `fetch()` in the trial that uses it, compares with `text` and shows an item with `html`.
+
+- `stimSetRef` — A reference from `buildQCEstimSetRef`. Every item it selects is listed, whatever its `n`.
+- `fileName` — A single string naming the file: a file name ending in `.json`, with no directory.
+- `attributes` — A character vector naming the attributes each item carries in the file, or `NULL` for all of them. Default `NULL`.
+- `dir` — A single string naming the directory to write into: the one the configuration files go to. Default `"."`.
+
+**Returns.** Invisibly, the path written.
 
 ### `saveQCEunplacedPages`
 
