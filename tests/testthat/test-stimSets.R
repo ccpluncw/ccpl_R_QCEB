@@ -105,14 +105,17 @@ test_that("a files set expands into one scenario per item with its columns and t
                "<div><img src=\"stimFile.php?set=faces&amp;id=d003&amp;v=3\" alt=\"\"></div>")
 })
 
+#the opening of a marked element as the package writes it
+.mk <- function(key) paste0("<span data-qcep-item='", key, "'>")
+
 test_that("a text set expands into marked, escaped text, and a missing attribute is an empty column", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
   sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus}}</p>"),
                                     createFeedbackList(), "wordSet")
-  expect_equal(sc[[1]]$frame[[1]]$stimulus, "<p><span data-qcep-item=\"words:w001\">a &amp; b</span></p>")
-  expect_equal(sc[[2]]$frame[[1]]$stimulus, "<p><span data-qcep-item=\"words:w002\">&lt;tag&gt;</span></p>")
+  expect_equal(sc[[1]]$frame[[1]]$stimulus, paste0("<p>", .mk("words:w001"), "a &amp; b</span></p>"))
+  expect_equal(sc[[2]]$frame[[1]]$stimulus, paste0("<p>", .mk("words:w002"), "&lt;tag&gt;</span></p>"))
   expect_equal(sc[[4]]$frame[[1]]$stimulus,
-               "<p><span data-qcep-item=\"words:w004\">quote &quot;x&quot;</span></p>")
+               paste0("<p>", .mk("words:w004"), "quote &quot;x&quot;</span></p>"))
   expect_equal(sc[[4]]$outputVariables$stim_frequency, "")
 })
 
@@ -122,7 +125,7 @@ test_that("a token read from a stripped manifest is written into the marked elem
   sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus}}</p>"),
                                     createFeedbackList(), "wordSet")
   expect_equal(sc[[1]]$frame[[1]]$stimulus,
-               "<p><span data-qcep-item=\"words:w001\">\u27e6words:w001\u27e7</span></p>")
+               paste0("<p>", .mk("words:w001"), "\u27e6words:w001\u27e7</span></p>"))
 })
 
 test_that("the stimulusUrl placeholder gives the path alone, for a files set only", {
@@ -262,11 +265,22 @@ test_that("a Unicode line or paragraph separator or a C1 control is refused like
   }
 })
 
+test_that("an item inside a JSON-string stimulus keeps the JSON valid, quotes, backslashes and line breaks included", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  ref$items[[1]]$text <- "say \"hi\" to C:\\temp\nthen 'go'"
+  stem <- "{\"stem\":\"<p>{{stimulus}}</p>\",\"options\":[\"yes\",\"no\"]}"
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames(stem), createFeedbackList(), "s")
+  out <- sc[[1]]$frame[[1]]$stimulus
+  expect_true(jsonlite::validate(out))
+  expect_equal(jsonlite::fromJSON(out)$stem,
+               paste0("<p>", .mk("words:w001"), "say &quot;hi&quot; to C:&#92;temp<br>then &#39;go&#39;</span></p>"))
+})
+
 test_that("a text item's line breaks and tabs are written as markup", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
   ref$items[[1]]$text <- "Alex found an error.\r\n\r\nAlex said nothing.\nThe end\there."
   sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus}}</p>"), createFeedbackList(), "s")
   expect_equal(sc[[1]]$frame[[1]]$stimulus,
-               paste0("<p><span data-qcep-item=\"words:w001\">Alex found an error.<br><br>",
+               paste0("<p>", .mk("words:w001"), "Alex found an error.<br><br>",
                       "Alex said nothing.<br>The end&#9;here.</span></p>"))
 })

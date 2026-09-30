@@ -112,7 +112,7 @@ savePreloadFiles(stimSets = list(faces))
 - `addStimSetToQCEscenarioList()` writes one scenario per selected item into
   the set `setName`. In the frames, `{{stimulus}}` becomes the item — an
   image, sound or video element for a file, and for a word set a marked
-  element `<span data-qcep-item="<set>:<id>">` holding the escaped text —
+  element `<span data-qcep-item='<set>:<id>'>` holding the escaped text —
   and `{{stimulusUrl}}` the file's address alone. Every scenario writes
   `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per
   attribute into the data. List them in `fields.txt` (a generated study's
@@ -392,7 +392,7 @@ addStimSetToQCEscenarioList(
 )
 ```
 
-Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Two placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element `<span data-qcep-item="<set>:<id>">` holding the escaped text, a line break written as `<br>`, a blank line as `<br><br>` and a tab as `&#9;` -- and `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
+Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Two placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element `<span data-qcep-item='<set>:<id>'>` holding the escaped text, a line break written as `<br>`, a blank line as `<br><br>`, a tab as `&#9;` and a backslash as `&#92;`, so it is valid inside a JSON string -- and `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
 
 - `QCEScenarioList` — The QCEScenarioList to add to, or `NULL` to start a new one.
 - `stimSetRef` — A reference from `buildQCEstimSetRef`.
