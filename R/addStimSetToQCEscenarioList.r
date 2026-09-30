@@ -1,6 +1,6 @@
 #' Add one scenario per item of a stimulus set to a QCEScenarioList
 #'
-#' Function that expands a stimulus-set reference from \code{buildQCEstimSetRef} into scenarios: one per selected item, all in the set named \code{setName}, each a copy of \code{QCEframeList} with the item written into every frame's stimulus. Two placeholders mark where: \code{\{\{stimulus\}\}} becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element \code{<span data-qcep-item='<set>:<id>'>} holding the escaped text, a line break written as \code{<br>}, a blank line as \code{<br><br>}, a tab as \code{&#9;} and a backslash as \code{&#92;}, so it is valid inside a JSON string -- and \code{\{\{stimulusUrl\}\}} becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
+#' Function that expands a stimulus-set reference from \code{buildQCEstimSetRef} into scenarios: one per selected item, all in the set named \code{setName}, each a copy of \code{QCEframeList} with the item written into every frame's stimulus. Two placeholders mark where: \code{\{\{stimulus\}\}} becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element \code{<span data-qcep-item='<set>:<id>'>} holding the escaped text with its spaces kept (\code{white-space:pre-wrap}), a line break written as \code{<br>}, a tab as \code{&#9;} and a backslash as \code{&#92;}, so it is valid inside a JSON string -- and \code{\{\{stimulusUrl\}\}} becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
 #'
 #' Every scenario records \code{stimSet}, \code{stimSetVersion}, \code{stimId} and one \code{stim_<attribute>} column per declared attribute (empty when the item has no value) in the data; a number is written in fixed notation with up to 15 significant digits, never in scientific notation. An attribute value holding a tab, line break, other control character or Unicode line or paragraph separator is refused, since it would split a row of the data file; a text item may hold line breaks and tabs, and any other control character or separator is refused. A file's address is the engine's stimulus endpoint, \code{stimFile.php?set=<set>&id=<id>&v=<version>}, relative to the page; the endpoint serves the file only to a running session of the study, and the version in the address keeps a browser from showing a cached file of an earlier version.
 #' @param QCEScenarioList The QCEScenarioList to add to, or \code{NULL} to start a new one.
@@ -61,12 +61,11 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
   }
   #single-quoted, so the element stands inside a JSON string unchanged
   mark <- function(key, inner) {
-    paste0("<span data-qcep-item='", key, "'>", inner, "</span>")
+    paste0("<span data-qcep-item='", key, "' style='white-space:pre-wrap'>", inner, "</span>")
   }
   #line breaks and tabs become markup, so the page never holds a raw one
   render <- function(x) {
     x <- escape(gsub("\r\n?", "\n", x))
-    x <- gsub("\n[ \t]*\n[ \t\n]*", "<br><br>", x)
     x <- gsub("\n", "<br>", x, fixed = TRUE)
     gsub("\t", "&#9;", x, fixed = TRUE)
   }

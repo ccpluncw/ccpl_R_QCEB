@@ -106,7 +106,7 @@ test_that("a files set expands into one scenario per item with its columns and t
 })
 
 #the opening of a marked element as the package writes it
-.mk <- function(key) paste0("<span data-qcep-item='", key, "'>")
+.mk <- function(key) paste0("<span data-qcep-item='", key, "' style='white-space:pre-wrap'>")
 
 test_that("a text set expands into marked, escaped text, and a missing attribute is an empty column", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
@@ -274,6 +274,14 @@ test_that("an item inside a JSON-string stimulus keeps the JSON valid, quotes, b
   expect_true(jsonlite::validate(out))
   expect_equal(jsonlite::fromJSON(out)$stem,
                paste0("<p>", .mk("words:w001"), "say &quot;hi&quot; to C:&#92;temp<br>then &#39;go&#39;</span></p>"))
+})
+
+test_that("a text item keeps its indentation and runs of spaces", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  ref$items[[1]]$text <- "for (i in x) {\n    total <- total + i\n}"
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("{{stimulus}}"), createFeedbackList(), "s")
+  expect_equal(sc[[1]]$frame[[1]]$stimulus,
+               paste0(.mk("words:w001"), "for (i in x) {<br>    total &lt;- total + i<br>}</span>"))
 })
 
 test_that("a text item's line breaks and tabs are written as markup", {
