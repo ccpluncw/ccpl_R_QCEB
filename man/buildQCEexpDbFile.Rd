@@ -32,7 +32,8 @@ buildQCEexpDbFile(
   warnOnLeave = NULL,
   strictGroupAssignment = NULL,
   creditClaimTimeoutMs = NULL,
-  reservationMinutes = NULL
+  reservationMinutes = NULL,
+  researcherContact = NULL
 )
 }
 \arguments{
@@ -91,6 +92,8 @@ buildQCEexpDbFile(
 \item{creditClaimTimeoutMs}{Optional single number, at least 1000: the timeout in milliseconds on the credit claim, the one request that writes the credit record and returns the grant-or-deny verdict at the end of a gated run. NULL uses the engine default (10000), which is the right choice unless a deployment is known to be slow. ⚠ A value the browser cannot use does not relax the timeout, it REMOVES it -- the underlying field treats zero as "no limit" -- and an unbounded claim against a server that accepts the connection and never answers leaves the participant on a blank screen with the final save unrun. A very small value fails the other way: every claim times out, and the claim fails open, so credit is granted with no record written. Both are refused here. DEFAULT = NULL.}
 
 \item{reservationMinutes}{Optional single positive number of minutes: how long an assigned run with no recorded completion still counts toward its group when the server assigns groups in balance. Inside the window the assignment holds a place, so a run still under way is not counted twice over by the next participant's draw; past it the run is treated as abandoned and releases the place, so a participant who walked away does not hold one for ever. Read only when the experiment's groups declare \code{nPerBlock}; an experiment whose groups do not is unaffected by it. NULL uses the server's own window of 90 minutes. Default \code{NULL}.}
+
+\item{researcherContact}{Optional single string: the email address participants may write to about their credit. When a page of the study cannot go on, the engine sends the researcher a report of the fault itself and shows the participant a message saying so, with this address as a link for questions about credit; without it the message asks them to contact the researcher as their study invitation describes. Must be one plain address (letters, digits and \code{. _ + -} before the \code{@}, a domain with a dot after it, no spaces or other characters); leading and trailing spaces are removed. \code{NULL} leaves the setting out. Default \code{NULL}.}
 }
 \value{
 the QCEBdbfileList

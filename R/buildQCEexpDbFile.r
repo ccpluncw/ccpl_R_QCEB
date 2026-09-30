@@ -29,13 +29,14 @@
 #' @param strictGroupAssignment Optional single Boolean controlling what a multi-group experiment does when it cannot obtain a group assignment from the server. Server-side assignment is what makes the chosen group durable across a reload and what lets the server withhold groups a participant has already completed. When strict, a run that cannot obtain one refuses to start and tells the participant that nothing has been recorded and they may try again; when not strict (the engine default), it falls back to drawing a group in the browser, which is how multi-group experiments behaved before assignment existed but leaves the choice recorded nowhere. Has no effect on a single-group experiment, which never asks the server. Strict is forced on regardless of this setting for repeat-session links, where the recorded group is part of the credit key. Set TRUE to opt in. NULL uses the engine default (not strict). DEFAULT = NULL.
 #' @param creditClaimTimeoutMs Optional single number, at least 1000: the timeout in milliseconds on the credit claim, the one request that writes the credit record and returns the grant-or-deny verdict at the end of a gated run. NULL uses the engine default (10000), which is the right choice unless a deployment is known to be slow. ⚠ A value the browser cannot use does not relax the timeout, it REMOVES it -- the underlying field treats zero as "no limit" -- and an unbounded claim against a server that accepts the connection and never answers leaves the participant on a blank screen with the final save unrun. A very small value fails the other way: every claim times out, and the claim fails open, so credit is granted with no record written. Both are refused here. DEFAULT = NULL.
 #' @param reservationMinutes Optional single positive number of minutes: how long an assigned run with no recorded completion still counts toward its group when the server assigns groups in balance. Inside the window the assignment holds a place, so a run still under way is not counted twice over by the next participant's draw; past it the run is treated as abandoned and releases the place, so a participant who walked away does not hold one for ever. Read only when the experiment's groups declare \code{nPerBlock}; an experiment whose groups do not is unaffected by it. NULL uses the server's own window of 90 minutes. Default \code{NULL}.
+#' @param researcherContact Optional single string: the email address participants may write to about their credit. When a page of the study cannot go on, the engine sends the researcher a report of the fault itself and shows the participant a message saying so, with this address as a link for questions about credit; without it the message asks them to contact the researcher as their study invitation describes. Must be one plain address (letters, digits and \code{. _ + -} before the \code{@}, a domain with a dot after it, no spaces or other characters); leading and trailing spaces are removed. \code{NULL} leaves the setting out. Default \code{NULL}.
 #'
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
 #' @examples buildQCEdbFile (expName = "myExp", addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
-buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL, warnOnLeave = NULL, strictGroupAssignment = NULL, creditClaimTimeoutMs = NULL, reservationMinutes = NULL) {
+buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL, warnOnLeave = NULL, strictGroupAssignment = NULL, creditClaimTimeoutMs = NULL, reservationMinutes = NULL, researcherContact = NULL) {
 
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
@@ -337,6 +338,20 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
       stop("reservationMinutes must be a single positive number of minutes.")
     }
     tmpList$reservationMinutes <- reservationMinutes
+  }
+
+  #one plain address, since the engine writes it into a mailto link
+  if (!is.null(researcherContact)) {
+    ok <- is.character(researcherContact) && length(researcherContact) == 1 && !is.na(researcherContact)
+    if (ok) {
+      researcherContact <- trimws(researcherContact)
+      ok <- nchar(researcherContact) <= 254 &&
+        grepl("^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}$", researcherContact)
+    }
+    if (!ok) {
+      stop("researcherContact must be one plain email address, such as name@university.edu.")
+    }
+    tmpList$researcherContact <- researcherContact
   }
 
   return(tmpList)

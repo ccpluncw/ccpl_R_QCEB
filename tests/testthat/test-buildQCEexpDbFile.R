@@ -404,3 +404,23 @@ test_that("reservationMinutes survives the JSON round trip as a one-element arra
   expect_equal(length(back$reservationMinutes), 1)
   expect_equal(back$reservationMinutes[[1]], 90)
 })
+
+#--- researcherContact -------------------------------------------------------
+
+test_that("researcherContact is absent unless stated", {
+  expect_false("researcherContact" %in% names(buildQCEexpDbFile(expName = "e1")))
+})
+
+test_that("a valid email address is stored as given, trimmed", {
+  db <- buildQCEexpDbFile(expName = "e1", researcherContact = " lab.person@uni.edu ")
+  expect_equal(db$researcherContact, "lab.person@uni.edu")
+})
+
+test_that("anything that is not one plain email address is refused", {
+  bad <- list("not an email", "a@b", "a b@c.edu", "a@b.edu, c@d.edu", "<a@b.edu>",
+              "a@b.edu?subject=x", "javascript:alert(1)@x.edu", c("a@b.edu", "c@d.edu"), 3,
+              "\"q\"@b.edu", paste0(strrep("a", 250), "@b.edu"))
+  for (b in bad) {
+    expect_error(buildQCEexpDbFile(expName = "e1", researcherContact = b), "researcherContact")
+  }
+})

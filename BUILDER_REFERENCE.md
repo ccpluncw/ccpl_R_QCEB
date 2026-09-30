@@ -1333,7 +1333,8 @@ buildQCEexpDbFile(
   warnOnLeave = NULL,
   strictGroupAssignment = NULL,
   creditClaimTimeoutMs = NULL,
-  reservationMinutes = NULL
+  reservationMinutes = NULL,
+  researcherContact = NULL
 )
 ```
 
@@ -1367,6 +1368,7 @@ Function that create a QCEB dbfile.
 - `strictGroupAssignment` — Optional single Boolean controlling what a multi-group experiment does when it cannot obtain a group assignment from the server. Server-side assignment is what makes the chosen group durable across a reload and what lets the server withhold groups a participant has already completed. When strict, a run that cannot obtain one refuses to start and tells the participant that nothing has been recorded and they may try again; when not strict (the engine default), it falls back to drawing a group in the browser, which is how multi-group experiments behaved before assignment existed but leaves the choice recorded nowhere. Has no effect on a single-group experiment, which never asks the server. Strict is forced on regardless of this setting for repeat-session links, where the recorded group is part of the credit key. Set TRUE to opt in. NULL uses the engine default (not strict). DEFAULT = NULL.
 - `creditClaimTimeoutMs` — Optional single number, at least 1000: the timeout in milliseconds on the credit claim, the one request that writes the credit record and returns the grant-or-deny verdict at the end of a gated run. NULL uses the engine default (10000), which is the right choice unless a deployment is known to be slow. ⚠ A value the browser cannot use does not relax the timeout, it REMOVES it -- the underlying field treats zero as "no limit" -- and an unbounded claim against a server that accepts the connection and never answers leaves the participant on a blank screen with the final save unrun. A very small value fails the other way: every claim times out, and the claim fails open, so credit is granted with no record written. Both are refused here. DEFAULT = NULL.
 - `reservationMinutes` — Optional single positive number of minutes: how long an assigned run with no recorded completion still counts toward its group when the server assigns groups in balance. Inside the window the assignment holds a place, so a run still under way is not counted twice over by the next participant's draw; past it the run is treated as abandoned and releases the place, so a participant who walked away does not hold one for ever. Read only when the experiment's groups declare `nPerBlock`; an experiment whose groups do not is unaffected by it. NULL uses the server's own window of 90 minutes. Default `NULL`.
+- `researcherContact` — Optional single string: the email address participants may write to about their credit. When a page of the study cannot go on, the engine sends the researcher a report of the fault itself and shows the participant a message saying so, with this address as a link for questions about credit; without it the message asks them to contact the researcher as their study invitation describes. Must be one plain address (letters, digits and `. _ + -` before the `@`, a domain with a dot after it, no spaces or other characters); leading and trailing spaces are removed. `NULL` leaves the setting out. Default `NULL`.
 
 **Returns.** the QCEBdbfileList
 
@@ -2109,7 +2111,7 @@ savePreloadFiles(
 )
 ```
 
-Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. The files of any stimulus sets passed in `stimSets` are added by media type, as their stimulus-endpoint addresses; a set drawn at random per participant preloads every item that could be drawn. Text sets add nothing.
+Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. Each list is written as an array, empty when nothing of that kind is preloaded. The files of any stimulus sets passed in `stimSets` are added by media type, as their stimulus-endpoint addresses; a set drawn at random per participant preloads every item that could be drawn. Text sets add nothing.
 
 - `imageFileArray` — An array of the image filenames (plus paths) that need to be preloaded. Default `NULL`.
 - `videoFileArray` — An array of the video filenames (plus paths) that need to be preloaded. Default `NULL`.
