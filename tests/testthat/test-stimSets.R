@@ -345,3 +345,29 @@ test_that("a text item's line breaks and tabs are written as markup", {
                paste0("<p>", .mk("words:w001"), "Alex found an error.<br><br>",
                       "Alex said nothing.<br>The end&#9;here.</span></p>"))
 })
+
+test_that("a survey frame shows a text item and a text value as plain words inside its JSON model", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  ref$attributes <- c(ref$attributes, list(list(name = "gloss", type = "text")))
+  ref$items[[1]]$text <- "I \"enjoy\" parties\\ <b>\nand ⟦x:y⟧"
+  ref$items[[1]]$attrs$gloss <- "a 'gloss'"
+  ref$items[[2]]$text <- "⟦words:w002⟧"
+  model <- surveyModel(surveyPage("p1", surveyQuestion("radiogroup", "q", "{{stimulus}} ({{stimulus:gloss}})",
+                                                       choices = c("{{stimulus}}", "No"))))
+  fr <- addSurveyFrameToQCEframeList(NULL, model, frameName = "item")
+  fr <- addFrameToQCEframeList(fr, trialType = "key", frameName = "shown", stimulus = "<p>{{stimulus}}</p>",
+                               post_trial_gap = 0, choices = c("d"))
+  sc <- addStimSetToQCEscenarioList(NULL, ref, fr, createFeedbackList(), "s")
+  out <- sc[[1]]$frame[[1]]$stimulus
+  expect_true(jsonlite::validate(out))
+  q <- jsonlite::fromJSON(out, simplifyVector = FALSE)$pages[[1]]$elements[[1]]
+  expect_equal(q$title, "I \"enjoy\" parties\\ <b>\nand ⟦x:y⟧ (a 'gloss')")
+  expect_equal(q$choices[[1]], "I \"enjoy\" parties\\ <b>\nand ⟦x:y⟧")
+  #the model's text never takes a placeholder's form
+  expect_false(grepl("⟦", out, fixed = TRUE))
+  expect_false(grepl("data-qcep-item", out, fixed = TRUE))
+  #a placeholder is written as it is, for the platform to fill
+  expect_true(grepl("⟦words:w002⟧", sc[[2]]$frame[[1]]$stimulus, fixed = TRUE))
+  #the other frame is marked as before
+  expect_true(grepl("data-qcep-item='words:w001'", sc[[1]]$frame[[2]]$stimulus, fixed = TRUE))
+})

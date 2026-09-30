@@ -112,7 +112,8 @@ savePreloadFiles(stimSets = list(faces))
 - `addStimSetToQCEscenarioList()` writes one scenario per selected item into
   the set `setName`. In the frames, `{{stimulus}}` becomes the item — an
   image, sound or video element for a file, and for a word set a marked
-  element `<span data-qcep-item='<set>:<id>'>` holding the escaped text —
+  element `<span data-qcep-item='<set>:<id>'>` holding the escaped text
+  (plain words, escaped for its JSON, in a survey frame) —
   and `{{stimulusUrl}}` the file's address alone. Every scenario writes
   `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per
   attribute into the data. List them in `fields.txt` (a generated study's
@@ -124,10 +125,15 @@ value in a marked element like an item, a number or level as written.
 
 The platform may give the build a copy of a set whose words are placeholders
 (`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<attribute>⟧` for a text attribute's value)
-and put the words in after the build, wherever a placeholder stands: an item's
-`text` or a value may be placed as it is in any frame, page or script (a
-second item beside the first, a prime from another set). Never test, change or
-print a placeholder: it is not the words.
+and put the words in after the build, where it knows how they are shown: a
+frame of a scenario (a second item beside the first, a prime from another
+set), a data column in `outputVariables`, or the text of an `.html` page. A
+survey frame shows them as plain words. A placeholder in a script, a JSON file
+of the study's own, or a page's `<script>`, `<style>` or attribute is never
+filled, and the platform refuses the study: a hook reads an item from the
+trial's data (`stim_<attribute>`, or a column added to `outputVariables`),
+never from its own code. Never test, change or print a placeholder: it is not
+the words.
 
 A set's files are served to a running session only, through the engine's
 stimulus endpoint, so the addresses work on engine 10.0 and later; an earlier
@@ -396,7 +402,7 @@ addStimSetToQCEscenarioList(
 )
 ```
 
-Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Three placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element `<span data-qcep-item='<set>:<id>'>` holding the escaped text with its spaces kept (`white-space:pre-wrap`) and its own script's direction (`dir='auto'`), a line break written as `<br>`, a tab as `&#9;` and a backslash as `&#92;`, so it is valid inside a JSON string -- `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element, and `{{stimulus:<attribute>}}` becomes the item's value of that attribute -- a text value marked and escaped like a text item (`data-qcep-item='<set>:<id>:<attribute>'`), a number or level as the data column writes it. At least one frame must carry a placeholder.
+Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Three placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element `<span data-qcep-item='<set>:<id>'>` holding the escaped text with its spaces kept (`white-space:pre-wrap`) and its own script's direction (`dir='auto'`), a line break written as `<br>`, a tab as `&#9;` and a backslash as `&#92;`, so it is valid inside a JSON string -- `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element, and `{{stimulus:<attribute>}}` becomes the item's value of that attribute -- a text value marked and escaped like a text item (`data-qcep-item='<set>:<id>:<attribute>'`), a number or level as the data column writes it. A survey frame (`addSurveyFrameToQCEframeList`) shows its text as text, so there a text item or value is written as plain words escaped for the string of the survey's JSON model it stands in, the placeholder's opening bracket written as its JSON escape so an item never takes a placeholder's form. At least one frame must carry a placeholder.
 
 - `QCEScenarioList` — The QCEScenarioList to add to, or `NULL` to start a new one.
 - `stimSetRef` — A reference from `buildQCEstimSetRef`.
