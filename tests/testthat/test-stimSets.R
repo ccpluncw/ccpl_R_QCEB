@@ -184,3 +184,30 @@ test_that("an attribute value holding a tab or line break is refused before it r
   expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s"),
                "item w001: the text holds a tab, line break or other control character")
 })
+
+test_that("number attributes are written in full without scientific notation and filter numerically", {
+  root <- file.path(tempfile("stim"), "stimuli")
+  dir.create(file.path(root, "nums"), recursive = TRUE)
+  vals <- c(0.0001, 100000, 3e9, 1e-7, 4.2)
+  txt <- paste0('{"manifestVersion":1,"set":{"name":"nums","version":1,"kind":"text",',
+                '"lockedAt":"2026-01-01T00:00:00Z","contentHash":"sha256:x",',
+                '"source":{"description":"t","basis":"own","identifiablePeople":false}},',
+                '"attributes":[{"name":"frequency","type":"number"}],"items":[',
+                '{"id":"a","text":"a","attrs":{"frequency":0.0001}},',
+                '{"id":"b","text":"b","attrs":{"frequency":100000}},',
+                '{"id":"c","text":"c","attrs":{"frequency":3000000000}},',
+                '{"id":"d","text":"d","attrs":{"frequency":1e-7}},',
+                '{"id":"e","text":"e","attrs":{"frequency":4.2}}]}')
+  writeLines(txt, file.path(root, "nums", "manifest.json"))
+  ref <- buildQCEstimSetRef("nums", stimuliDir = root)
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s")
+  got <- vapply(sc, function(s) s$outputVariables$stim_frequency, "")
+  expect_equal(unname(got), c("0.0001", "100000", "3000000000", "0.0000001", "4.2"))
+  expect_false(any(grepl("e", got, fixed = TRUE)))
+  for (i in seq_along(vals)) {
+    hit <- buildQCEstimSetRef("nums", where = list(frequency = vals[i]), stimuliDir = root)
+    expect_equal(hit$items[[1]]$id, letters[i])
+  }
+  expect_equal(buildQCEstimSetRef("nums", where = list(frequency = 100000L),
+                                  stimuliDir = root)$items[[1]]$id, "b")
+})

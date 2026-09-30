@@ -2,7 +2,7 @@
 #'
 #' Function that reads a locked stimulus set's \code{manifest.json} and selects the items a block shows. A set is a directory \code{<stimuliDir>/<stimSet>/} holding \code{manifest.json} (schema version 1) and, for a set of files, \code{files/}; the platform places it in the study before the build. The reference is passed to \code{addStimSetToQCEscenarioList}, which writes one scenario per selected item, and to \code{savePreloadFiles}, which preloads the set's files. Files are served only inside a running session, through the engine's stimulus endpoint, so a set needs engine 10.0 or later.
 #'
-#' A filter keeps an item when every named attribute matches: a single value is an equality test, and \code{list(min = , max = )} (either bound may be left out) is a range test on a number attribute. An item with no value for a filtered attribute does not match.
+#' A filter keeps an item when every named attribute matches: a single value is an equality test (numeric, to within rounding, for a number attribute), and \code{list(min = , max = )} (either bound may be left out) is a range test on a number attribute. An item with no value for a filtered attribute does not match.
 #' @param stimSet A single string naming the set: its directory under \code{stimuliDir} and the \code{set.name} in its manifest.
 #' @param where A named list filtering the items on their attributes, for example \code{list(gender = "f", rating = list(min = 3))}. \code{NULL} keeps every item. Default \code{NULL}.
 #' @param n A single whole number: how many of the matching items each participant sees, drawn at random per participant by the engine. \code{NULL} shows every matching item. Pass \code{ref$n} as \code{numberOfTrialsPerSet} to \code{addSetToQCEsetInfoList} with \code{selectionType = "randomWithoutReplacement"}. Default \code{NULL}.
@@ -97,9 +97,13 @@ buildQCEstimSetRef <- function(stimSet, where = NULL, n = NULL, stimuliDir = "st
       v <- it$attrs[[nm]]
       if (is.null(v)) return(FALSE)
       f <- where[[nm]]
+      isNumber <- identical(attributes[[match(nm, attrNames)]]$type, "number")
       if (is.list(f)) {
         if (!is.null(f$min) && v < f$min) return(FALSE)
         if (!is.null(f$max) && v > f$max) return(FALSE)
+      } else if (isNumber) {
+        #equal to within rounding, so 100000L matches 1e5
+        if (!is.numeric(v) || abs(v - f) > 1e-12 * max(abs(v), abs(f))) return(FALSE)
       } else if (!identical(as.character(v), as.character(f))) {
         return(FALSE)
       }
