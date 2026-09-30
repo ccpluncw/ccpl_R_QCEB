@@ -172,3 +172,15 @@ test_that("an empty preload list is written as an empty array, which the engine 
   pr <- jsonlite::fromJSON("preloadFile.json", simplifyVector = FALSE)
   expect_equal(lengths(pr), c(images = 0L, video = 0L, audio = 0L))
 })
+
+test_that("an attribute value holding a tab or line break is refused before it reaches the data", {
+  root <- .stimRoot()
+  ref <- buildQCEstimSetRef("faces", stimuliDir = root)
+  ref$items[[2]]$attrs$gender <- "f\tm"
+  expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s"),
+               "item d002: \"gender\" holds a tab, line break or other control character")
+  ref <- buildQCEstimSetRef("words", stimuliDir = root)
+  ref$items[[1]]$text <- "two\nlines"
+  expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s"),
+               "item w001: the text holds a tab, line break or other control character")
+})

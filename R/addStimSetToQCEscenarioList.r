@@ -2,7 +2,7 @@
 #'
 #' Function that expands a stimulus-set reference from \code{buildQCEstimSetRef} into scenarios: one per selected item, all in the set named \code{setName}, each a copy of \code{QCEframeList} with the item written into every frame's stimulus. Two placeholders mark where: \code{\{\{stimulus\}\}} becomes the item itself -- an image, sound or video element for a file, the escaped text for a text item -- and \code{\{\{stimulusUrl\}\}} becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
 #'
-#' Every scenario records \code{stimSet}, \code{stimSetVersion}, \code{stimId} and one \code{stim_<attribute>} column per declared attribute (empty when the item has no value) in the data. A file's address is the engine's stimulus endpoint, \code{stimFile.php?set=<set>&id=<id>}, relative to the page; the endpoint serves the file only to a running session of the study.
+#' Every scenario records \code{stimSet}, \code{stimSetVersion}, \code{stimId} and one \code{stim_<attribute>} column per declared attribute (empty when the item has no value) in the data. An attribute value or a text item holding a tab, line break or other control character is refused, since it would split a row of the data file. A file's address is the engine's stimulus endpoint, \code{stimFile.php?set=<set>&id=<id>}, relative to the page; the endpoint serves the file only to a running session of the study.
 #' @param QCEScenarioList The QCEScenarioList to add to, or \code{NULL} to start a new one.
 #' @param stimSetRef A reference from \code{buildQCEstimSetRef}.
 #' @param QCEframeList The frames each scenario shows, from \code{addFrameToQCEframeList}, with a placeholder in at least one frame's stimulus.
@@ -57,7 +57,20 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
     gsub("'", "&#39;", x, fixed = TRUE)
   }
 
+  #a tab or newline in a value splits a row of the data file
+  control <- "[\001-\037\177]"
   for (it in stimSetRef$items) {
+    for (a in attrNames) {
+      v <- it$attrs[[a]]
+      if (is.character(v) && any(grepl(control, v))) {
+        stop("item ", it$id, ": \"", a, "\" holds a tab, line break or other control character; ",
+             "a value is one line of plain text.")
+      }
+    }
+    if (isText && any(grepl(control, it$text))) {
+      stop("item ", it$id, ": the text holds a tab, line break or other control character; ",
+           "a text item is one line of plain text.")
+    }
     if (isText) {
       shown <- escape(it$text)
       url <- NULL
