@@ -192,7 +192,7 @@ scalars the engine's manifest reader refuses.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-09-29 — 77 exported functions (70 current, 7 deprecated).*
+*Generated from `man/` on 2026-09-30 — 77 exported functions (70 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -396,7 +396,7 @@ Function that expands a stimulus-set reference from `buildQCEstimSetRef` into sc
 - `trigger` — Optional trial-level triggers from `buildQCETriggerList`, given to every scenario. Default `NULL`.
 
 **Details.** 
-Every scenario records `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per declared attribute (empty when the item has no value) in the data; a number is written in fixed notation with up to 15 significant digits, never in scientific notation. An attribute value or a text item holding a tab, line break or other control character is refused, since it would split a row of the data file. A file's address is the engine's stimulus endpoint, `stimFile.php?set=<set>&id=<id>&v=<version>`, relative to the page; the endpoint serves the file only to a running session of the study, and the version in the address keeps a browser from showing a cached file of an earlier version.
+Every scenario records `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per declared attribute (empty when the item has no value) in the data; a number is written in fixed notation with up to 15 significant digits, never in scientific notation. An attribute value or a text item holding a tab, line break, other control character or Unicode line or paragraph separator is refused, since it would split a row of the data file. A file's address is the engine's stimulus endpoint, `stimFile.php?set=<set>&id=<id>&v=<version>`, relative to the page; the endpoint serves the file only to a running session of the study, and the version in the address keeps a browser from showing a cached file of an earlier version.
 
 **Returns.** the updated QCEScenarioList
 

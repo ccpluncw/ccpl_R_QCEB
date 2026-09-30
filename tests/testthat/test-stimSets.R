@@ -237,3 +237,17 @@ test_that("a set with no attributes expands with only the set columns", {
   expect_error(buildQCEstimSetRef("plain", where = list(x = 1), stimuliDir = root),
                "its attributes are none")
 })
+
+test_that("a Unicode line or paragraph separator or a C1 control is refused like a tab", {
+  root <- .stimRoot()
+  for (bad in c("a b\u0085c", "x y", "x y", "c1\u009bz")) {
+    ref <- buildQCEstimSetRef("faces", stimuliDir = root)
+    ref$items[[1]]$attrs$gender <- bad
+    expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s"),
+                 "holds a tab, line break or other control character")
+    ref <- buildQCEstimSetRef("words", stimuliDir = root)
+    ref$items[[3]]$text <- bad
+    expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(), createFeedbackList(), "s"),
+                 "the text holds a tab, line break or other control character")
+  }
+})
