@@ -126,6 +126,15 @@ test_that("an item's own opening bracket is written so it never reads as a place
   expect_equal(sc[[1]]$frame[[1]]$stimulus, paste0(.mk("words:w001"), "the pair &#10214;ab:cd\u27e7</span>"))
 })
 
+test_that("a missing set's error names only the directories that are sets", {
+  root <- .stimRoot()
+  dir.create(file.path(root, "notes"))
+  dir.create(file.path(root, "qcep-private-copy"))
+  err <- tryCatch(buildQCEstimSetRef("absent", stimuliDir = root), error = function(e) conditionMessage(e))
+  expect_match(err, "The study carries: faces, words.", fixed = TRUE)
+  expect_false(grepl("notes|qcep-private", err))
+})
+
 test_that("a text item's length is its chars, from the manifest when it gives one", {
   root <- .stimRoot()
   ref <- buildQCEstimSetRef("words", stimuliDir = root)

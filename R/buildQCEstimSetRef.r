@@ -33,7 +33,9 @@ buildQCEstimSetRef <- function(stimSet, where = NULL, n = NULL, stimuliDir = "st
 
   manifestFile <- file.path(stimuliDir, stimSet, "manifest.json")
   if (!file.exists(manifestFile)) {
+    #only directories that are sets, never the rest of what the directory holds
     have <- if (dir.exists(stimuliDir)) list.dirs(stimuliDir, full.names = FALSE, recursive = FALSE) else character()
+    have <- have[file.exists(file.path(stimuliDir, have, "manifest.json"))]
     stop("there is no stimulus set \"", stimSet, "\" in ", stimuliDir, "/. ",
          if (length(have)) paste0("The study carries: ", paste(have, collapse = ", "), ".")
          else "The study carries no stimulus sets.")
