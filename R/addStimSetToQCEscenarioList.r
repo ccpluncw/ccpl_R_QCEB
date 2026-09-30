@@ -1,6 +1,6 @@
 #' Add one scenario per item of a stimulus set to a QCEScenarioList
 #'
-#' Function that expands a stimulus-set reference from \code{buildQCEstimSetRef} into scenarios: one per selected item, all in the set named \code{setName}, each a copy of \code{QCEframeList} with the item written into every frame's stimulus. Two placeholders mark where: \code{\{\{stimulus\}\}} becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element \code{<span data-qcep-item='<set>:<id>'>} holding the escaped text with its spaces kept (\code{white-space:pre-wrap}) and its own script's direction (\code{dir='auto'}), a line break written as \code{<br>}, a tab as \code{&#9;} and a backslash as \code{&#92;}, so it is valid inside a JSON string -- and \code{\{\{stimulusUrl\}\}} becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
+#' Function that expands a stimulus-set reference from \code{buildQCEstimSetRef} into scenarios: one per selected item, all in the set named \code{setName}, each a copy of \code{QCEframeList} with the item written into every frame's stimulus. Three placeholders mark where: \code{\{\{stimulus\}\}} becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element \code{<span data-qcep-item='<set>:<id>'>} holding the escaped text with its spaces kept (\code{white-space:pre-wrap}) and its own script's direction (\code{dir='auto'}), a line break written as \code{<br>}, a tab as \code{&#9;} and a backslash as \code{&#92;}, so it is valid inside a JSON string -- \code{\{\{stimulusUrl\}\}} becomes the file's address alone, for a frame that writes its own element, and \code{\{\{stimulus:<attribute>\}\}} becomes the item's value of that attribute -- a text value marked and escaped like a text item (\code{data-qcep-item='<set>:<id>:<attribute>'}), a number or level as the data column writes it. At least one frame must carry a placeholder.
 #'
 #' Every scenario records \code{stimSet}, \code{stimSetVersion}, \code{stimId} and one \code{stim_<attribute>} column per declared attribute (empty when the item has no value) in the data; a number is written in fixed notation with up to 15 significant digits, never in scientific notation. An attribute value holding a tab, line break, other control character or Unicode line or paragraph separator is refused, since it would split a row of the data file; a text item may hold line breaks and tabs, and any other control character or separator is refused. A file's address is the engine's stimulus endpoint, \code{stimFile.php?set=<set>&id=<id>&v=<version>}, relative to the page; the endpoint serves the file only to a running session of the study, and the version in the address keeps a browser from showing a cached file of an earlier version.
 #' @param QCEScenarioList The QCEScenarioList to add to, or \code{NULL} to start a new one.
@@ -32,8 +32,10 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
     stop("setName must be a single string.")
   }
   stims <- vapply(QCEframeList, function(fr) paste(fr$stimulus, collapse = ""), "")
-  if (!any(grepl("{{stimulus}}", stims, fixed = TRUE) | grepl("{{stimulusUrl}}", stims, fixed = TRUE))) {
-    stop("no frame's stimulus carries the placeholder {{stimulus}} or {{stimulusUrl}}, ",
+  attrPattern <- "\\{\\{stimulus:([A-Za-z][A-Za-z0-9_]*)\\}\\}"
+  if (!any(grepl("{{stimulus}}", stims, fixed = TRUE) | grepl("{{stimulusUrl}}", stims, fixed = TRUE) |
+           grepl(attrPattern, stims))) {
+    stop("no frame's stimulus carries the placeholder {{stimulus}}, {{stimulusUrl}} or {{stimulus:<attribute>}}, ",
          "so no item of stimulus set \"", stimSetRef$stimSet, "\" would be shown.")
   }
   isText <- identical(stimSetRef$kind, "text")
@@ -42,6 +44,16 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
   }
 
   attrNames <- vapply(stimSetRef$attributes, function(a) a$name, "")
+  attrTypes <- vapply(stimSetRef$attributes, function(a) a$type, "")
+  #the attributes a frame shows through {{stimulus:<attribute>}}
+  shownAttrs <- unique(unlist(lapply(regmatches(stims, gregexpr(attrPattern, stims)),
+                                     function(m) sub("^\\{\\{stimulus:(.*)\\}\\}$", "\\1", m))))
+  unknown <- setdiff(shownAttrs, attrNames)
+  if (length(unknown)) {
+    stop("a frame shows {{stimulus:", unknown[1], "}}, but stimulus set \"", stimSetRef$stimSet,
+         "\" has no attribute \"", unknown[1], "\"; its attributes are ",
+         if (length(attrNames)) paste(attrNames, collapse = ", ") else "none", ".")
+  }
   #paste0 turns an empty vector into "stim_"
   attrCols <- if (length(attrNames)) paste0("stim_", attrNames) else character(0)
   stimCols <- c("stimSet", "stimSetVersion", "stimId", attrCols)
@@ -104,20 +116,30 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
                       video = paste0("<video src=\"", url, "\" autoplay playsinline></video>"),
                       stop("item ", it$id, " has media type ", it$mediaType, ", which no frame can show."))
     }
-    frames <- lapply(QCEframeList, function(fr) {
-      if (length(fr$stimulus) == 1) {
-        s <- gsub("{{stimulus}}", shown, fr$stimulus, fixed = TRUE)
-        if (!is.null(url)) s <- gsub("{{stimulusUrl}}", url, s, fixed = TRUE)
-        fr$stimulus <- s
-      }
-      fr
-    })
     vals <- vapply(attrNames, function(a) {
       v <- it$attrs[[a]]
       if (is.null(v)) return("")
       #fixed notation, so a column never holds 1e-04
       if (is.numeric(v)) format(v, digits = 15, scientific = FALSE, trim = TRUE) else as.character(v)
     }, "")
+    #a text value is marked like an item; a number or a level is shown as written
+    attrShown <- vapply(shownAttrs, function(a) {
+      v <- vals[[match(a, attrNames)]]
+      if (identical(attrTypes[[match(a, attrNames)]], "text")) {
+        mark(paste0(stimSetRef$stimSet, ":", it$id, ":", a), render(v))
+      } else {
+        escape(v)
+      }
+    }, "")
+    frames <- lapply(QCEframeList, function(fr) {
+      if (length(fr$stimulus) == 1) {
+        s <- gsub("{{stimulus}}", shown, fr$stimulus, fixed = TRUE)
+        if (!is.null(url)) s <- gsub("{{stimulusUrl}}", url, s, fixed = TRUE)
+        for (a in shownAttrs) s <- gsub(paste0("{{stimulus:", a, "}}"), attrShown[[a]], s, fixed = TRUE)
+        fr$stimulus <- s
+      }
+      fr
+    })
     attrVals <- as.list(unname(vals))
     names(attrVals) <- attrCols
     ov <- c(list(stimSet = stimSetRef$stimSet,

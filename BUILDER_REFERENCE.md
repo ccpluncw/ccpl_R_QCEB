@@ -119,11 +119,15 @@ savePreloadFiles(stimSets = list(faces))
   `fields.txt` is derived from the configuration, so they are added for it).
 - `savePreloadFiles(stimSets = ...)` preloads the sets' files.
 
+`{{stimulus:<attribute>}}` shows the item's value of an attribute: a text
+value in a marked element like an item, a number or level as written.
+
 The platform may give the build a copy of a set whose words are placeholders
 (`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<attribute>⟧` for a text attribute's value)
-and put the words in after the build. Write a text item only through
-`{{stimulus}}`, and never test, print or copy an item's `text`: anywhere else
-the placeholder stays as it is and the study is refused.
+and put the words in after the build, wherever a placeholder stands: an item's
+`text` or a value may be placed as it is in any frame, page or script (a
+second item beside the first, a prime from another set). Never test, change or
+print a placeholder: it is not the words.
 
 A set's files are served to a running session only, through the engine's
 stimulus endpoint, so the addresses work on engine 10.0 and later; an earlier
@@ -392,7 +396,7 @@ addStimSetToQCEscenarioList(
 )
 ```
 
-Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Two placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element `<span data-qcep-item='<set>:<id>'>` holding the escaped text with its spaces kept (`white-space:pre-wrap`) and its own script's direction (`dir='auto'`), a line break written as `<br>`, a tab as `&#9;` and a backslash as `&#92;`, so it is valid inside a JSON string -- and `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element. At least one frame must carry a placeholder.
+Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Three placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element `<span data-qcep-item='<set>:<id>'>` holding the escaped text with its spaces kept (`white-space:pre-wrap`) and its own script's direction (`dir='auto'`), a line break written as `<br>`, a tab as `&#9;` and a backslash as `&#92;`, so it is valid inside a JSON string -- `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element, and `{{stimulus:<attribute>}}` becomes the item's value of that attribute -- a text value marked and escaped like a text item (`data-qcep-item='<set>:<id>:<attribute>'`), a number or level as the data column writes it. At least one frame must carry a placeholder.
 
 - `QCEScenarioList` — The QCEScenarioList to add to, or `NULL` to start a new one.
 - `stimSetRef` — A reference from `buildQCEstimSetRef`.

@@ -283,6 +283,31 @@ test_that("an item inside a JSON-string stimulus keeps the JSON valid, quotes, b
                paste0("<p>", .mk("words:w001"), "say &quot;hi&quot; to C:&#92;temp<br>then &#39;go&#39;</span></p>"))
 })
 
+test_that("{{stimulus:<attribute>}} shows a value: a text value marked, a number as written", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  ref$attributes <- c(ref$attributes, list(list(name = "prime", type = "text")))
+  ref$items[[1]]$attrs$prime <- "doctor's \"note\""
+  ref$items[[2]]$attrs$prime <- "\u27e6words:w002:prime\u27e7"
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus:prime}}</p>{{stimulus}} ({{stimulus:frequency}})"),
+                                    createFeedbackList(), "s")
+  expect_equal(sc[[1]]$frame[[1]]$stimulus,
+               paste0("<p>", .mk("words:w001:prime"), "doctor&#39;s &quot;note&quot;</span></p>",
+                      .mk("words:w001"), "a &amp; b</span> (10)"))
+  expect_equal(sc[[2]]$frame[[1]]$stimulus,
+               paste0("<p>", .mk("words:w002:prime"), "\u27e6words:w002:prime\u27e7</span></p>",
+                      .mk("words:w002"), "&lt;tag&gt;</span> (20)"))
+  expect_equal(sc[[4]]$frame[[1]]$stimulus,
+               paste0("<p>", .mk("words:w004:prime"), "</span></p>", .mk("words:w004"), "quote &quot;x&quot;</span> ()"))
+})
+
+test_that("{{stimulus:<attribute>}} alone is a placeholder, and an unknown attribute is refused", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus:frequency}}</p>"), createFeedbackList(), "s")
+  expect_equal(sc[[3]]$frame[[1]]$stimulus, "<p>30</p>")
+  expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames("{{stimulus}} {{stimulus:prime}}"), createFeedbackList(), "s"),
+               "has no attribute \"prime\"; its attributes are frequency")
+})
+
 test_that("a text item keeps its indentation and runs of spaces", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
   ref$items[[1]]$text <- "for (i in x) {\n    total <- total + i\n}"
