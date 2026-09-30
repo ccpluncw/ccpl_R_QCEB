@@ -122,7 +122,7 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
       #fixed notation, so a column never holds 1e-04
       if (is.numeric(v)) format(v, digits = 15, scientific = FALSE, trim = TRUE) else as.character(v)
     }, "")
-    #a text value is marked like an item; a number or a level is shown as written
+    #a text value is marked like an item, a number or level shown as written
     attrShown <- vapply(shownAttrs, function(a) {
       v <- vals[[match(a, attrNames)]]
       if (identical(attrTypes[[match(a, attrNames)]], "text")) {
