@@ -106,7 +106,7 @@ test_that("a files set expands into one scenario per item with its columns and t
 })
 
 #the opening of a marked element as the package writes it
-.mk <- function(key) paste0("<span data-qcep-item='", key, "' style='white-space:pre-wrap'>")
+.mk <- function(key) paste0("<span data-qcep-item='", key, "' dir='auto' style='white-space:pre-wrap'>")
 
 test_that("a text set expands into marked, escaped text, and a missing attribute is an empty column", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
