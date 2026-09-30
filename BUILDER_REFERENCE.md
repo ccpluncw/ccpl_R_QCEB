@@ -436,7 +436,7 @@ Function that reads a locked stimulus set's `manifest.json` and selects the item
 **Details.** 
 A filter keeps an item when every named attribute matches: a single value is an equality test (numeric, to within rounding, for a number attribute), and `list(min = , max = )` (either bound may be left out) is a range test on a number attribute. An item with no value for a filtered attribute does not match.
 
-**Returns.** A list describing the reference: `stimSet`, the set's name; `version`, its locked version; `kind`, `"files"` or `"text"`; `attributes`, the declared attributes, each a list with `name`, `type` and, for a category, `levels`; `items`, the matching items, each a list with `id`, `attrs` and either `file` and `mediaType` or `text`; `n`, how many of them each participant sees; `where`, the filter as given.
+**Returns.** A list describing the reference: `stimSet`, the set's name; `version`, its locked version; `kind`, `"files"` or `"text"`; `attributes`, the declared attributes, each a list with `name`, `type` and, for a category, `levels`; `items`, the matching items, each a list with `id`, `attrs` and either `file` and `mediaType` or `text` and `chars`, the text's length in characters (the manifest's `chars` when it gives one, as a copy whose words are placeholders does); `n`, how many of them each participant sees; `where`, the filter as given.
 
 ## Survey models
 

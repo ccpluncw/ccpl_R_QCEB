@@ -9,7 +9,7 @@
 #' @param stimuliDir A string giving the directory that holds the study's sets, relative to the working directory the build runs in. Default \code{"stimuli"}.
 #' @param engineVersion A string naming the engine the study runs. Sets are refused before engine 10.0, which has no stimulus endpoint. Default \code{"10.0"}.
 #'
-#' @return A list describing the reference: \code{stimSet}, the set's name; \code{version}, its locked version; \code{kind}, \code{"files"} or \code{"text"}; \code{attributes}, the declared attributes, each a list with \code{name}, \code{type} and, for a category, \code{levels}; \code{items}, the matching items, each a list with \code{id}, \code{attrs} and either \code{file} and \code{mediaType} or \code{text}; \code{n}, how many of them each participant sees; \code{where}, the filter as given.
+#' @return A list describing the reference: \code{stimSet}, the set's name; \code{version}, its locked version; \code{kind}, \code{"files"} or \code{"text"}; \code{attributes}, the declared attributes, each a list with \code{name}, \code{type} and, for a category, \code{levels}; \code{items}, the matching items, each a list with \code{id}, \code{attrs} and either \code{file} and \code{mediaType} or \code{text} and \code{chars}, the text's length in characters (the manifest's \code{chars} when it gives one, as a copy whose words are placeholders does); \code{n}, how many of them each participant sees; \code{where}, the filter as given.
 #' @keywords QCE stimulus set reference manifest
 #' @export
 #' @examples
@@ -119,6 +119,8 @@ buildQCEstimSetRef <- function(stimSet, where = NULL, n = NULL, stimuliDir = "st
       out$mediaType <- it$mediaType
     } else {
       out$text <- it$text
+      #a copy whose words are placeholders gives the length it had
+      out$chars <- if (is.null(it$chars)) nchar(it$text) else as.integer(it$chars)
     }
     out
   })

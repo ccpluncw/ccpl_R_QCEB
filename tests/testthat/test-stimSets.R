@@ -126,6 +126,18 @@ test_that("an item's own opening bracket is written so it never reads as a place
   expect_equal(sc[[1]]$frame[[1]]$stimulus, paste0(.mk("words:w001"), "the pair &#10214;ab:cd\u27e7</span>"))
 })
 
+test_that("a text item's length is its chars, from the manifest when it gives one", {
+  root <- .stimRoot()
+  ref <- buildQCEstimSetRef("words", stimuliDir = root)
+  expect_equal(vapply(ref$items, function(it) it$chars, 1L), c(5L, 5L, 5L, 9L))
+  f <- file.path(root, "words", "manifest.json")
+  doc <- jsonlite::fromJSON(f, simplifyVector = FALSE)
+  doc$items[[1]]$text <- "\u27e6words:w001\u27e7"
+  doc$items[[1]]$chars <- 42
+  writeLines(jsonlite::toJSON(doc, auto_unbox = TRUE), f)
+  expect_equal(buildQCEstimSetRef("words", stimuliDir = root)$items[[1]]$chars, 42L)
+})
+
 test_that("a token read from a stripped manifest is written into the marked element as it is", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
   ref$items[[1]]$text <- "\u27e6words:w001\u27e7"
