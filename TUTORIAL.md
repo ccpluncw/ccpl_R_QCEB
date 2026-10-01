@@ -1124,10 +1124,11 @@ saveQCEpageFiles(placements, "pages.json", sidecars = sidecars, dir = OUT_DIR)
 - The groups point at the placements file through `pages = "pages.json"`
   (chapter 7), so each group may have its own.
 
-A required question must reach the participant unanswered: no radio button
-already checked, no number already filled in. A pre-selected answer can be sent
-without the participant ever choosing it, and the pre-flight check in chapter
-12 warns about such a page.
+A required question normally reaches the participant unanswered: no radio
+button already checked, no number already filled in. A pre-selected answer can
+be sent without the participant ever choosing it, so the pre-flight check in
+chapter 12 warns about one; it is a warning, because now and then a starting
+answer is the design.
 
 Placed pages are one way to ask about the participant. The engine also has
 built-in slots for an age screen and an About-you screen in the experiment
