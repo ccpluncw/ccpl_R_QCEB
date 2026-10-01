@@ -128,3 +128,62 @@ shapeMatch/
   fields.txt                  the columns the server saves (chapter 11)
   output_fields_manifest.txt  QCEB's list of expected columns (chapter 11)
 ```
+
+## 2. The build script: one R script writes every file
+
+The whole study comes from one R script. You run it from the folder where the
+study should appear, for example with `Rscript build.R`, and it writes the
+study's folder from nothing. Nothing in the folder is edited by hand. When you
+want to change the study, you change the script and run it again. That way the
+script is always a complete, readable record of the study, and a rebuild can
+never lose a change.
+
+The script starts by loading QCEB and naming a few things it uses throughout.
+
+```r
+library(QCEB)
+
+EXP_NAME  <- "shapeMatch"
+TYPE_NAME <- "TestType"
+OUT_DIR   <- EXP_NAME
+STUDY_URL <- paste0(TYPE_NAME, "/", EXP_NAME, "/")
+
+dir.create(file.path(OUT_DIR, "pictures"), recursive = TRUE,
+           showWarnings = FALSE)
+```
+
+`EXP_NAME` is the study's name. It is the name of the folder (`OUT_DIR`), and on
+the server it is the name of the folder the study is served from.
+
+`TYPE_NAME` and `STUDY_URL` are about addresses. On the server, studies are
+grouped by **experiment type**: a study lives in the folder
+`wwwFiles/<type>/<name>/`. The participant's browser, however, is never
+pointed at that folder. Every participant runs the study through one page,
+`experiment.php`, which sits at the top of `wwwFiles/`. A browser reads every
+address in a page relative to the page itself. So when a stimulus names a file
+of the study, such as one of the pictures, the address must start from the top
+of `wwwFiles/`: `TestType/shapeMatch/pictures/circle_blue.png`. `STUDY_URL` holds
+that start. An address written relative to the study's own folder
+(`pictures/circle_blue.png`) does not work: the browser looks for it at the top
+of `wwwFiles/`, and the run stops at the loading screen. `TestType` is the type
+the local test run in chapter 12 uses; before you build for a real server, set
+`TYPE_NAME` to the type your study is registered under.
+
+The script writes each configuration file with `saveJsonFile()`. QCEB writes
+every single value as a list of one (`"expName": ["shapeMatch"]`), because that
+is the form the engine reads. Leave the files as QCEB writes them. If a later
+step of a script ever has to read one back, use `readQCEjsonFile()`, which keeps
+that form; a general JSON reader does not, and the file it writes back looks
+right and no longer works.
+
+The first file is the smallest. The server starts a study by running a PHP file
+named after the study's folder, here `shapeMatch.php`. Its one line names the
+engine version the study runs on. This tutorial uses engine 10.0.
+
+```r
+writeLines('<?php require "../../bin/QCEB.10.0.php"; ?>',
+           file.path(OUT_DIR, paste0(EXP_NAME, ".php")))
+```
+
+The path `../../bin/` is fixed by the server's layout: the engine lives in
+`wwwFiles/bin/`, two folders above the study.
