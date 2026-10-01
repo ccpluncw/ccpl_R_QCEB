@@ -1,6 +1,6 @@
 #the r blocks of TUTORIAL.md run in order as one script and build its study
 
-TUTORIAL_RUN_BLOCKS <- 23
+TUTORIAL_RUN_BLOCKS <- 27
 TUTORIAL_NORUN_BLOCKS <- 0
 
 docPath <- function(name) {

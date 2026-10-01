@@ -873,3 +873,149 @@ for (g in groups) {
 - `customHooksStateKeys` lists the values in `ctx.qceState.custom` that a
   condition reads (chapter 9). The engine refuses a condition that names a key
   not on this list, which catches a misspelt name before anyone runs the study.
+
+## 9. Flow that depends on responses: conditions, excluding what was shown, switch rules
+
+So far every participant runs the same two blocks. This chapter adds three
+blocks whose running depends on what the participant does, using three tools
+the engine provides: **conditions** (`showIf`), **excluding what was shown**,
+and **switch rules**. None of them needs a hook of its own; the engine applies
+them.
+
+### A second practice block, only when needed
+
+A **condition** is attached to a trial, a set or a block. The engine tests it
+when that part is reached, and skips the part if it is false. This block runs
+only for a participant who made two or more mistakes in the first practice
+block, which the hook counted in `ctx.qceState.custom.practiceErrors`:
+
+```r
+writeLines(page(paste0("<p>Let us practise a little more.</p>",
+  "<button id='Go' type='button'>Continue</button>")),
+  file.path(OUT_DIR, "practice_again.html"))
+
+bAgain <- addBlockToQCETrialStructureList(NULL, cellSets(1), mixed,
+            blockNumber = 2, blockName = "practiceAgain",
+            showIf = buildQCEstateCondition("practiceErrors", "greaterThan", 1),
+            excludePreviouslyPresented = TRUE,
+            entryInstruction = "practice_again.html")[[1]]
+```
+
+`buildQCEstateCondition()` reads a value a hook wrote; the name must be one of
+the `customHooksStateKeys` declared in chapter 8. A participant with no errors
+never had the value set, and a value that was never set makes the comparison
+false, so the block is skipped. The other kinds of condition read an earlier
+trial's recorded answer (`buildQCEshowIfCondition()`, for a trial given a
+`stimRef` tag), or whether an earlier block's switch rule fired
+(`buildQCEblockSwitchedCondition()`, used below). `buildQCEshowIfCompound()`
+joins conditions with "all" or "any".
+
+### Excluding what was shown
+
+`excludePreviouslyPresented = TRUE` removes from the block's pools every
+scenario the participant has already seen earlier in the session, before the
+block draws.
+The second practice block and the main block draw from the same four pools as
+the first practice block, so with it a participant never meets the same pair
+twice. The main block is built again with it:
+
+```r
+bMain <- addBlockToQCETrialStructureList(NULL, cellSets(6), mixed,
+           blockNumber = 3, blockName = "main",
+           excludePreviouslyPresented = TRUE,
+           entryInstruction = "main_start.html")[[1]]
+```
+
+It is now block 3, since the second practice block takes position 2. Each cell
+holds at least 12 pairs, and the most any participant can be dealt from one
+cell is 1 + 1 + 6 + 2 = 10 (the last 2 are the extra round below), so the
+pools never run short.
+
+### An offer, a switch rule, and an extra round
+
+At the end of the main block the participant is asked whether they want a short
+extra round. The question is one trial, answered with Y or N, so it gets a key
+map of its own and a set of its own:
+
+```r
+kmYesNo <- buildKeyMap(data.frame(Yes = c("y", "Y"), No = c("n", "N"),
+                                  stringsAsFactors = FALSE))
+offerHTML <- paste0(
+  "<div style='text-align:center; font-family:sans-serif; font-size:22px'>",
+  "<p>Would you like a short extra round of 8 pairs?</p>",
+  "<p>Press Y for yes or N for no.</p></div>")
+fr <- addFrameToQCEframeList(NULL, trialType = "key", frameName = "offer",
+        stimulus = offerHTML, stimulus_duration = NULL, post_trial_gap = 300,
+        choices = getKeyChoicesFromKeyMap(kmYesNo), background = "#FFFFFF",
+        output = TRUE)
+scenarios <- addScenarioToQCEscenarioList(scenarios, fr, createFeedbackList(),
+               NULL, "offer")
+
+for (g in groups) {
+  dbfiles[[g]] <- addKeyMapToDbfile(dbfiles[[g]], "yesNo",
+                    buildQCEkeyMapEntry(map = kmYesNo))
+}
+```
+
+A **named key map** is registered in the group settings under a name, here
+`yesNo`, and a block chooses it with `keyMapName`. Blocks without one use the
+session's key map from chapter 7.
+
+Then the last two blocks, the finished list of blocks, and the switch rule:
+
+```r
+siOffer <- addSetToQCEsetInfoList(NULL, scenarios, setName = "offer",
+             numberOfTrialsPerSet = 1, selectionType = "fixed")
+once <- createBlockIteratorList(numberOfIterations = 1,
+          randomizeTrialInSetOrder = TRUE, randomizeSetOrder = "fixed",
+          randomizeAllTrials = FALSE)
+bOffer <- addBlockToQCETrialStructureList(NULL, siOffer, once,
+            blockNumber = 4, blockName = "offer", keyMapName = "yesNo",
+            showKeyMapInstruction = "never")[[1]]
+bExtra <- addBlockToQCETrialStructureList(NULL, cellSets(2), mixed,
+            blockNumber = 5, blockName = "extra",
+            showIf = buildQCEblockSwitchedCondition("offer", "switchFired"),
+            excludePreviouslyPresented = TRUE)[[1]]
+
+ts <- list("1" = bPractice, "2" = bAgain, "3" = bMain, "4" = bOffer,
+           "5" = bExtra)
+ts <- addBlockSwitchRulesToQCETrialStructureList(ts, list(
+  buildQCEblockSwitchRule(threshold = buildQCEswitchThreshold(1),
+    watchBlock = "offer", countResponse = "Yes", switchToBlock = "extra")))
+```
+
+A **switch rule** watches a block and counts responses that meet a condition.
+When the count reaches the threshold, the rule fires: the watched block ends at
+once and the run jumps forward to the block named in `switchToBlock` (with none
+named, the session's remaining blocks are skipped). Here it counts "Yes" key
+presses in the offer block, and one is enough. `countResponse = "Yes"` is short
+for "the `Key` column equals `Yes`", which is why key-map labels matter
+(chapter 3).
+
+The rule and the condition on the extra block work together. If the participant
+presses Y, the rule fires and the run goes to the extra round, whose condition
+"the offer block's switch fired" is true. If they press N, the rule never fires;
+the extra block is next anyway, but its condition is false, so it is skipped and
+the session ends. Without the condition, N would lead to the extra round too.
+
+Points about switch rules worth knowing:
+
+- A watched block must run once (`numberOfIterations = 1`), and a jump goes only
+  forward, to a later block.
+- Several rules may watch the same block; the first to reach its threshold
+  fires.
+- `buildQCEswitchRule()` makes the other kind of rule, which works inside one
+  block and moves between its sets: for example, ending a training set once the
+  participant has pressed the right key some number of times.
+- A rule counts what is on the trial's row at the moment the response is
+  recorded: the key's label, the key, the response time and the trial's output
+  variables (`countWhen` compares any of them with a value). Columns a hook adds
+  when the trial finishes are written after the count, so a rule cannot count
+  them.
+
+`addBlockSwitchRulesToQCETrialStructureList()` adds the rules to the finished
+list. Call it last, after every block is in the list.
+
+`showKeyMapInstruction = "never"` stops the key-map screen the engine would
+otherwise show because the offer block's key map differs from the previous
+block's; the question already says which keys to press.
