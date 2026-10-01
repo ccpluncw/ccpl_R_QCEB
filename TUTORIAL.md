@@ -1019,3 +1019,117 @@ list. Call it last, after every block is in the list.
 `showKeyMapInstruction = "never"` stops the key-map screen the engine would
 otherwise show because the offer block's key map differs from the previous
 block's; the question already says which keys to press.
+
+## 10. Pages: consent, age, About-you, anchors and fields
+
+### Consent
+
+Consent comes before the engine. When a participant opens their link, the
+server shows the study's consent text and the participant clicks to agree; only
+then does the engine's page load. The text is a file, `consent.txt`, holding
+plain HTML paragraphs. On the server it sits in the study's offline folder
+(chapter 12), and a study without one gets the generic text of its type or of
+the lab.
+
+```r
+writeLines(paste0(
+  "<h2>Consent</h2>",
+  "<p>This study takes about ten minutes. You will compare pairs of ",
+  "pictures. You may stop at any time.</p>"),
+  file.path(OUT_DIR, "consent.txt"))
+```
+
+### Pages and anchors
+
+A **page** is an HTML file the engine plays at a named moment of the run, an
+**anchor**. The anchors are:
+
+- `experimentStart`: once, before the experiment's instructions and the welcome
+  message. The usual place for questions about the participant.
+- `sessionStart` and `sessionEnd`: at the top and tail of a session, after the
+  session's instructions. Name a session to choose one; leave it out for every
+  session.
+- `entry` and `exit`: when a named block (or a named set inside it) starts or
+  ends. These need the session and the block.
+
+This study asks two questions at the start, About-you and age, and shows a
+debriefing at the end of the session. The pages are ordinary HTML that the
+script writes, using the `page()` function from chapter 7:
+
+```r
+writeLines(page(paste0(
+  "<p>About you</p>",
+  "<p>Which describes you?</p>",
+  "<label><input type='radio' name='gender' value='woman'> a woman</label><br>",
+  "<label><input type='radio' name='gender' value='man'> a man</label><br>",
+  "<label><input type='radio' name='gender' value='other'> ",
+  "another gender</label><br>",
+  "<label><input type='radio' name='gender' value='PNS'> ",
+  "I prefer not to say</label>",
+  "<p><button id='next' type='button'>Next</button></p>")),
+  file.path(OUT_DIR, "aboutYou.html"))
+
+writeLines(page(paste0(
+  "<p>How old are you, in years?</p>",
+  "<input type='number' name='age' min='16' max='110'>",
+  "<p><button id='next' type='button'>Next</button></p>")),
+  file.path(OUT_DIR, "age.html"))
+
+writeLines(page(paste0(
+  "<p>Thank you. This study asked how quickly people compare pictures ",
+  "by shape or by colour.</p>",
+  "<button id='Go' type='button'>Finish</button>")),
+  file.path(OUT_DIR, "debrief.html"))
+```
+
+### Where pages play, and what they record
+
+Two kinds of file describe the pages. The **placements** file says which page
+plays at which anchor. Each page's **sidecar** (`<page>.page.json`) says which
+button ends the page and which answers to record.
+
+```r
+placements <- NULL
+placements <- addPageToQCEpagePlacement(placements,
+                QCEanchor("experimentStart"), "aboutYou")
+placements <- addPageToQCEpagePlacement(placements,
+                QCEanchor("experimentStart"), "age")
+placements <- addPageToQCEpagePlacement(placements,
+                QCEanchor("sessionEnd"), "debrief", playOnce = TRUE)
+
+sidecars <- list(
+  aboutYou = buildQCEpageSidecar(contBtn = "next", fields = list(
+    buildQCEpageField("gender", type = "radio", as = "Gender",
+                      required = TRUE))),
+  age = buildQCEpageSidecar(contBtn = "next", fields = list(
+    buildQCEpageField("age", type = "number", as = "Age", required = TRUE))),
+  debrief = buildQCEpageSidecar(contBtn = "Go"))
+
+saveQCEpageFiles(placements, "pages.json", sidecars = sidecars, dir = OUT_DIR)
+```
+
+- A placement names the page without `.html`. Pages at the same anchor play in
+  the order they are added. `playOnce = TRUE` keeps a page from playing again
+  at an anchor that recurs.
+- `contBtn` is the `id` of the button that ends the page, not the words on it.
+- Each field names a form control by its HTML `name` (`input`), says what kind
+  it is (`type`: text, number, hidden, radio, checkbox or select), and names
+  the data column the answer goes into (`as`). `required = TRUE` keeps the
+  button from working until the question is answered; `requiredMessage` sets
+  what the page says when it is not.
+- By default a page's answers are written on every row of the data (a sidecar's
+  `dataScope` of `"global"`), which is what answers about the participant need.
+  `"row"` keeps them on the page's own row instead, for a page asked several
+  times.
+- The groups point at the placements file through `pages = "pages.json"`
+  (chapter 7), so each group may have its own.
+
+A required question must reach the participant unanswered: no radio button
+already checked, no number already filled in. A pre-selected answer can be sent
+without the participant ever choosing it, and the pre-flight check in chapter
+12 refuses such a page.
+
+Placed pages are one way to ask about the participant. The engine also has
+built-in slots for an age screen and an About-you screen in the experiment
+settings (`getDemographicsFile`, `getGenderFile`), with control names and
+button ids it fixes; placed pages let the study choose its own.
