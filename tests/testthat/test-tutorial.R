@@ -74,3 +74,33 @@ test_that("every r block of the tutorial runs in order and builds its study", {
     ts <- readQCEjsonFile(file.path(study, "shapeMatch_Tsfile.json"))
     expect_setequal(names(ts), c(as.character(1:5), "switchRules"))
 })
+
+test_that("every worked pattern of the reference builds its study", {
+    skip_on_cran()
+    path <- docPath("BUILDER_REFERENCE.md")
+    skip_if_not(file.exists(path), "the reference is not part of the built package")
+    skip_if_not(capabilities("png"), "no png device to draw the pictures")
+
+    lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
+    from <- which(lines == "## Worked patterns")
+    to <- which(lines == "## Acknowledgments")
+    expect_length(from, 1)
+    expect_length(to, 1)
+    blocks <- rBlocks(lines[from:to])
+    expect_length(blocks, 7)
+    expect_false(any(vapply(blocks, isNoRun, logical(1))))
+
+    work <- tempfile("patterns")
+    dir.create(work)
+    old <- setwd(work)
+    on.exit(setwd(old), add = TRUE)
+    expect_null(runBlocks(blocks, blockEnv()))
+
+    studies <- c("patternPicture", "patternSeveral", "patternCross",
+                 "patternCells", "patternTokens", "patternFeedback")
+    for (s in studies) {
+        expect_true(file.exists(file.path(work, s, "expInfo.json")), info = s)
+        expect_true(file.exists(file.path(work, s, paste0(s, ".php"))), info = s)
+        expect_length(missingQCEoutputFields(file.path(work, s)), 0)
+    }
+})

@@ -2580,6 +2580,347 @@ Rules that keep either structure safe:
    on (matched set sizes, referenced HTML files existing, serialization
    round-trips).
 
+## Worked patterns
+
+Six patterns that real studies are built from, each a complete study small
+enough to read at once. They use the ordinary mechanisms of the reference
+above: a scenario whose stimulus is any HTML, a design table made in R, sets as
+pools, the trial structure's draw, `savePreloadFiles()` and custom hooks. The
+tutorial (`TUTORIAL.md`) builds one study from all of them and explains each
+step at length.
+
+Every pattern ends by calling `writeStudy()`, defined in the first block below,
+which writes the parts every study needs and that do not change from pattern to
+pattern: a trial structure of one block, the group settings, the experiment
+settings, `expInfo.json`, the preload list, the launcher (`<dir>.php`, engine
+10.0) and `fields.txt`, checked against the configuration. Run that block
+first, then any pattern; each builds its own folder. Each pattern has been
+built, pre-flighted on engine 10.0 and walked headless as written.
+
+Two facts the patterns rely on:
+
+- **An address in a stimulus is read relative to the participant's page,**
+  `experiment.php`, which sits at the top of the served tree (`wwwFiles/`). A
+  file in the study's own folder is therefore addressed as
+  `<type>/<study>/<path>`; the patterns build that start as `url`.
+  `TYPE_NAME` is the experiment type the study is registered under (`TestType`
+  for a local walk). No folder name is fixed: a study keeps its files wherever
+  its script puts them.
+- **The preload list is written at build time, before any participant
+  exists.** The engine preloads it first and only then, block by block, shuffles
+  the pools and draws each participant's trials, so the list holds every file
+  of every pool a participant's trials can be drawn from.
+
+```r
+library(QCEB)
+
+TYPE_NAME <- "TestType"
+
+drawSquare <- function(file, colour) {
+  png(file, width = 150, height = 150, bg = "white")
+  par(mar = c(0, 0, 0, 0))
+  plot.new()
+  rect(0.1, 0.1, 0.9, 0.9, col = colour, border = NA)
+  invisible(dev.off())
+}
+
+writeStudy <- function(dir, scenarios, setInfo, keyMap, iterator = NULL,
+                       images = character(), hooksFile = NULL,
+                       hookColumns = NULL) {
+  if (is.null(iterator)) {
+    iterator <- createBlockIteratorList(numberOfIterations = 1,
+                  randomizeTrialInSetOrder = TRUE,
+                  randomizeSetOrder = "randomFirst", randomizeAllTrials = TRUE)
+  }
+  block <- addBlockToQCETrialStructureList(NULL, setInfo, iterator,
+             blockNumber = 1, blockName = "test")[[1]]
+  saveJsonFile(scenarios, file.path(dir, "stimfile.json"))
+  saveJsonFile(list("1" = block), file.path(dir, "tsfile.json"))
+  dbf <- buildQCEgroupDbFile(condName = dir, keyMap = keyMap)
+  if (!is.null(hooksFile)) {
+    dbf <- addHooksToQCEgroupDbFile(dbf, hooksFile,
+             customHooksColumns = hookColumns)
+  }
+  saveJsonFile(dbf, file.path(dir, "dbfile.json"))
+  saveJsonFile(buildQCEexpDbFile(expName = dir),
+               file.path(dir, "expDBfile.json"))
+  sess <- addSessionToSessionList(NULL, sessionOrder = 1, sessionName = dir,
+            dbFile = "dbfile.json", tsFile = "tsfile.json",
+            stimFile = "stimfile.json")
+  saveJsonFile(addSessionListToQCEGroupList(NULL, sess, groupName = "all"),
+               file.path(dir, "expInfo.json"))
+  local({
+    old <- setwd(dir)
+    on.exit(setwd(old))
+    savePreloadFiles(imageFileArray = images)
+  })
+  writeLines('<?php require "../../bin/QCEB.10.0.php"; ?>',
+             file.path(dir, paste0(dir, ".php")))
+  outs <- unique(unlist(lapply(scenarios,
+            function(s) names(s$outputVariables))))
+  writeLines(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name",
+    "SessionKey", "BlockName", "BlockKey", "BlockNum", "BlockIt", "Trial",
+    "TrialInSession", "TrialinBlock", "trial_index", "trial_type", "StimNum",
+    "FrameNum", "FrameName", "respType", "posttgap", "stim_dur", "Response",
+    "rt", "Key", "Set", "stimRef", "ShowFeedBack", "FeedBack", outs,
+    hookColumns), file.path(dir, "fields.txt"))
+  gaps <- missingQCEoutputFields(dir)
+  if (length(gaps) > 0) stop("fields.txt is missing: ", paste(gaps, collapse = ", "))
+  invisible(dir)
+}
+```
+
+### Pattern 1 — a picture in a stimulus
+
+A picture is an ordinary file shown by an ordinary `<img>` tag in the frame's
+HTML, and the same address goes into the preload list. The file's path goes into
+the output variables, so the data names the exact picture each trial showed.
+
+```r
+dir <- "patternPicture"
+url <- paste0(TYPE_NAME, "/", dir, "/")
+dir.create(file.path(dir, "img"), recursive = TRUE, showWarnings = FALSE)
+km <- buildKeyMap(data.frame(Red = c("d", "D"), Blue = c("k", "K"),
+                             stringsAsFactors = FALSE))
+pics <- data.frame(colour = c("red", "blue"),
+                   file = c("img/red.png", "img/blue.png"),
+                   stringsAsFactors = FALSE)
+drawSquare(file.path(dir, pics$file[1]), "#C0392B")
+drawSquare(file.path(dir, pics$file[2]), "#2F6DB5")
+
+sc <- NULL
+for (i in seq_len(nrow(pics))) {
+  html <- paste0("<img src='", url, pics$file[i], "' width='150' height='150'>",
+                 "<p>D = red &nbsp; K = blue</p>")
+  fr <- addFrameToQCEframeList(NULL, trialType = "key", frameName = "picture",
+          stimulus = html, post_trial_gap = 300,
+          choices = getKeyChoicesFromKeyMap(km), background = "#FFFFFF")
+  sc <- addScenarioToQCEscenarioList(sc, fr, createFeedbackList(),
+          createQCEoutputVariableList(pics[i, ]), "pictures")
+}
+si <- addSetToQCEsetInfoList(NULL, sc, setName = "pictures",
+        numberOfTrialsPerSet = 2)
+writeStudy(dir, sc, si, km, images = paste0(url, pics$file))
+```
+
+### Pattern 2 — several items on one screen
+
+Everything a frame shows is one HTML string, so a screen of several items is
+HTML holding several items: here a question and two pictures side by side, each
+with its key under it. Any layout HTML and CSS can express works the same way: a
+table, a grid, a sentence with a word in colour, a picture with words over it.
+The output variables record what stood where.
+
+```r
+dir <- "patternSeveral"
+url <- paste0(TYPE_NAME, "/", dir, "/")
+dir.create(file.path(dir, "img"), recursive = TRUE, showWarnings = FALSE)
+drawSquare(file.path(dir, "img/red.png"), "#C0392B")
+drawSquare(file.path(dir, "img/blue.png"), "#2F6DB5")
+km <- buildKeyMap(data.frame(Left = c("d", "D"), Right = c("k", "K"),
+                             stringsAsFactors = FALSE))
+side <- function(colour, key) {
+  paste0("<div><img src='", url, "img/", colour, ".png' width='120' ",
+         "height='120'><p>", key, "</p></div>")
+}
+trials <- data.frame(left = c("red", "blue"), right = c("blue", "red"),
+                     stringsAsFactors = FALSE)
+
+sc <- NULL
+for (i in seq_len(nrow(trials))) {
+  html <- paste0("<div style='text-align:center'><p>Which square is red?</p>",
+    "<div style='display:flex; justify-content:center; gap:60px'>",
+    side(trials$left[i], "D"), side(trials$right[i], "K"), "</div></div>")
+  fr <- addFrameToQCEframeList(NULL, trialType = "key", frameName = "choice",
+          stimulus = html, post_trial_gap = 300,
+          choices = getKeyChoicesFromKeyMap(km), background = "#FFFFFF")
+  sc <- addScenarioToQCEscenarioList(sc, fr, createFeedbackList(),
+          createQCEoutputVariableList(trials[i, ]), "pairs")
+}
+si <- addSetToQCEsetInfoList(NULL, sc, setName = "pairs",
+        numberOfTrialsPerSet = 2)
+writeStudy(dir, sc, si, km,
+           images = paste0(url, c("img/red.png", "img/blue.png")))
+```
+
+### Pattern 3 — a pool built by crossing lists
+
+The design is a data frame made in R before the study runs. Crossing lists with
+`expand.grid()` gives one row per combination; each row becomes one scenario,
+and the row's columns become its output variables. Dropping rows forbids
+combinations; copying and changing rows makes catch trials. The engine draws
+from the finished pool.
+
+```r
+dir <- "patternCross"
+dir.create(dir, showWarnings = FALSE)
+km <- buildKeyMap(data.frame(Fruit = c("d", "D"), Other = c("k", "K"),
+                             stringsAsFactors = FALSE))
+words <- data.frame(word = c("apple", "pear", "chair", "table"),
+                    answer = c("Fruit", "Fruit", "Other", "Other"),
+                    stringsAsFactors = FALSE)
+design <- expand.grid(word = words$word, font = c("serif", "sans-serif"),
+                      size = c(24, 48), stringsAsFactors = FALSE)
+design <- merge(design, words, by = "word")
+
+sc <- NULL
+for (i in seq_len(nrow(design))) {
+  html <- paste0("<p style='font-family:", design$font[i], "; font-size:",
+                 design$size[i], "px'>", design$word[i], "</p>",
+                 "<p>D = a fruit &nbsp; K = something else</p>")
+  fr <- addFrameToQCEframeList(NULL, trialType = "key", frameName = "word",
+          stimulus = html, post_trial_gap = 300,
+          choices = getKeyChoicesFromKeyMap(km), background = "#FFFFFF")
+  sc <- addScenarioToQCEscenarioList(sc, fr, createFeedbackList(),
+          createQCEoutputVariableList(design[i, ]), "words")
+}
+si <- addSetToQCEsetInfoList(NULL, sc, setName = "words",
+        numberOfTrialsPerSet = 8)
+writeStudy(dir, sc, si, km)
+```
+
+### Pattern 4 — design cells as sets
+
+A set is a pool of scenarios, usually one cell of the design. Give each scenario
+its cell as its set name, and give the block one set entry per cell with the
+number to draw from it: every participant then gets that many trials from every
+cell, however large each cell is. `randomizeAllTrials = TRUE` (the iterator
+`writeStudy()` uses by default) mixes the cells into one shuffled order;
+`FALSE` runs them one set after another.
+
+```r
+dir <- "patternCells"
+dir.create(dir, showWarnings = FALSE)
+km <- buildKeyMap(data.frame(red = c("r", "R"), green = c("g", "G"),
+                             blue = c("b", "B"), stringsAsFactors = FALSE))
+design <- expand.grid(word = c("red", "green", "blue"),
+                      ink = c("red", "green", "blue"), stringsAsFactors = FALSE)
+design$cell <- ifelse(design$word == design$ink, "congruent", "incongruent")
+
+sc <- NULL
+for (i in seq_len(nrow(design))) {
+  html <- paste0("<p style='font-size:48px; color:", design$ink[i], "'>",
+                 toupper(design$word[i]), "</p>",
+                 "<p>Name the ink: R, G or B</p>")
+  fr <- addFrameToQCEframeList(NULL, trialType = "key", frameName = "stroop",
+          stimulus = html, post_trial_gap = 300,
+          choices = getKeyChoicesFromKeyMap(km), background = "#FFFFFF")
+  sc <- addScenarioToQCEscenarioList(sc, fr, createFeedbackList(),
+          createQCEoutputVariableList(design[i, ]), design$cell[i])
+}
+si <- NULL
+for (cell in c("congruent", "incongruent")) {
+  si <- addSetToQCEsetInfoList(si, sc, setName = cell,
+          numberOfTrialsPerSet = 3)
+}
+writeStudy(dir, sc, si, km)
+```
+
+### Pattern 5 — a hook that fills tokens
+
+A stimulus may hold `{{tokens}}`: names in double braces that a hook fills when
+the trial starts. `onTrialStart` returns `stimulusReplacements`, and the engine
+puts each value in place of its token in every frame of the trial and also
+writes it to the trial's row as a column named after the token. Here a coin flip
+decides which of a scenario's two words is shown on top, so one scenario serves
+both orders and the data records the order shown. Values from the configuration
+files reach a hook as one-element arrays, hence `uw()`. The token columns are
+declared as the hook's columns so the build checks `fields.txt` for them. The
+same placement could instead be fixed at build time, one scenario per order;
+both are QCEP mechanisms.
+
+```r
+dir <- "patternTokens"
+dir.create(dir, showWarnings = FALSE)
+km <- buildKeyMap(data.frame(Related = c("d", "D"), Unrelated = c("k", "K"),
+                             stringsAsFactors = FALSE))
+pairs <- data.frame(word1 = c("cup", "dog", "sun"),
+                    word2 = c("saucer", "cloud", "moon"),
+                    stringsAsFactors = FALSE)
+html <- paste0("<p style='font-size:28px'>{{top}}</p>",
+               "<p style='font-size:28px'>{{bottom}}</p>",
+               "<p>D = related &nbsp; K = unrelated</p>")
+
+sc <- NULL
+for (i in seq_len(nrow(pairs))) {
+  fr <- addFrameToQCEframeList(NULL, trialType = "key", frameName = "pair",
+          stimulus = html, post_trial_gap = 300,
+          choices = getKeyChoicesFromKeyMap(km), background = "#FFFFFF")
+  sc <- addScenarioToQCEscenarioList(sc, fr, createFeedbackList(),
+          createQCEoutputVariableList(pairs[i, ]), "pairs")
+}
+writeLines(r"---(
+var QCEPHooks = {
+  onTrialStart: function (info, ctx) {
+    function uw(v) { return Array.isArray(v) ? v[0] : v; }
+    var o = info.scenario.outputVariables;
+    var a = uw(o.word1), b = uw(o.word2);
+    var flip = Math.random() < 0.5;
+    return { stimulusReplacements: { top: flip ? b : a, bottom: flip ? a : b } };
+  }
+};
+)---", file.path(dir, "customHooks.js"))
+si <- addSetToQCEsetInfoList(NULL, sc, setName = "pairs",
+        numberOfTrialsPerSet = 3)
+writeStudy(dir, sc, si, km, hooksFile = "customHooks.js",
+           hookColumns = c("top", "bottom"))
+```
+
+### Pattern 6 — a hook that builds feedback
+
+Feedback that depends on what the participant was actually shown is built at
+run time. `onTrialFinish` sees each finished trial's row (the key's label in
+`Key`, the output variables beside it) and keeps what it needs in
+`ctx.qceState.custom`, a scratchpad that lasts the session. `onBlockEnd` then
+returns a `feedback` screen, which the participant ends with a key press, and
+`dataAnnotations`, which the engine records on a row of their own for the
+block. Every hook is called on every trial of every block, so a study with
+several blocks checks the block name first.
+
+```r
+dir <- "patternFeedback"
+dir.create(dir, showWarnings = FALSE)
+km <- buildKeyMap(data.frame(Like = c("d", "D"), Dislike = c("k", "K"),
+                             stringsAsFactors = FALSE))
+words <- c("river", "candle", "garden", "thunder")
+
+sc <- NULL
+for (w in words) {
+  fr <- addFrameToQCEframeList(NULL, trialType = "key", frameName = "rate",
+          stimulus = paste0("<p style='font-size:32px'>", w, "</p>",
+                            "<p>D = I like it &nbsp; K = I do not</p>"),
+          post_trial_gap = 300, choices = getKeyChoicesFromKeyMap(km),
+          background = "#FFFFFF")
+  sc <- addScenarioToQCEscenarioList(sc, fr, createFeedbackList(),
+          createQCEoutputVariableList(data.frame(word = w)), "words")
+}
+writeLines(r"---(
+var QCEPHooks = (function () {
+  function uw(v) { return Array.isArray(v) ? v[0] : v; }
+  return {
+    onTrialFinish: function (data, ctx) {
+      var c = ctx.qceState.custom;
+      if (!c.liked) c.liked = [];
+      if (data.Key === 'Like') c.liked.push(uw(data.word));
+      return {};
+    },
+    onBlockEnd: function (blockName, ctx) {
+      var liked = ctx.qceState.custom.liked || [];
+      return {
+        feedback: '<p>You liked ' + liked.length + ' of the words: ' +
+          liked.join(', ') + '.</p><p>Press any key to go on.</p>',
+        dataAnnotations: { nLiked: liked.length }
+      };
+    }
+  };
+})();
+)---", file.path(dir, "customHooks.js"))
+si <- addSetToQCEsetInfoList(NULL, sc, setName = "words",
+        numberOfTrialsPerSet = 4)
+writeStudy(dir, sc, si, km, hooksFile = "customHooks.js",
+           hookColumns = "nLiked")
+```
+
 ## Acknowledgments
 
 *This document was drafted with assistance from Claude (Anthropic). All
