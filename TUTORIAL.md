@@ -398,3 +398,84 @@ trials: every stimulus file in every pool a participant's trials can be drawn
 from must be on it. For this study that is all twelve pictures. If a listed
 file cannot be fetched, the run stops at the loading screen with "The
 experiment failed to load."
+
+## 5. The design table: crossing and balancing in R; a row is a trial
+
+### Crossing lists
+
+The design is made in R, before the study ever runs, as an ordinary data frame
+with one row per possible trial. This study crosses the list of pictures with
+itself, so every ordered pair is a row, and describes each row:
+
+```r
+pairs <- expand.grid(left = seq_len(nrow(pics)), right = seq_len(nrow(pics)))
+design <- data.frame(
+  leftFile    = pics$file[pairs$left],
+  rightFile   = pics$file[pairs$right],
+  leftShape   = pics$shape[pairs$left],
+  rightShape  = pics$shape[pairs$right],
+  leftColour  = pics$colour[pairs$left],
+  rightColour = pics$colour[pairs$right],
+  stringsAsFactors = FALSE)
+design$shapeMatch  <- ifelse(design$leftShape == design$rightShape,
+                             "same", "different")
+design$colourMatch <- ifelse(design$leftColour == design$rightColour,
+                             "same", "different")
+design$cell <- paste0("shape_", design$shapeMatch, "_colour_",
+                      design$colourMatch)
+table(design$cell)
+```
+
+That gives 144 rows in four cells: 12 pairs with the same shape and the same
+colour (a picture beside itself), 24 with the same shape in different colours,
+36 with different shapes in the same colour, and 72 that differ in both.
+
+Anything a design needs is ordinary R at this point. To forbid a cell, drop its
+rows. To keep a picture from appearing beside itself, drop the rows where the
+two files are equal. To match two lists on some value, sort and split them. To
+add catch trials, copy some rows and change them. The engine never sees these
+steps; it only sees the trials the table turns into.
+
+The cells are unequal in size, which does not matter: chapter 6 draws the same
+number of trials from each cell for every participant.
+
+### A row is a trial
+
+Each row of the table becomes one scenario:
+
+```r
+scenarios <- NULL
+for (i in seq_len(nrow(design))) {
+  row <- design[i, ]
+  ov <- createQCEoutputVariableList(row[, setdiff(names(row), "cell")])
+  scenarios <- addScenarioToQCEscenarioList(scenarios,
+                 trialFrames(pairScreen(row$leftFile, row$rightFile)),
+                 createFeedbackList(), ov, row$cell)
+}
+length(scenarios)
+```
+
+The arguments of `addScenarioToQCEscenarioList()` are, in order: the list so
+far (`NULL` to start one), the trial's frames, its feedback list, its output
+variables, and the name of its set. The set name here is the row's design cell,
+so the four cells become four sets.
+
+The scenario's key in the list is its stimulus ID: QCEB numbers scenarios
+`"1"`, `"2"`, ... in the order they are added, and the data file records the
+number as `StimNum`. Because the number follows the order of the build, a
+rebuild that adds trials earlier in the list renumbers everything after them.
+
+### Output variables
+
+The output variables are how the data says which stimulus a trial showed.
+`createQCEoutputVariableList()` takes a one-row data frame and turns each column
+into a data column, written on every saved row of that trial. Here they are the
+row's own columns, without `cell` (the engine records the set name in its own
+`Set` column).
+
+Two kinds of descriptor are worth having. The path of each file
+(`leftFile`, `rightFile`) lets anyone go and look at the exact stimulus the
+participant saw. General descriptors (`leftShape`, `colourMatch`, and so on) are
+what an analysis groups and compares by. You decide which descriptors a trial
+carries; for pictures of faces they might be gender, race and the rating each
+face received. Every value is written as text.
