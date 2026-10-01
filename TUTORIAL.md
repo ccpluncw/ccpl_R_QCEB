@@ -1127,7 +1127,7 @@ saveQCEpageFiles(placements, "pages.json", sidecars = sidecars, dir = OUT_DIR)
 A required question must reach the participant unanswered: no radio button
 already checked, no number already filled in. A pre-selected answer can be sent
 without the participant ever choosing it, and the pre-flight check in chapter
-12 refuses such a page.
+12 warns about such a page.
 
 Placed pages are one way to ask about the participant. The engine also has
 built-in slots for an age screen and an About-you screen in the experiment
@@ -1237,3 +1237,114 @@ their own: `hook/` (each time a hook returned something), `showif/` (each
 condition tested), `switch/` and `blockSwitch/` (switch rules), `interact/`
 (the participant leaving the window or full screen), and `errors/` and `logs/`
 (problems the engine reported). `fields.txt` governs only the main file.
+
+## 12. Checking and deploying: pre-flight, the test walk, the server
+
+A built folder can be wrong in ways R cannot see: a block that deals no trials,
+a page whose button the engine cannot find, a picture at an address that does
+not exist. QCEP has two checks to run before a study goes onto a server, and
+both come with the QCEP repository (called `<QCEP>` below). They need Node.js;
+the walk also needs PHP and Chrome.
+
+### Pre-flight
+
+```sh
+cd <QCEP>
+node tools/qcep_preflight.js /path/to/shapeMatch --engine codebase/customScripts/v10
+```
+
+The pre-flight loads the engine's own checking code and runs it over every
+group and session of the folder, in about a second. It checks that each
+session's three files fit together, generates a trial order for each session
+and prints how many trials every block deals, finds every file the engine will
+fetch (pages, hooks, instructions), checks where the pages are placed and that
+each page has the controls and button its sidecar names, and warns about a
+required question that arrives already answered. It does not look inside a
+stimulus, so a picture at a wrong address passes it; the walk below catches
+that. For this study it ends:
+
+```text
+  trial-order generation    PASS  (41 trials)
+    per block: {"practice":4,"practiceAgain":4,"main":24,"offer":1,"extra":8}
+...
+ALL CHECKS PASS — the sessions will start. This is not a browser validation.
+```
+
+The block counts are the most a participant can be dealt: here every block,
+including the two that run only for some participants. The pre-flight checks
+against the engine version you name with `--engine`, and without it uses the
+scripts of the older engine 9.1, so a study whose launcher names 10.0 must say
+`--engine codebase/customScripts/v10`. A pass means the sessions will start. It
+shows no screen, calls no hook and saves nothing.
+
+### The test walk
+
+```sh
+cd <QCEP>
+node tools/build_pipeline/pipeline.js /path/to/shapeMatch --skip-build --walks=correct,wrong
+```
+
+The pipeline lays out a disposable copy of a server on your machine, serves it
+at `http://127.0.0.1:8788`, and drives a headless Chrome through the whole run,
+once for each walk named. A `correct` walk always answers with the first key or
+option offered and a `wrong` walk with the last; they name positions, not right
+answers. It types 25 into an empty number box, ticks a radio button where none
+is ticked, and clicks a page's button. `--skip-build` uses the folder as it is;
+without it, the pipeline first runs a script called `build_config.R` inside the
+folder, which this study does not have. The server is stopped and the copy
+removed when it finishes. Only one pipeline can run on a machine at a time,
+because the port is fixed.
+
+It writes `pipeline_report/report.txt` inside the study folder. For each walk,
+read three things: `completed: true`, the list of screens the run put up, and
+the final screen. For this study, the `correct` walk pressed D throughout, so
+it made practice errors and met the second practice block; it pressed Y at the
+offer and played the extra round. The `wrong` walk pressed K and then N, and
+its screen list goes from the offer straight to the debriefing, which shows the
+switch rule and the condition doing their work.
+
+Do not stop at the report's last line. A run whose pictures cannot be loaded
+stops at "The experiment failed to load.", and the pipeline still ends its
+output with `PIPELINE CLEAN`; only the walk's own lines (`completed: false`, a
+warning that it answered nothing) show the failure. The walk shows a stand-in
+consent text rather than the study's `consent.txt`.
+
+The walk says that every screen can be reached and answered and that the run
+ends. It says nothing about whether the study measures what it should. That,
+and what the screens look like, needs a person: run the study yourself in a
+browser before anyone else does.
+
+### The server
+
+Putting a study on the server is done by whoever runs the server; nothing in
+the build deploys itself. What it involves:
+
+1. Set `TYPE_NAME` in the script to the experiment type the study is registered
+   under, and build again, so every address points at the study's real folder.
+2. Each study has two folders on the server. The **served** folder,
+   `wwwFiles/<type>/shapeMatch/`, receives the whole built folder: the PHP
+   launcher, the JSON files, the HTML pages, the hooks file and the pictures.
+   Everything the participant's browser fetches is here. The **offline**
+   folder, `offlineFiles/<type>/shapeMatch/`, holds what the browser must never
+   fetch: `fields.txt` and `consent.txt`, and the `data/` folder, which the
+   server creates when the first participant's data arrives.
+3. The study is entered in the server's list of experiments (and a new type in
+   its list of types). Their numbers make up the participant links, which the
+   researcher creates on the server.
+
+To change a running study, change the script, build, check and copy the files
+again. Never edit a file on the server, and never insert a group in the middle
+of `expInfo.json` (chapter 7).
+
+### What this tutorial left out
+
+The same parts build much more than this study. Questionnaires are survey
+frames (`addSurveyFrameToQCEframeList()` with `surveyModel()`), placed in
+blocks like any other trial. A completion gate decides from the data whether a
+participant earns credit and where they are sent at the end
+(`completionGate` and `completionRedirect` in the experiment settings).
+Several tasks in one run are several sessions. Cards are panels that stay on
+screen across trials. Speed feedback, rest breaks and hardware triggers are
+settings of the group settings file. A study may also bring a jsPsych plugin of
+its own. `BUILDER_REFERENCE.md` documents each function, and `QCEP_SPEC.md`
+says what the engine does with each setting.
