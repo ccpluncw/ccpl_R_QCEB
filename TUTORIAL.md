@@ -187,3 +187,84 @@ writeLines('<?php require "../../bin/QCEB.10.0.php"; ?>',
 
 The path `../../bin/` is fixed by the server's layout: the engine lives in
 `wwwFiles/bin/`, two folders above the study.
+
+## 3. A trial: frames, the stimulus as HTML, responses and key maps
+
+### Responses and key maps
+
+A **key map** says which keys the participant may press and what each one
+means. In this study D means "same" and K means "different".
+
+```r
+km <- buildKeyMap(data.frame(Same = c("d", "D"), Different = c("k", "K"),
+                             stringsAsFactors = FALSE))
+choices <- getKeyChoicesFromKeyMap(km)
+```
+
+Each column name is a **label**: the meaning of the keys under it. The label
+does three jobs. It is what the data file records in the `Key` column when one
+of those keys is pressed (the key itself goes in `Response`, and the response
+time in milliseconds in `rt`). It is the text of the key-map screen the engine
+shows before the first block that takes key presses. And it is the word a
+switch rule counts (chapter 9). So name the meaning, not the key, and spell it
+the same way everywhere. Both cases of each letter are listed because the
+engine looks up the pressed character exactly: a D pressed with Caps Lock on
+must be in the map to be recorded as "Same". `choices` is the flat list of
+every key in the map, which a frame needs to know which keys end it.
+
+### Frames
+
+A trial in this study has two frames: a fixation cross for half a second, then
+the screen with the two pictures, which stays until the participant presses D
+or K. Each frame is added with `addFrameToQCEframeList()`:
+
+```r
+fixationHTML <- "<div style='font-size:48px'>+</div>"
+
+trialFrames <- function(screenHTML) {
+  fr <- addFrameToQCEframeList(NULL, trialType = "key",
+          frameName = "fixation", stimulus = fixationHTML,
+          stimulus_duration = 500, post_trial_gap = 0, choices = NULL,
+          background = "#FFFFFF", output = FALSE)
+  addFrameToQCEframeList(fr, trialType = "key", frameName = "pair",
+    stimulus = screenHTML, stimulus_duration = NULL, post_trial_gap = 400,
+    choices = choices, background = "#FFFFFF", output = TRUE)
+}
+
+example <- trialFrames("<p>Two pictures will go here.</p>")
+length(example)
+```
+
+What the arguments mean:
+
+- `trialType` is how the frame takes its response. `"key"` shows the stimulus
+  and waits for a key; the engine hands the HTML to jsPsych's keyboard-response
+  plugin. Other types take typed text (`"textbox"`), a mouse drag along a line
+  (`"numberline"`) or around a circle (`"angleline"`), or a whole
+  questionnaire (`"survey"`).
+- `frameName` names the frame in the data (`FrameName`).
+- `stimulus` is the HTML to show. It can be any HTML: text, a table, pictures,
+  drawings, styled with CSS. Chapter 4 builds the real one.
+- `stimulus_duration` is how long the stimulus stays, in milliseconds. `NULL`
+  means until the participant responds.
+- `post_trial_gap` is a blank pause after the frame, in milliseconds. It has no
+  default; you must give it, even as 0.
+- `choices` is the keys that end the frame. `NULL` means no key ends it, so the
+  fixation frame ends on its timer. A frame with neither a timer nor a key would
+  never end, and the engine refuses it.
+- `background` is the colour of the page while the frame is shown. QCEB's
+  default is black, so a study on white says so.
+- `output` says whether the frame's row is kept in the data file. The engine
+  records a row for every frame and drops the rows of frames marked `FALSE`
+  when it saves. The fixation has nothing worth keeping.
+
+`trialFrames()` is an ordinary R function of this script, not part of QCEB. It
+returns a frame list of two frames; chapter 5 calls it once for every pair.
+
+A frame list becomes a trial, a **scenario**, when it is added to the stimulus
+file's list of scenarios with `addScenarioToQCEscenarioList()`. A scenario
+holds its frames, a feedback list, its output variables and the name of its
+set. The feedback list is QCEB's built-in way to show a message after a
+response, chosen by which key was pressed; this study gives feedback with a hook
+instead (chapter 8), so it passes `createFeedbackList()` with no keys, which
+means no feedback.
