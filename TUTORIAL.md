@@ -561,3 +561,133 @@ Both blocks draw from the same four pools. Nothing yet stops the main block from
 drawing a pair the practice block already showed; chapter 9 adds that.
 `entryInstruction` names a page shown when the block starts (written in chapter
 7). Chapter 7 explains `blockNumber`, `blockName` and the `[[1]]`.
+
+## 7. Blocks, sessions, groups and group settings
+
+### Placing blocks
+
+The trial-structure file is a list of blocks. Each block's key in the list is
+its position in the run, and it must agree with the block's `blockNumber`.
+`addBlockToQCETrialStructureList()` numbers the blocks of a list it is given by
+counting them, not by `blockNumber`, so the clear way is the one chapter 6
+used: build each block alone from `NULL`, take it out with `[[1]]`, and place
+the blocks in a list yourself:
+
+```r
+ts <- list("1" = bPractice, "2" = bMain)
+```
+
+Block names must be unique: switch rules, conditions and hooks find blocks by
+name, and the data records the name in `BlockName`. Chapter 9 adds three more
+blocks and builds this list again.
+
+### Groups and their settings
+
+The two groups differ in one thing: which property they judge. That difference
+lives in each group's **settings file** (QCEP calls it the group's dbfile),
+made with `buildQCEgroupDbFile()`:
+
+```r
+groups <- c("shape", "colour")
+dbfiles <- list()
+for (g in groups) {
+  dbf <- buildQCEgroupDbFile(condName = g, keyMap = km,
+           instructionFile = paste0("instructions_", g, ".html"))
+  dbf$judge <- g
+  dbfiles[[g]] <- dbf
+}
+```
+
+- `condName` is written to every row of the data as `Cond_Name`.
+- `keyMap` is the session's key map. Both groups use D and K the same way. A
+  study that wanted to counterbalance the keys would give the groups different
+  maps here, or set `randomizeKeyMap = TRUE` to shuffle the meanings for each
+  participant.
+- `instructionFile` names the page shown when the session starts. Each group
+  gets its own, because each judges a different property.
+- `judge` is the study's own setting. QCEB has no argument for it, so the script
+  adds it to the list. The engine passes the whole settings file to the hooks,
+  where chapter 8 reads it. Any value a group needs at run time can be carried
+  this way.
+
+The settings files are kept in `dbfiles` for now; chapters 8 and 9 add to them,
+and chapter 11 writes them.
+
+### Pages the settings name
+
+The instruction pages are plain HTML files that the script writes. A page
+shown by the engine between trials (an instruction page, a page when a block
+starts) ends when its button with the `id` `Go` is clicked.
+
+```r
+page <- function(body) {
+  paste0("<div style='max-width:640px; margin:40px auto; ",
+         "font-family:sans-serif; font-size:18px'>", body, "</div>")
+}
+for (g in groups) {
+  writeLines(page(paste0(
+    "<p>On each screen you will see two pictures.</p>",
+    "<p>Press <b>D</b> if they have the same ", g,
+    " and <b>K</b> if they do not.</p>",
+    "<p>We start with a few practice pairs.</p>",
+    "<button id='Go' type='button'>Start</button>")),
+    file.path(OUT_DIR, paste0("instructions_", g, ".html")))
+}
+writeLines(page(paste0(
+  "<p>Now the real pairs begin. There is no feedback until the end.</p>",
+  "<button id='Go' type='button'>Continue</button>")),
+  file.path(OUT_DIR, "main_start.html"))
+```
+
+### Sessions and groups
+
+A **session** joins one settings file, one trial-structure file and one
+stimulus file. A **group** is a list of sessions. Here each group has one
+session; the groups share the stimulus file and the trial structure and differ
+only in their settings file.
+
+```r
+expInfo <- NULL
+for (g in groups) {
+  sess <- addSessionToSessionList(NULL, sessionOrder = 1,
+            sessionName = EXP_NAME,
+            dbFile = paste0(g, "_Dbfile.json"),
+            tsFile = "shapeMatch_Tsfile.json",
+            stimFile = "shapeMatch_Stimfile.json")
+  expInfo <- addSessionListToQCEGroupList(expInfo, sess, groupName = g,
+               pages = "pages.json", nPerBlock = 1)
+}
+```
+
+- `sessionOrder` places a session among its group's sessions; `-1` puts the
+  sessions in a random order for each participant. A study with several tasks
+  usually makes each task a session.
+- `groupName` is written to the data as `Group`.
+- `pages` names the file saying which pages play where (chapter 10).
+- `nPerBlock` asks the server to assign participants in balance. Each group's
+  number is its share; equal numbers keep the groups the same size. Every group
+  must declare it, or none.
+
+The server records each participant's group by its position in this list. Once
+a study is running, add new groups at the end and never insert one in the
+middle, or participants already assigned would point at the wrong group.
+
+### Settings for the whole experiment
+
+The **experiment settings file** holds what is the same for everyone: the
+study's name in the data, the messages the engine shows, and some policies.
+
+```r
+expDb <- buildQCEexpDbFile(expName = EXP_NAME,
+           welcomeMsg = "<p>Welcome. Press any key to begin.</p>",
+           endOfExpMsg = "<p>Thank you for taking part.</p>",
+           saveDataEveryNTrials = 20, strictGroupAssignment = TRUE)
+```
+
+- `expName` is written to every row as `Exp_Name`.
+- `welcomeMsg` and `endOfExpMsg` are the first and last messages.
+- `saveDataEveryNTrials` sends the data to the server every 20 trials as well
+  as at the end, so a run that is abandoned midway still leaves its trials.
+- `strictGroupAssignment = TRUE` makes a run refuse to start when the server
+  cannot assign a group, instead of drawing one in the browser where nothing
+  records it. A study with balanced groups should set it.
