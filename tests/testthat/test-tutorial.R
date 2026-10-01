@@ -1,6 +1,6 @@
 #the r blocks of TUTORIAL.md run in order as one script and build its study
 
-TUTORIAL_RUN_BLOCKS <- 30
+TUTORIAL_RUN_BLOCKS <- 32
 TUTORIAL_NORUN_BLOCKS <- 0
 
 docPath <- function(name) {
@@ -58,4 +58,19 @@ test_that("every r block of the tutorial runs in order and builds its study", {
     old <- setwd(work)
     on.exit(setwd(old), add = TRUE)
     expect_null(runBlocks(blocks[!norun], blockEnv()))
+
+    study <- file.path(work, "shapeMatch")
+    built <- c("shapeMatch.php", "preloadFile.json", "shapeMatch_Stimfile.json",
+               "shapeMatch_Tsfile.json", "shape_Dbfile.json",
+               "colour_Dbfile.json", "expDBfile.json", "expInfo.json",
+               "customHooks.js", "pages.json", "aboutYou.page.json",
+               "age.page.json", "debrief.page.json", "consent.txt",
+               "fields.txt", "output_fields_manifest.txt")
+    expect_true(all(file.exists(file.path(study, built))))
+    expect_length(list.files(file.path(study, "pictures"), pattern = "png$"), 12)
+    expect_length(missingQCEoutputFields(study), 0)
+    sc <- readQCEjsonFile(file.path(study, "shapeMatch_Stimfile.json"))
+    expect_length(sc, 145)
+    ts <- readQCEjsonFile(file.path(study, "shapeMatch_Tsfile.json"))
+    expect_setequal(names(ts), c(as.character(1:5), "switchRules"))
 })

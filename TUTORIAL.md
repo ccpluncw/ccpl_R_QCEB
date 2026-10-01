@@ -1028,8 +1028,8 @@ Consent comes before the engine. When a participant opens their link, the
 server shows the study's consent text and the participant clicks to agree; only
 then does the engine's page load. The text is a file, `consent.txt`, holding
 plain HTML paragraphs. On the server it sits in the study's offline folder
-(chapter 12), and a study without one gets the generic text of its type or of
-the lab.
+(chapter 12). A study without one gets its type's consent text, or failing
+that the server's; with none at all, the study cannot start.
 
 ```r
 writeLines(paste0(
@@ -1133,3 +1133,107 @@ Placed pages are one way to ask about the participant. The engine also has
 built-in slots for an age screen and an About-you screen in the experiment
 settings (`getDemographicsFile`, `getGenderFile`), with control names and
 button ids it fixes; placed pages let the study choose its own.
+
+## 11. The data file: engine columns, output variables, `fields.txt`
+
+### Writing the configuration files
+
+Every part of the study now exists in R. The script writes the configuration
+files once, at the end, when each is complete:
+
+```r
+saveJsonFile(scenarios, file.path(OUT_DIR, "shapeMatch_Stimfile.json"))
+saveJsonFile(ts, file.path(OUT_DIR, "shapeMatch_Tsfile.json"))
+for (g in groups) {
+  saveJsonFile(dbfiles[[g]], file.path(OUT_DIR, paste0(g, "_Dbfile.json")))
+}
+saveJsonFile(expDb, file.path(OUT_DIR, "expDBfile.json"))
+saveJsonFile(expInfo, file.path(OUT_DIR, "expInfo.json"))
+```
+
+### What a row is
+
+The engine records a row for every frame and saves the rows of frames marked
+`output = TRUE`. In this study that is one row per trial: the pair frame of
+each pair trial, and the offer frame. Each block whose hook returned values
+adds one row of its own (chapter 8). The pages' answers are not rows; they are
+written onto every row.
+
+A row carries four kinds of column:
+
+- **Engine columns**, the same for every study: who and where (`Exp_Name`,
+  `Group`, `Cond_Name`, `Sess_Name`, `sn`, the participant's subject string),
+  the position in the run (`BlockName`, `BlockNum`, `BlockIt`, `Trial`,
+  `TrialInSession`, `TrialinBlock`, `trial_index`), which trial and frame
+  (`StimNum`, `Set`, `FrameNum`, `FrameName`, `respType`, `trial_type`,
+  `stimRef`), the frame's timing (`stim_dur`, `posttgap`), and the response
+  (`Key`, the label of the key; `Response`, the key; `rt`, the time in
+  milliseconds; `FeedBack` and `ShowFeedBack`, for QCEB's built-in feedback).
+- **Output variables**, from the trial's scenario (chapter 5).
+- **Hook columns**, from `dataAnnotations` and filled tokens (chapter 8).
+- **Page answers**, under the names their sidecars gave them (chapter 10).
+
+A column that means nothing on a row, such as `blockCorrect` on a trial row, is
+written as `N/A`. A few rows of a test run of this study (some columns left
+out):
+
+```text
+BlockName  Trial StimNum FrameName Key  Set                          leftFile                  colourMatch property correct blockCorrect blockTrials Age Gender
+practice   1     110     pair      Same shape_same_colour_different pictures/square_blue.png  different   colour   0       N/A          N/A         25  woman
+practice   3     89      pair      Same shape_different_colour_same pictures/circle_orange.png same       colour   1       N/A          N/A         25  woman
+extra      N/A   N/A     N/A       N/A  N/A                          N/A                       N/A         N/A      N/A     4            8           25  woman
+```
+
+The first row is a colour-group trial where both pictures were squares of
+different colours and the participant pressed D ("Same"): wrong for this group,
+so `correct` is 0. The last row is the extra round's summary from the block
+hook.
+
+### `fields.txt`: the columns the server keeps
+
+The server saves only the columns named in `fields.txt`. A column not in the
+file is dropped from the data without any error, so a forgotten line costs data
+that cannot be recovered. On the server the file sits in the study's offline
+folder (chapter 12). Two engine columns, `SessionKey` and `BlockKey` (the keys
+of the session and the block in their files, which identify them even when two
+share a name), are dropped unless the file lists them.
+
+The script writes the list and then checks it against the configuration:
+
+```r
+fields <- c(
+  "Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey",
+  "BlockName", "BlockKey", "BlockNum", "BlockIt", "Trial", "TrialInSession",
+  "TrialinBlock", "trial_index", "trial_type", "StimNum", "FrameNum",
+  "FrameName", "respType", "posttgap", "stim_dur", "Response", "rt", "Key",
+  "Set", "stimRef", "ShowFeedBack", "FeedBack",
+  "Gender", "Age",
+  setdiff(names(design), "cell"),
+  hookColumns)
+writeLines(fields, file.path(OUT_DIR, "fields.txt"))
+
+buildQCEoutputFieldManifest(OUT_DIR,
+  fieldsFile = file.path(OUT_DIR, "fields.txt"), engineVersion = "10.0")
+gaps <- missingQCEoutputFields(OUT_DIR)
+if (length(gaps) > 0) {
+  stop("fields.txt is missing: ", paste(gaps, collapse = ", "))
+}
+```
+
+`buildQCEoutputFieldManifest()` reads the configuration files on disk and
+writes `output_fields_manifest.txt`: every column the study is expected to
+produce, grouped by where it comes from, compared with `fields.txt`.
+`missingQCEoutputFields()` returns the expected columns `fields.txt` lacks, and
+the script stops if there are any. That is why chapter 8 declared the hook
+columns: the check cannot see inside the JavaScript, only the declaration.
+
+### The files a run leaves
+
+On the server, each participant's data goes into the study's offline folder,
+under `data/`. The main file, `p<sn>.finalDat`, is tab-separated, one row per
+saved row, and is written when the run ends; `p<sn>.dat` is written in pieces
+while the run goes. Beside them, folders keep records with fixed columns of
+their own: `hook/` (each time a hook returned something), `showif/` (each
+condition tested), `switch/` and `blockSwitch/` (switch rules), `interact/`
+(the participant leaving the window or full screen), and `errors/` and `logs/`
+(problems the engine reported). `fields.txt` governs only the main file.
