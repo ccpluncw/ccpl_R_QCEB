@@ -416,11 +416,14 @@ test_that("a valid email address is stored as given, trimmed", {
   expect_equal(db$researcherContact, "lab.person@uni.edu")
 })
 
-test_that("anything that is not one plain email address is refused", {
-  bad <- list("not an email", "a@b", "a b@c.edu", "a@b.edu, c@d.edu", "<a@b.edu>",
-              "a@b.edu?subject=x", "javascript:alert(1)@x.edu", c("a@b.edu", "c@d.edu"), 3,
-              "\"q\"@b.edu", paste0(strrep("a", 250), "@b.edu"))
-  for (b in bad) {
+test_that("any single string is stored, trimmed; the platform and the engine check the address", {
+  for (a in c("a@b", "first.o'brien@uni.edu", "name@uni.ac.uk", "x@localhost", "jos\u00e9@uni.edu")) {
+    expect_equal(buildQCEexpDbFile(expName = "e1", researcherContact = paste0(" ", a, " "))$researcherContact, a)
+  }
+})
+
+test_that("a contact that is not a single string is refused", {
+  for (b in list(c("a@b.edu", "c@d.edu"), 3, NA_character_, character(0))) {
     expect_error(buildQCEexpDbFile(expName = "e1", researcherContact = b), "researcherContact")
   }
 })

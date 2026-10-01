@@ -219,7 +219,7 @@ scalars the engine's manifest reader refuses.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-09-30 — 79 exported functions (72 current, 7 deprecated).*
+*Generated from `man/` on 2026-10-01 — 79 exported functions (72 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -1395,7 +1395,7 @@ Function that create a QCEB dbfile.
 - `strictGroupAssignment` — Optional single Boolean controlling what a multi-group experiment does when it cannot obtain a group assignment from the server. Server-side assignment is what makes the chosen group durable across a reload and what lets the server withhold groups a participant has already completed. When strict, a run that cannot obtain one refuses to start and tells the participant that nothing has been recorded and they may try again; when not strict (the engine default), it falls back to drawing a group in the browser, which is how multi-group experiments behaved before assignment existed but leaves the choice recorded nowhere. Has no effect on a single-group experiment, which never asks the server. Strict is forced on regardless of this setting for repeat-session links, where the recorded group is part of the credit key. Set TRUE to opt in. NULL uses the engine default (not strict). DEFAULT = NULL.
 - `creditClaimTimeoutMs` — Optional single number, at least 1000: the timeout in milliseconds on the credit claim, the one request that writes the credit record and returns the grant-or-deny verdict at the end of a gated run. NULL uses the engine default (10000), which is the right choice unless a deployment is known to be slow. ⚠ A value the browser cannot use does not relax the timeout, it REMOVES it -- the underlying field treats zero as "no limit" -- and an unbounded claim against a server that accepts the connection and never answers leaves the participant on a blank screen with the final save unrun. A very small value fails the other way: every claim times out, and the claim fails open, so credit is granted with no record written. Both are refused here. DEFAULT = NULL.
 - `reservationMinutes` — Optional single positive number of minutes: how long an assigned run with no recorded completion still counts toward its group when the server assigns groups in balance. Inside the window the assignment holds a place, so a run still under way is not counted twice over by the next participant's draw; past it the run is treated as abandoned and releases the place, so a participant who walked away does not hold one for ever. Read only when the experiment's groups declare `nPerBlock`; an experiment whose groups do not is unaffected by it. NULL uses the server's own window of 90 minutes. Default `NULL`.
-- `researcherContact` — Optional single string: the email address participants may write to about their credit. When a page of the study cannot go on, the engine sends the researcher a report of the fault itself and shows the participant a message saying so, with this address as a link for questions about credit; without it the message asks them to contact the researcher as their study invitation describes. Must be one plain address (letters, digits and `. _ + -` before the `@`, a domain with a dot after it, no spaces or other characters); leading and trailing spaces are removed. `NULL` leaves the setting out. Default `NULL`.
+- `researcherContact` — Optional single string: the email address participants may write to about their credit. When a page of the study cannot go on, the engine sends the researcher a report of the fault itself and shows the participant a message saying so, with this address as a link for questions about credit; without it the message asks them to contact the researcher as their study invitation describes. The platform checks the address; the engine shows it only when it is one address it can write into a link, and otherwise shows the message without it. Leading and trailing spaces are removed. `NULL` leaves the setting out. Default `NULL`.
 
 **Returns.** the QCEBdbfileList
 
@@ -2370,7 +2370,7 @@ saveQCEunplacedPages(pages, dir = ".")
 
 Writes `unplacedPages.json`, the list of a study's pages that no page placement, card placement or configuration file names -- a page a hook opens (a debrief chosen by condition) or a page another page links to. A platform that sets aside pages nothing uses keeps every page this list names. The engine does not read the file.
 
-- `pages` — A character vector of page names, each a file name in the study's directory, with or without its `.html` extension, for example `c("debrief_full", "debrief_short")`.
+- `pages` — A character vector of page names, each a file in the study's directory or a subfolder of it, with or without its `.html` extension, for example `c("debrief_full", "debriefs/debrief_short")`. A path is written with `/`.
 - `dir` — A single string naming the directory to write into: the one the configuration files go to. Default `"."`.
 
 **Returns.** Invisibly, the path written.

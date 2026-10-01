@@ -7,7 +7,7 @@
 saveQCEunplacedPages(pages, dir = ".")
 }
 \arguments{
-\item{pages}{A character vector of page names, each a file name in the study's directory, with or without its \code{.html} extension, for example \code{c("debrief_full", "debrief_short")}.}
+\item{pages}{A character vector of page names, each a file in the study's directory or a subfolder of it, with or without its \code{.html} extension, for example \code{c("debrief_full", "debriefs/debrief_short")}. A path is written with \code{/}.}
 
 \item{dir}{A single string naming the directory to write into: the one the configuration files go to. Default \code{"."}.}
 }
