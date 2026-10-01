@@ -21,7 +21,9 @@ build script. Paste them into one file and it builds the whole study. A block
 whose first line is `#not run` is an illustration only and is not part of the
 script. The package's tests run every block in order to keep this true. You need
 R 4.0 or later (the hooks in chapter 8 use R's raw strings) and the QCEB
-package.
+package; "Installing and loading" in `BUILDER_REFERENCE.md` says how to get it.
+Checking the study (chapter 12) also needs a copy of the QCEP repository, the
+platform's own code, which holds the engine and its checking tools.
 
 ## 1. What a study is, and a participant's path through it
 
@@ -56,7 +58,7 @@ in that sense from now on.
   fixed moment, such as the start of each trial or the end of a block.
 
 The configuration files are JSON, a plain-text format for lists and values.
-The QCEB script writes them; you never edit them by hand.
+The QCEB script writes them; you should never need to edit them by hand.
 
 ### The study this tutorial builds
 
@@ -133,7 +135,7 @@ shapeMatch/
 
 The whole study comes from one R script. You run it from the folder where the
 study should appear, for example with `Rscript build.R`, and it writes every
-file of the study's folder. Nothing in the folder is edited by hand. When you
+file of the study's folder. Nothing in the folder needs editing by hand. When you
 want to change the study, you change the script and run it again. That way the
 script is always a complete, readable record of the study, and a rebuild can
 never lose a change.
@@ -175,6 +177,13 @@ is the form the engine reads. Leave the files as QCEB writes them. If a later
 step of a script ever has to read one back, use `readQCEjsonFile()`, which keeps
 that form; a general JSON reader does not, and the file it writes back looks
 right and no longer works.
+
+`saveJsonFile()` and `savePreloadFiles()` also return the JSON they wrote. A
+value left at the top level of a script is printed when the script runs, so
+without care `Rscript build.R` fills the screen with thousands of lines of
+JSON. This script wraps those calls in `invisible()`; run as written, it
+prints only the few short checks it asks for (the sizes of the design cells,
+the number of scenarios).
 
 The first file is the smallest. The server starts a study by running a PHP file
 named after the study's folder, here `shapeMatch.php`. Its one line names the
@@ -383,7 +392,7 @@ instead of when the network delivers it. The script writes that list with
 local({
   old <- setwd(OUT_DIR)
   on.exit(setwd(old))
-  savePreloadFiles(imageFileArray = paste0(STUDY_URL, pics$file))
+  invisible(savePreloadFiles(imageFileArray = paste0(STUDY_URL, pics$file)))
 })
 ```
 
@@ -566,12 +575,19 @@ drawing a pair the practice block already showed; chapter 9 adds that.
 
 ### Placing blocks
 
-The trial-structure file is a list of blocks. Each block's key in the list is
-its position in the run, and it must agree with the block's `blockNumber`.
-`addBlockToQCETrialStructureList()` numbers the blocks of a list it is given by
-counting them, not by `blockNumber`, so the clear way is the one chapter 6
-used: build each block alone from `NULL`, take it out with `[[1]]`, and place
-the blocks in a list yourself:
+The trial-structure file is a list of blocks. A block's place in the run is
+its `blockNumber`: the engine puts block 1 first, block 2 second, and so on,
+whatever order the list holds them in. A `blockNumber` of `-1` puts the block
+at random in a place no other block has claimed. Two blocks with the same
+number, or a number larger than the count of blocks, are refused. The block's
+key in the list is only its name in the file, which the data records as
+`BlockKey`.
+
+`addBlockToQCETrialStructureList()` keys the blocks of a list it is given by
+counting them, not by `blockNumber`. The clear way is the one chapter 6 used:
+build each block alone from `NULL`, take it out with `[[1]]`, and place the
+blocks in a list yourself, keyed by their numbers so the file reads in the
+order the run plays:
 
 ```r
 ts <- list("1" = bPractice, "2" = bMain)
@@ -598,7 +614,9 @@ for (g in groups) {
 }
 ```
 
-- `condName` is written to every row of the data as `Cond_Name`.
+- `condName` is written to every trial row of the data as `Cond_Name`. (A row
+  of block results from a hook, chapter 8, has `N/A` there; chapter 11 lists
+  what such a row carries.)
 - `keyMap` is the session's key map. Both groups use D and K the same way. A
   study that wanted to counterbalance the keys would give the groups different
   maps here, or set `randomizeKeyMap = TRUE` to shuffle the meanings for each
@@ -709,7 +727,7 @@ looks for five functions on it, all optional:
 | `onTrialFinish` | when a trial's last frame ends | data columns, a feedback screen |
 | `onSetEnd` | when a set's trials end | data columns, a feedback screen |
 | `onBlockEnd` | when a block ends | data columns, a feedback screen |
-| `onSessionEnd` | once, before the data is saved | data columns, a feedback screen |
+| `onSessionEnd` | once at the end of each session | data columns, a feedback screen |
 
 Every hook also receives `ctx`, which holds three things: `ctx.dbConfig`, the
 participant's group settings file; `ctx.scenarios`, the whole stimulus file;
@@ -1143,13 +1161,13 @@ Every part of the study now exists in R. The script writes the configuration
 files once, at the end, when each is complete:
 
 ```r
-saveJsonFile(scenarios, file.path(OUT_DIR, "shapeMatch_Stimfile.json"))
-saveJsonFile(ts, file.path(OUT_DIR, "shapeMatch_Tsfile.json"))
+invisible(saveJsonFile(scenarios, file.path(OUT_DIR, "shapeMatch_Stimfile.json")))
+invisible(saveJsonFile(ts, file.path(OUT_DIR, "shapeMatch_Tsfile.json")))
 for (g in groups) {
   saveJsonFile(dbfiles[[g]], file.path(OUT_DIR, paste0(g, "_Dbfile.json")))
 }
-saveJsonFile(expDb, file.path(OUT_DIR, "expDBfile.json"))
-saveJsonFile(expInfo, file.path(OUT_DIR, "expInfo.json"))
+invisible(saveJsonFile(expDb, file.path(OUT_DIR, "expDBfile.json")))
+invisible(saveJsonFile(expInfo, file.path(OUT_DIR, "expInfo.json")))
 ```
 
 ### What a row is
@@ -1275,8 +1293,17 @@ The block counts are the most a participant can be dealt: here every block,
 including the two that run only for some participants. The pre-flight checks
 against the engine version you name with `--engine`, and without it uses the
 scripts of the older engine 9.1, so a study whose launcher names 10.0 must say
-`--engine codebase/customScripts/v10`. A pass means the sessions will start. It
-shows no screen, calls no hook and saves nothing.
+`--engine codebase/customScripts/v10`.
+
+A pass does not mean the study runs. The pre-flight shows no screen, calls no
+hook and saves nothing, and some of the engine's own checks run only in the
+browser, when a session starts or a trial is built. Two examples that pass the
+pre-flight and then stop a run: a switch rule that jumps back to an earlier
+block (the session is refused as it starts, with "This study could not be
+started"), and a frame with no timer and no key (the run stops at the first
+such trial, minutes in, with "Something has gone wrong and the study cannot
+continue"). A hook's mistakes, and a picture at a wrong address, are not seen
+either. The walk is what finds these.
 
 ### The test walk
 
@@ -1304,11 +1331,15 @@ offer and played the extra round. The `wrong` walk pressed K and then N, and
 its screen list goes from the offer straight to the debriefing, which shows the
 switch rule and the condition doing their work.
 
-Do not stop at the report's last line. A run whose pictures cannot be loaded
-stops at "The experiment failed to load.", and the pipeline still ends its
-output with `PIPELINE CLEAN`; only the walk's own lines (`completed: false`, a
-warning that it answered nothing) show the failure. The walk shows a stand-in
-consent text rather than the study's `consent.txt`.
+Do not stop at the report's last line: a run is confirmed only by its walk's
+`completed: true` and a screen list that reaches the end. A walk that did not
+finish (a run whose pictures cannot be loaded and stops at "The experiment
+failed to load.", a session refused as it starts, a run that stops midway) can
+still be followed by `PIPELINE CLEAN` on the last line; the walk's own lines
+(`completed: false`, its final screen) show the failure. Two lines appear in
+every walk's report and are not faults of the study: `TypeError: Permissions
+check failed`, which is the headless browser refusing full screen, and the
+stand-in consent text the walk shows instead of the study's `consent.txt`.
 
 The walk says that every screen can be reached and answered and that the run
 ends. It says nothing about whether the study measures what it should. That,
