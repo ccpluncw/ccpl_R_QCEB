@@ -268,3 +268,133 @@ set. The feedback list is QCEB's built-in way to show a message after a
 response, chosen by which key was pressed; this study gives feedback with a hook
 instead (chapter 8), so it passes `createFeedbackList()` with no keys, which
 means no feedback.
+
+## 4. Stimuli: pictures and preload, several items on a screen, drawn stimuli
+
+### Pictures
+
+A picture in a stimulus is an ordinary image file, shown by an ordinary HTML
+`<img>` tag. This study draws its own twelve pictures with R's `png()` device,
+one coloured shape per file:
+
+```r
+shapes  <- c("circle", "square", "triangle", "diamond")
+colours <- c(blue = "#2F6DB5", orange = "#E08A1E", green = "#3A9E5C")
+
+outline <- function(shape) {
+  a <- seq(0, 2 * pi, length.out = 100)
+  switch(shape,
+    circle   = list(x = 0.5 + 0.4 * cos(a), y = 0.5 + 0.4 * sin(a)),
+    square   = list(x = c(0.15, 0.85, 0.85, 0.15), y = c(0.15, 0.15, 0.85, 0.85)),
+    triangle = list(x = c(0.1, 0.9, 0.5), y = c(0.15, 0.15, 0.85)),
+    diamond  = list(x = c(0.5, 0.9, 0.5, 0.1), y = c(0.1, 0.5, 0.9, 0.5)))
+}
+
+drawPicture <- function(shape, fill, file) {
+  png(file, width = 200, height = 200, bg = "white")
+  par(mar = c(0, 0, 0, 0))
+  plot.new()
+  plot.window(xlim = c(0, 1), ylim = c(0, 1), asp = 1)
+  p <- outline(shape)
+  polygon(p$x, p$y, col = fill, border = NA)
+  invisible(dev.off())
+}
+
+pics <- expand.grid(shape = shapes, colour = names(colours),
+                    stringsAsFactors = FALSE)
+pics$file <- file.path("pictures", paste0(pics$shape, "_", pics$colour, ".png"))
+for (i in seq_len(nrow(pics))) {
+  drawPicture(pics$shape[i], colours[[pics$colour[i]]],
+              file.path(OUT_DIR, pics$file[i]))
+}
+```
+
+`pics` is a table of the twelve pictures: shape, colour and the file's path
+inside the study folder. The folder name `pictures/` is this script's choice.
+QCEP has no fixed place for a study's files; a script may put them in any
+folder of the study, or in a folder the server shares between studies, as long
+as every address it writes points there. Pictures you did not draw, such as a
+set of photographs, arrive the same way: the script copies or lists the files
+and reads a table that describes them.
+
+### Several items on one screen
+
+Everything one frame shows is one HTML string, so a screen holding several
+items is simply HTML that holds several items. This function writes the pair
+screen: a question, the two pictures side by side, and a reminder of the keys.
+
+```r
+pairScreen <- function(leftFile, rightFile) {
+  img <- function(f) {
+    paste0("<img src='", STUDY_URL, f,
+           "' width='160' height='160' style='margin:0 30px'>")
+  }
+  paste0(
+    "<div style='text-align:center; font-family:sans-serif'>",
+    "<p style='font-size:22px'>Do these two pictures have ",
+    "the same {{property}}?</p>",
+    "<div>", img(leftFile), img(rightFile), "</div>",
+    "<p style='font-size:16px; color:#555'>",
+    "D = same &nbsp;&nbsp;&nbsp; K = different</p>",
+    "</div>")
+}
+```
+
+Each `<img>` address is `STUDY_URL` followed by the file's path, as chapter 2
+explained. `{{property}}` is a **token**: a name in double braces that a hook
+replaces with a word when the trial starts (chapter 8). Until then it is just
+text in the string.
+
+There is no layout function in QCEB and no list of allowed designs. Whatever a
+web page can show, a study may show: words and pictures in a table or a grid,
+pictures behind one another, a sentence with one word in colour, sound or video
+elements, all of it styled with CSS. The engine places the HTML on the screen
+and records which trial it was; it does not inspect how the trial looks.
+
+### Drawn stimuli
+
+A stimulus does not need a file at all. HTML can draw shapes itself with SVG
+(a drawing language that browsers read inside HTML) or with CSS. The text `+`
+used as a fixation in chapter 3 becomes a drawn cross:
+
+```r
+fixationHTML <- paste0(
+  "<svg width='60' height='60' viewBox='0 0 60 60'>",
+  "<line x1='30' y1='8' x2='30' y2='52' stroke='#222' stroke-width='4'/>",
+  "<line x1='8' y1='30' x2='52' y2='30' stroke='#222' stroke-width='4'/>",
+  "</svg>")
+```
+
+`trialFrames()` reads `fixationHTML` each time it is called, so every trial
+built from now on gets the drawn cross. Other ways to draw: a CSS `transform`
+rotates or mirrors a letter or a picture; a hook can draw into the page while
+the study runs (the score bar in chapter 8 is drawn that way); and the
+`"numberline"` and `"angleline"` trial types take a list of drawing settings as
+their stimulus instead of HTML and draw the line themselves.
+
+### Preload
+
+Before the first trial, the engine loads every file named in
+`preloadFile.json`, so that a picture appears the moment its frame starts
+instead of when the network delivers it. The script writes that list with
+`savePreloadFiles()`, which writes into the current working directory:
+
+```r
+local({
+  old <- setwd(OUT_DIR)
+  on.exit(setwd(old))
+  savePreloadFiles(imageFileArray = paste0(STUDY_URL, pics$file))
+})
+```
+
+The addresses are the same ones the `<img>` tags use. Sounds and videos go in
+`audioFileArray` and `videoFileArray`. Every study writes this file, an empty
+list included.
+
+The order of events matters here. The engine preloads first. Only then, when
+each block starts, does it shuffle the block's pools and choose the trials this
+participant will see. So the list cannot be cut down to one participant's
+trials: every stimulus file in every pool a participant's trials can be drawn
+from must be on it. For this study that is all twelve pictures. If a listed
+file cannot be fetched, the run stops at the loading screen with "The
+experiment failed to load."
