@@ -23,7 +23,8 @@ script. The package's tests run every block in order to keep this true. You need
 R 4.0 or later (the hooks in chapter 8 use R's raw strings) and the QCEB
 package; "Installing and loading" in `BUILDER_REFERENCE.md` says how to get it.
 Checking the study (chapter 12) also needs a copy of the QCEP repository, the
-platform's own code, which holds the engine and its checking tools.
+platform's own code, which holds the engine and its checking tools. The
+repository is not public; a lab that runs QCEP provides the copy.
 
 ## 1. What a study is, and a participant's path through it
 
@@ -1208,7 +1209,8 @@ different colours and the participant pressed D ("Same"): wrong for this group,
 so `correct` is 0. The last row is the extra round's summary from the block
 hook. A row like it carries `Exp_Name`, `Group`, `sn`, the page answers, the
 block's `BlockName`, `BlockNum`, `BlockIt`, `BlockKey` and `SessionKey`, and
-the hook's values; `Cond_Name`, `Sess_Name` and every trial column are `N/A`.
+the hook's values, and `trial_index` and `trial_type` (`call-function`);
+`Cond_Name`, `Sess_Name` and the other trial columns are `N/A`.
 An analysis that selects rows by `Cond_Name` therefore leaves the block scores
 out; select them by `BlockName` and join them to the trials by `sn`.
 
@@ -1306,8 +1308,10 @@ pre-flight and then stop a run: a switch rule that jumps back to an earlier
 block (the session is refused as it starts, with "This study could not be
 started"), and a frame with no timer and no key (the run stops at the first
 such trial, which may come minutes into the run, with "Something has gone
-wrong and the study cannot continue"). A hook's mistakes, and a picture at a wrong address, are not seen
-either. The walk is what finds these.
+wrong and the study cannot continue"). A picture at a wrong address is not
+seen either. The walk finds all three: each stops the run, and the walk
+reports it (below). A hook's mistakes are different, and neither check finds
+them for you: see the end of the next section.
 
 ### The test walk
 
@@ -1343,10 +1347,19 @@ Do not stop at the report's last line: a run is confirmed only by its walk's
 finish (a run whose pictures cannot be loaded and stops at "The experiment
 failed to load.", a session refused as it starts, a run that stops midway) can
 still be followed by `PIPELINE CLEAN` on the last line; the walk's own lines
-(`completed: false`, its final screen) show the failure. Two lines appear in
-every walk's report and are not faults of the study: `TypeError: Permissions
-check failed`, which is the headless browser refusing full screen, and the
-stand-in consent text the walk shows instead of the study's `consent.txt`.
+(`completed: false`, its final screen) show the failure. A walk that reached
+full screen reports `TypeError: Permissions check failed`; that is the headless
+browser refusing full screen, not a fault of the study. The screen list starts
+at the full-screen request; the consent page is not in it.
+
+A hook that throws an error does not stop the run: the engine skips that call,
+logs the error on the server (`data/errors/_errors.log` in the study's offline
+folder) and goes on. So a walk can complete, and the pipeline print `PIPELINE
+CLEAN`, while a hook fails on every trial, and the report says nothing about
+it. Check a hook by what it should have done. In the screen list, a token the
+hook fills must not appear as `{{property}}`, and feedback the hook builds must
+appear. In the data (a walk run with `--keep` leaves the copy and its server
+for you to look at, and to stop), the hook's columns must hold values.
 
 The walk says that every screen can be reached and answered and that the run
 ends. It says nothing about whether the study measures what it should. That,
