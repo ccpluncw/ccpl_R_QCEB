@@ -687,7 +687,189 @@ expDb <- buildQCEexpDbFile(expName = EXP_NAME,
 - `expName` is written to every row as `Exp_Name`.
 - `welcomeMsg` and `endOfExpMsg` are the first and last messages.
 - `saveDataEveryNTrials` sends the data to the server every 20 trials as well
-  as at the end, so a run that is abandoned midway still leaves its trials.
+  as at the end, so a run abandoned midway keeps the trials saved so far.
 - `strictGroupAssignment = TRUE` makes a run refuse to start when the server
   cannot assign a group, instead of drawing one in the browser where nothing
   records it. A study with balanced groups should set it.
+
+## 8. Hooks: tokens at trial start, feedback, declared columns
+
+### What a hook is
+
+Some things can only be known while the study runs: which group the participant
+is in, whether their answer was right, how many they got right in a block. A
+**hook** is a JavaScript function of yours that the engine calls at a fixed
+moment and that hands the engine something back. The hooks live in one file,
+`customHooks.js`, which defines one object called `QCEPHooks`. The engine
+looks for five functions on it, all optional:
+
+| hook | the engine calls it | it may return |
+|---|---|---|
+| `onTrialStart` | as a trial's first frame starts | words to put in place of `{{tokens}}`, a narrower set of keys, data columns |
+| `onTrialFinish` | when a trial's last frame ends | data columns, a feedback screen |
+| `onSetEnd` | when a set's trials end | data columns, a feedback screen |
+| `onBlockEnd` | when a block ends | data columns, a feedback screen |
+| `onSessionEnd` | once, before the data is saved | data columns, a feedback screen |
+
+Every hook also receives `ctx`, which holds three things: `ctx.dbConfig`, the
+participant's group settings file; `ctx.scenarios`, the whole stimulus file;
+and `ctx.qceState.custom`, an empty object the hooks may write to and read from
+for the rest of the session.
+
+Hooks and the build script are two ways to do the same kinds of thing, and a
+study uses whichever suits. This study could have written the question into
+every trial at build time, with one stimulus file per group. A hook lets both
+groups share one stimulus file and one pool instead, and fills in the one word
+that differs when each trial starts.
+
+The script writes the file from R, keeping the JavaScript in R raw strings
+(`r"---( ... )---"`), which hold any text exactly as typed. The file is built
+from five pieces so each can be explained.
+
+### The start of the file
+
+```r
+hookHead <- r"---(
+var QCEPHooks = (function () {
+  function uw(v) { return Array.isArray(v) ? v[0] : v; }
+  var SCORED = { practice: true, practiceAgain: true, main: true, extra: true };
+
+  function bar(nRight, n) {
+    var w = (n > 0) ? Math.round(300 * nRight / n) : 0;
+    return '<svg width="320" height="40" viewBox="0 0 320 40">' +
+      '<rect x="10" y="10" width="300" height="20" fill="#DDDDDD"/>' +
+      '<rect x="10" y="10" width="' + w + '" height="20" fill="#3A9E5C"/>' +
+      '</svg>';
+  }
+
+  return {
+)---"
+```
+
+`uw()` is needed because QCEB writes every single value as a list of one
+(chapter 2), and values read from the configuration files reach the hooks in
+that form: the group's `judge` arrives as `["shape"]`. `SCORED` names the blocks
+whose trials are scored; the engine calls every hook on every trial of every
+block, so each hook first checks which block it is in. `bar()` draws a score bar
+in SVG, for the block feedback below.
+
+### A token filled when the trial starts
+
+```r
+hookTrialStart <- r"---(
+    onTrialStart: function (info, ctx) {
+      if (!SCORED[uw(info.data.BlockName)]) return {};
+      return { stimulusReplacements: { property: uw(ctx.dbConfig.judge) } };
+    },
+)---"
+```
+
+`stimulusReplacements` replaces every `{{property}}` in the trial's frames with
+the group's word before the frame is shown, so the shape group reads "Do these
+two pictures have the same shape?" and the colour group "... the same colour?".
+The engine also writes each filled token into the trial's row of the data, as a
+column named after the token (`property`), so the data shows what was on the
+screen. `info.data` is the trial's row as it starts (block name, trial number
+and the like); `info.scenario` is the trial's scenario, with its output
+variables.
+
+### Scoring, and feedback after a trial
+
+```r
+hookTrialFinish <- r"---(
+    onTrialFinish: function (data, ctx) {
+      var block = uw(data.BlockName);
+      if (!SCORED[block]) return {};
+      var truth = uw(data[uw(ctx.dbConfig.judge) + 'Match']);
+      var correct = (data.Key === 'Same') === (truth === 'same');
+      var c = ctx.qceState.custom;
+      if (!c.tally) c.tally = {};
+      if (!c.tally[block]) c.tally[block] = { n: 0, right: 0 };
+      c.tally[block].n += 1;
+      if (correct) c.tally[block].right += 1;
+      if (block === 'practice' && !correct) {
+        c.practiceErrors = (c.practiceErrors || 0) + 1;
+      }
+      var out = { dataAnnotations: { correct: correct ? 1 : 0 } };
+      if (block === 'practice' || block === 'practiceAgain') {
+        out.feedback = correct ? '<p style="font-size:24px">Correct</p>'
+          : '<p style="font-size:24px">Not quite</p>';
+        out.feedbackDuration = 800;
+      }
+      return out;
+    },
+)---"
+```
+
+`data` is the finished trial's row: `Key` holds the label of the key pressed
+(chapter 3), and the trial's output variables are there too, so
+`data.shapeMatch` says whether the two shapes were the same. Which output
+variable decides the answer depends on the group, read from `ctx.dbConfig`.
+
+The hook returns two things. `dataAnnotations` adds columns to the trial's row:
+here `correct`, 1 or 0. `feedback` is HTML the engine shows straight after the
+trial; `feedbackDuration` shows it for 800 milliseconds, and without it the
+participant presses a key to go on. Only the practice blocks get feedback.
+
+The hook also keeps running counts in `ctx.qceState.custom`: a tally for each
+block, and the number of practice errors, which chapter 9 uses to decide
+whether a second practice block runs.
+
+### Feedback built at the end of a block
+
+```r
+hookBlockEnd <- r"---(
+    onBlockEnd: function (blockName, ctx) {
+      if (blockName !== 'main' && blockName !== 'extra') return {};
+      var t = (ctx.qceState.custom.tally || {})[blockName];
+      if (!t) return {};
+      return {
+        feedback: '<div style="text-align:center; font-family:sans-serif">' +
+          '<p style="font-size:22px">You answered ' + t.right + ' of ' + t.n +
+          ' correctly.</p>' + bar(t.right, t.n) +
+          '<p>Press any key to go on.</p></div>',
+        dataAnnotations: { blockCorrect: t.right, blockTrials: t.n }
+      };
+    }
+)---"
+
+hookTail <- r"---(
+  };
+})();
+)---"
+
+writeLines(paste0(hookHead, hookTrialStart, hookTrialFinish, hookBlockEnd,
+                  hookTail), file.path(OUT_DIR, "customHooks.js"))
+```
+
+When the main block, or the extra round, ends, the hook builds a screen from the
+trials that were actually shown: the count of correct answers and a bar drawn
+to match. The participant presses a key to leave it. The two numbers also go
+into the data. Values returned at the end of a block describe the whole block,
+not one trial, so the engine records them on a row of their own, labelled with
+the block's name.
+
+A hook that throws an error is reported in the engine's log and skipped; the
+run goes on.
+
+### Declaring what the hooks write
+
+The engine only calls the hooks if the group settings file names the file. Two
+lists go with it:
+
+```r
+hookColumns <- c("property", "correct", "blockCorrect", "blockTrials")
+for (g in groups) {
+  dbfiles[[g]] <- addHooksToQCEgroupDbFile(dbfiles[[g]], "customHooks.js",
+                    customHooksStateKeys = "practiceErrors",
+                    customHooksColumns = hookColumns)
+}
+```
+
+- `customHooksColumns` lists every data column the hooks write, filled tokens
+  included. A column a hook writes exists only inside the JavaScript, so
+  without this list no check can see it; with it, chapter 11's check fails the
+  build if the save list leaves one out.
+- `customHooksStateKeys` lists the values in `ctx.qceState.custom` that a
+  condition reads (chapter 9). The engine refuses a condition that names a key
+  not on this list, which catches a misspelt name before anyone runs the study.
