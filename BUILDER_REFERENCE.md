@@ -111,9 +111,9 @@ savePreloadFiles(stimSets = list(faces))
   every match. Pass `ref$n` as `numberOfTrialsPerSet`.
 - `addStimSetToQCEscenarioList()` writes one scenario per selected item into
   the set `setName`. In the frames, `{{stimulus}}` becomes the item — an
-  image, sound or video element for a file, and for a word set a marked
-  element `<span data-qcep-item='<set>:<id>'>` holding the escaped text
-  (plain words, escaped for its JSON, in a survey frame) —
+  image, sound or video element for a file, and for a word set its text,
+  escaped for where it stands in the frame's markup (plain words, escaped for
+  its JSON, in a survey frame) —
   and `{{stimulusUrl}}` the file's address alone. Every scenario writes
   `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per
   attribute into the data. List them in `fields.txt` (a generated study's
@@ -121,25 +121,29 @@ savePreloadFiles(stimSets = list(faces))
 - `savePreloadFiles(stimSets = ...)` preloads the sets' files.
 
 `{{stimulus:<attribute>}}` shows the item's value of an attribute: a text
-value in a marked element like an item, a number or level as written.
+value escaped like an item, a number or level as written. A text item or
+value may stand in a frame's text (kept as typed, in its own direction), a
+tag's attribute (`<button data-word='{{stimulus}}'>`, an input's `value`), a
+`<textarea>`, an option or SVG text; one in a frame's `<script>`, `<style>` or
+comment stops the build.
 
 The platform may give the build a copy of a set whose words are placeholders
 (`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<attribute>⟧` for a text attribute's value)
 and put the words in after the build, where it knows how they are shown: a
 frame of a scenario (a second item beside the first, a prime from another
-set), a data column in `outputVariables`, or the text of an `.html` page. A
-survey frame shows them as plain words. A placeholder in a script, a JSON file
-of the study's own, or a page's `<script>`, `<style>` or attribute is never
-filled, and the platform refuses the study: a hook reads an item from the
-trial's data (`stim_<attribute>`, or a column added to `outputVariables`),
+set), a data column in `outputVariables`, the markup of an `.html` page, or a
+set list. A survey frame shows them as plain words. A placeholder in a
+script, a JSON file of the study's own, or a `<script>`, `<style>` or comment
+is never filled, and the platform refuses the study: a hook reads an item from
+the trial's data (`stim_<attribute>`, or a column added to `outputVariables`),
 never from its own code. Never test, change or print a placeholder: it is not
 the words.
 
 A hook that needs the whole list — free recall scored against it, a foil
 drawn for a recognition test — gets it from `saveQCEstimSetList(ref,
 "wordList.json", dir = OUT_DIR)`, which writes the set's items (and the
-platform fills their words): the hook fetches the file in the trial that uses
-it, compares with each item's `text` and shows one with its `html`.
+platform fills their words): the hook fetches the file, compares with each
+item's `text` and shows one with its `html`.
 
 A set's files are served to a running session only, through the engine's
 stimulus endpoint, so the addresses work on engine 10.0 and later; an earlier
@@ -408,7 +412,7 @@ addStimSetToQCEscenarioList(
 )
 ```
 
-Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Three placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item a marked element `<span data-qcep-item='<set>:<id>'>` holding the escaped text with its spaces kept (`white-space:pre-wrap`) and its own script's direction (`dir='auto'`), a line break written as `<br>`, a tab as `&#9;` and a backslash as `&#92;`, so it is valid inside a JSON string -- `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element, and `{{stimulus:<attribute>}}` becomes the item's value of that attribute -- a text value marked and escaped like a text item (`data-qcep-item='<set>:<id>:<attribute>'`), a number or level as the data column writes it. A survey frame (`addSurveyFrameToQCEframeList`) shows its text as text, so there a text item or value is written as plain words escaped for the string of the survey's JSON model it stands in, the placeholder's opening bracket written as its JSON escape so an item never takes a placeholder's form. At least one frame must carry a placeholder.
+Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Three placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item its text -- `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element, and `{{stimulus:<attribute>}}` becomes the item's value of that attribute, a number or level as the data column writes it. A text item or text value is written escaped for where it stands in the frame's markup: in its text inside `<span dir='auto' style='white-space:pre-wrap'>`, so its spacing and line breaks show as typed in its own script's direction; in a tag's attribute, a `<textarea>` or `<title>`, an option or SVG text as character references alone (a space in an attribute as `&#32;`). Every character that could end or escape a JSON string is a character reference (a line break `&#10;`, a tab `&#9;`, a backslash `&#92;`), so the frame stays valid inside a JSON string. A placeholder in a frame's script, style or HTML comment is refused: read an item in a hook from the trial's data. A survey frame (`addSurveyFrameToQCEframeList`) shows its text as text, so there a text item or value is written as plain words escaped for the string of the survey's JSON model it stands in, the placeholder's opening bracket written as its JSON escape so an item never takes a placeholder's form. At least one frame must carry a placeholder.
 
 - `QCEScenarioList` — The QCEScenarioList to add to, or `NULL` to start a new one.
 - `stimSetRef` — A reference from `buildQCEstimSetRef`.
@@ -2347,12 +2351,12 @@ Write a stimulus set's items to a file a hook can load
 saveQCEstimSetList(stimSetRef, fileName, attributes = NULL, dir = ".")
 ```
 
-Writes a JSON file listing the items of a stimulus-set reference from `buildQCEstimSetRef`, for a custom hook that needs the whole list rather than its own trial's item: to score free recall against it, or to draw a foil for a recognition test. The file holds `stimSetList`, with the set's `set` name, `version` and `kind`, and `items`, one per item of the reference, each with its `id` and `attrs` (every attribute, or those named in `attributes`) and, for a text item, `text`, its words, `chars`, their length in characters, and `html`, the item as the marked element a frame shows. A platform that gives the build a copy of the set whose words are placeholders puts the words into `text`, `html` and each text value after the build. A hook loads the file with `fetch()` in the trial that uses it, compares with `text` and shows an item with `html`.
+Writes a JSON file listing the items of a stimulus-set reference from `buildQCEstimSetRef`, for a custom hook that needs the whole list rather than its own trial's item: to score free recall against it, or to draw a foil for a recognition test. The file holds `stimSetList`, with the set's `set` name, `version` and `kind`, and `items`, one per item of the reference, each with its `id` and `attrs` (every attribute, or those named in `attributes`) and, for a text item, `text`, its words, `chars`, their length in characters, and `html`, the item as a frame's text shows it, escaped inside `<span dir='auto' style='white-space:pre-wrap'>`. A platform that gives the build a copy of the set whose words are placeholders puts the words into `text`, `html` and each text value after the build. A hook loads the file with `fetch()` in the trial that uses it, compares with `text` and shows an item with `html`.
 
 - `stimSetRef` — A reference from `buildQCEstimSetRef`. Every item it selects is listed, whatever its `n`.
 - `fileName` — A single string naming the file: a file name ending in `.json`, with no directory.
 - `attributes` — A character vector naming the attributes each item carries in the file, or `NULL` for all of them. Default `NULL`.
-- `dir` — A single string naming the directory to write into: the one the configuration files go to. Default `"."`.
+- `dir` — A single string naming the directory to write into: the one the configuration files go to, `OUT_DIR` in a builder script. Default `"."`.
 
 **Returns.** Invisibly, the path written.
 

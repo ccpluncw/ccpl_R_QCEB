@@ -1,10 +1,10 @@
 #' Write a stimulus set's items to a file a hook can load
 #'
-#' Writes a JSON file listing the items of a stimulus-set reference from \code{buildQCEstimSetRef}, for a custom hook that needs the whole list rather than its own trial's item: to score free recall against it, or to draw a foil for a recognition test. The file holds \code{stimSetList}, with the set's \code{set} name, \code{version} and \code{kind}, and \code{items}, one per item of the reference, each with its \code{id} and \code{attrs} (every attribute, or those named in \code{attributes}) and, for a text item, \code{text}, its words, \code{chars}, their length in characters, and \code{html}, the item as the marked element a frame shows. A platform that gives the build a copy of the set whose words are placeholders puts the words into \code{text}, \code{html} and each text value after the build. A hook loads the file with \code{fetch()} in the trial that uses it, compares with \code{text} and shows an item with \code{html}.
+#' Writes a JSON file listing the items of a stimulus-set reference from \code{buildQCEstimSetRef}, for a custom hook that needs the whole list rather than its own trial's item: to score free recall against it, or to draw a foil for a recognition test. The file holds \code{stimSetList}, with the set's \code{set} name, \code{version} and \code{kind}, and \code{items}, one per item of the reference, each with its \code{id} and \code{attrs} (every attribute, or those named in \code{attributes}) and, for a text item, \code{text}, its words, \code{chars}, their length in characters, and \code{html}, the item as a frame's text shows it, escaped inside \code{<span dir='auto' style='white-space:pre-wrap'>}. A platform that gives the build a copy of the set whose words are placeholders puts the words into \code{text}, \code{html} and each text value after the build. A hook loads the file with \code{fetch()} in the trial that uses it, compares with \code{text} and shows an item with \code{html}.
 #' @param stimSetRef A reference from \code{buildQCEstimSetRef}. Every item it selects is listed, whatever its \code{n}.
 #' @param fileName A single string naming the file: a file name ending in \code{.json}, with no directory.
 #' @param attributes A character vector naming the attributes each item carries in the file, or \code{NULL} for all of them. Default \code{NULL}.
-#' @param dir A single string naming the directory to write into: the one the configuration files go to. Default \code{"."}.
+#' @param dir A single string naming the directory to write into: the one the configuration files go to, \code{OUT_DIR} in a builder script. Default \code{"."}.
 #'
 #' @return Invisibly, the path written.
 #' @keywords QCE stimulus set list hook recall recognition foil
@@ -45,7 +45,7 @@ saveQCEstimSetList <- function(stimSetRef, fileName, attributes = NULL, dir = ".
     if (isText) {
       out$text <- it$text
       out$chars <- if (is.null(it$chars)) nchar(it$text) else as.integer(it$chars)
-      out$html <- .stimMark(paste0(stimSetRef$stimSet, ":", it$id), .stimRender(it$text))
+      out$html <- .stimWordsIn("text", "", it$text)
     }
     keep <- intersect(attributes, names(it$attrs))
     #an empty named list is written as {}

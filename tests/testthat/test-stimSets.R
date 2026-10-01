@@ -106,7 +106,7 @@ test_that("a files set expands into one scenario per item with its columns and t
 })
 
 #the opening of a marked element as the package writes it
-.mk <- function(key) paste0("<span data-qcep-item='", key, "' dir='auto' style='white-space:pre-wrap'>")
+.mk <- function(key) "<span dir='auto' style='white-space:pre-wrap'>"
 
 test_that("a text set expands into marked, escaped text, and a missing attribute is an empty column", {
   ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
@@ -153,7 +153,7 @@ test_that("a token read from a stripped manifest is written into the marked elem
   sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus}}</p>"),
                                     createFeedbackList(), "wordSet")
   expect_equal(sc[[1]]$frame[[1]]$stimulus,
-               paste0("<p>", .mk("words:w001"), "\u27e6words:w001\u27e7</span></p>"))
+               paste0("<p>", "\u27e6words:w001\u27e7", "</p>"))
 })
 
 test_that("the stimulusUrl placeholder gives the path alone, for a files set only", {
@@ -301,7 +301,7 @@ test_that("an item inside a JSON-string stimulus keeps the JSON valid, quotes, b
   out <- sc[[1]]$frame[[1]]$stimulus
   expect_true(jsonlite::validate(out))
   expect_equal(jsonlite::fromJSON(out)$stem,
-               paste0("<p>", .mk("words:w001"), "say &quot;hi&quot; to C:&#92;temp<br>then &#39;go&#39;</span></p>"))
+               paste0("<p>", .mk("words:w001"), "say &quot;hi&quot; to C:&#92;temp&#10;then &#39;go&#39;</span></p>"))
 })
 
 test_that("{{stimulus:<attribute>}} shows a value: a text value marked, a number as written", {
@@ -315,7 +315,7 @@ test_that("{{stimulus:<attribute>}} shows a value: a text value marked, a number
                paste0("<p>", .mk("words:w001:prime"), "doctor&#39;s &quot;note&quot;</span></p>",
                       .mk("words:w001"), "a &amp; b</span> (10)"))
   expect_equal(sc[[2]]$frame[[1]]$stimulus,
-               paste0("<p>", .mk("words:w002:prime"), "\u27e6words:w002:prime\u27e7</span></p>",
+               paste0("<p>", "\u27e6words:w002:prime\u27e7", "</p>",
                       .mk("words:w002"), "&lt;tag&gt;</span> (20)"))
   expect_equal(sc[[4]]$frame[[1]]$stimulus,
                paste0("<p>", .mk("words:w004:prime"), "</span></p>", .mk("words:w004"), "quote &quot;x&quot;</span> ()"))
@@ -334,7 +334,7 @@ test_that("a text item keeps its indentation and runs of spaces", {
   ref$items[[1]]$text <- "for (i in x) {\n    total <- total + i\n}"
   sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("{{stimulus}}"), createFeedbackList(), "s")
   expect_equal(sc[[1]]$frame[[1]]$stimulus,
-               paste0(.mk("words:w001"), "for (i in x) {<br>    total &lt;- total + i<br>}</span>"))
+               paste0(.mk("words:w001"), "for (i in x) {&#10;    total &lt;- total + i&#10;}</span>"))
 })
 
 test_that("a text item's line breaks and tabs are written as markup", {
@@ -342,8 +342,8 @@ test_that("a text item's line breaks and tabs are written as markup", {
   ref$items[[1]]$text <- "Alex found an error.\r\n\r\nAlex said nothing.\nThe end\there."
   sc <- addStimSetToQCEscenarioList(NULL, ref, .frames("<p>{{stimulus}}</p>"), createFeedbackList(), "s")
   expect_equal(sc[[1]]$frame[[1]]$stimulus,
-               paste0("<p>", .mk("words:w001"), "Alex found an error.<br><br>",
-                      "Alex said nothing.<br>The end&#9;here.</span></p>"))
+               paste0("<p>", .mk("words:w001"), "Alex found an error.&#10;&#10;",
+                      "Alex said nothing.&#10;The end&#9;here.</span></p>"))
 })
 
 test_that("a survey frame shows a text item and a text value as plain words inside its JSON model", {
@@ -365,11 +365,11 @@ test_that("a survey frame shows a text item and a text value as plain words insi
   expect_equal(q$choices[[1]], "I \"enjoy\" parties\\ <b>\nand ⟦x:y⟧")
   #the model's text never takes a placeholder's form
   expect_false(grepl("⟦", out, fixed = TRUE))
-  expect_false(grepl("data-qcep-item", out, fixed = TRUE))
+  expect_false(grepl("<span", out, fixed = TRUE))
   #a placeholder is written as it is, for the platform to fill
   expect_true(grepl("⟦words:w002⟧", sc[[2]]$frame[[1]]$stimulus, fixed = TRUE))
   #the other frame is marked as before
-  expect_true(grepl("data-qcep-item='words:w001'", sc[[1]]$frame[[2]]$stimulus, fixed = TRUE))
+  expect_true(grepl("white-space:pre-wrap", sc[[1]]$frame[[2]]$stimulus, fixed = TRUE))
 })
 
 test_that("saveQCEstimSetList writes every item a hook needs: text, html, length and attributes", {
@@ -393,7 +393,7 @@ test_that("saveQCEstimSetList writes every item a hook needs: text, html, length
   #a placeholder is written as it is, for the platform to fill
   expect_equal(doc$items[[2]]$text, "⟦words:w002⟧")
   expect_equal(doc$items[[2]]$chars, 5)
-  expect_equal(doc$items[[2]]$html, paste0(.mk("words:w002"), "⟦words:w002⟧</span>"))
+  expect_equal(doc$items[[2]]$html, "⟦words:w002⟧")
   expect_equal(doc$items[[4]]$attrs, setNames(list(), character(0)))
   saveQCEstimSetList(ref, "freq.json", attributes = "frequency", dir = dir)
   doc <- jsonlite::read_json(file.path(dir, "freq.json"))
@@ -411,4 +411,25 @@ test_that("saveQCEstimSetList lists a files set by id and attributes, and refuse
   expect_error(saveQCEstimSetList(faces, "sub/faces.json", dir = dir), "with no directory")
   expect_error(saveQCEstimSetList(faces, "f.json", attributes = "age", dir = dir), "has no attribute \"age\"; its attributes are rating, gender")
   expect_error(saveQCEstimSetList(list(), "f.json"), "must be a reference")
+})
+
+test_that("a text item is escaped for where it stands in the frame, and refused in a script, a style or a comment", {
+  ref <- buildQCEstimSetRef("words", stimuliDir = .stimRoot())
+  ref$attributes <- c(ref$attributes, list(list(name = "gloss", type = "text")))
+  ref$items[[1]]$text <- "it's <b>\"x\"</b>\nnext"
+  ref$items[[1]]$attrs$gloss <- "two words"
+  stim <- paste0("<p>{{stimulus}}</p><button data-word='{{stimulus:gloss}}' value={{stimulus:gloss}}>Pick</button>",
+                 "<textarea>{{stimulus}}</textarea><svg><text>{{stimulus}}</text></svg>",
+                 "<select><option>{{stimulus}}<option>other</select><title>{{stimulus}}</title>")
+  sc <- addStimSetToQCEscenarioList(NULL, ref, .frames(stim), createFeedbackList(), "s")
+  esc <- "it&#39;s &lt;b&gt;&quot;x&quot;&lt;/b&gt;&#10;next"
+  expect_equal(sc[[1]]$frame[[1]]$stimulus,
+               paste0("<p>", .mk(), esc, "</span></p><button data-word='two&#32;words' value=two&#32;words>Pick</button>",
+                      "<textarea>", esc, "</textarea><svg><text>", esc, "</text></svg>",
+                      "<select><option>", esc, "<option>other</select><title>", esc, "</title>"))
+  for (bad in c("<script>var w = '{{stimulus}}';</script>", "<style>p::after{content:'{{stimulus}}'}</style>",
+                "<!-- {{stimulus}} -->", "<p>ok</p><script type='text/template'>{{stimulus:gloss}}</script>")) {
+    expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(bad), createFeedbackList(), "s"),
+                 "where a set's words are never written")
+  }
 })
