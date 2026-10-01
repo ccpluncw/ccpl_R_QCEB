@@ -428,7 +428,9 @@ test_that("a text item is escaped for where it stands in the frame, and refused 
                       "<textarea>", esc, "</textarea><svg><text>", esc, "</text></svg>",
                       "<select><option>", esc, "<option>other</select><title>", esc, "</title>"))
   for (bad in c("<script>var w = '{{stimulus}}';</script>", "<style>p::after{content:'{{stimulus}}'}</style>",
-                "<!-- {{stimulus}} -->", "<p>ok</p><script type='text/template'>{{stimulus:gloss}}</script>")) {
+                "<!-- {{stimulus}} -->", "<p>ok</p><script type='text/template'>{{stimulus:gloss}}</script>",
+                "<button onclick=\"pick('{{stimulus}}')\">x</button>", "<p style='content:{{stimulus}}'>x</p>",
+                "<a href='javascript:go(\"{{stimulus}}\")'>x</a>", "<div {{stimulus}}>x</div>")) {
     expect_error(addStimSetToQCEscenarioList(NULL, ref, .frames(bad), createFeedbackList(), "s"),
                  "where a set's words are never written")
   }

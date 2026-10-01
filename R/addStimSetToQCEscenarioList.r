@@ -76,14 +76,14 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
       at <- m[k]
       tok <- substr(s, at, at + attr(m, "match.length")[k] - 1)
       key <- sub("^\\{\\{stimulus:?(.*)\\}\\}$", "\\1", tok)
-      p <- if (survey) list(kind = "survey", name = "") else .stimPartAt(parts, at)
+      p <- if (survey) list(kind = "survey", name = "") else .stimPlaceAt(s, parts, at)
       words <- (key == "" && isText) || (!key %in% c("", "Url") && identical(attrTypes[match(key, attrNames)], "text"))
-      if (words && is.null(.stimWordsIn(p$kind, p$name, "x")) && p$kind != "survey") {
-        stop("frame \"", fr$frameName, "\" has ", tok, " ", .stimPlaceOf(p$kind, p$name),
+      if (words && p$kind != "survey" && is.null(.stimWordsIn(p, "x"))) {
+        stop("frame \"", fr$frameName, "\" has ", tok, " ", .stimPlaceOf(p),
              ", where a set's words are never written. Show an item in a frame's text, a tag's attribute, ",
              "a textarea, an option or SVG text, and read it in a hook from the trial's data (stim_<attribute>).")
       }
-      list(start = at, end = at + nchar(tok), key = key, kind = p$kind, name = p$name)
+      list(start = at, end = at + nchar(tok), key = key, place = p)
     })
   })
   #an item's text, or a value, as it stands in a slot
@@ -91,11 +91,11 @@ addStimSetToQCEscenarioList <- function(QCEScenarioList, stimSetRef, QCEframeLis
     if (sl$key == "Url") return(if (is.null(url)) paste0("{{stimulusUrl}}") else url)
     if (sl$key == "") {
       if (!isText) return(shown)
-      return(if (sl$kind == "survey") .stimPlain(it$text) else .stimWordsIn(sl$kind, sl$name, it$text))
+      return(if (sl$place$kind == "survey") .stimPlain(it$text) else .stimWordsIn(sl$place, it$text))
     }
     v <- vals[[match(sl$key, attrNames)]]
-    if (sl$kind == "survey") return(.stimPlain(v))
-    if (identical(attrTypes[[match(sl$key, attrNames)]], "text")) return(.stimWordsIn(sl$kind, sl$name, v))
+    if (sl$place$kind == "survey") return(.stimPlain(v))
+    if (identical(attrTypes[[match(sl$key, attrNames)]], "text")) return(.stimWordsIn(sl$place, v))
     .stimEscape(v)
   }
 

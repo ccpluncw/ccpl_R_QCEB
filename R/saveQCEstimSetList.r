@@ -45,7 +45,7 @@ saveQCEstimSetList <- function(stimSetRef, fileName, attributes = NULL, dir = ".
     if (isText) {
       out$text <- it$text
       out$chars <- if (is.null(it$chars)) nchar(it$text) else as.integer(it$chars)
-      out$html <- .stimWordsIn("text", "", it$text)
+      out$html <- .stimWordsIn(list(kind = "text", name = ""), it$text)
     }
     keep <- intersect(attributes, names(it$attrs))
     #an empty named list is written as {}

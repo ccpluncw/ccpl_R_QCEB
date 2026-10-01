@@ -26,23 +26,34 @@
   gsub("⟦", "\\u27e6", substr(x, 2, nchar(x) - 1), fixed = TRUE)
 }
 
+#an attribute whose value is code: a handler, a style, a javascript: address
+.stimCodeAttr <- function(place) {
+  grepl("^on", place$attr) || place$attr == "style" || grepl("^\\s*javascript:", place$value, ignore.case = TRUE)
+}
+
 #text as it stands at a place in markup, or NULL where words are never written
-.stimWordsIn <- function(kind, name, x) {
+.stimWordsIn <- function(place, x) {
   #a placeholder the platform fills after the build is written as it is
   if (grepl(.stimToken, x, perl = TRUE)) return(x)
+  kind <- place$kind
   if (kind == "text") {
     #spacing and line breaks shown as typed, in the text's own direction
     return(paste0("<span dir='auto' style='white-space:pre-wrap'>", .stimEscape(x), "</span>"))
   }
-  if (kind == "tag") return(gsub(" ", "&#32;", .stimEscape(x), fixed = TRUE))
-  if (kind == "inert" || (kind == "raw" && name %in% c("textarea", "title"))) return(.stimEscape(x))
+  if (kind == "tag") {
+    if (is.null(place$attr) || .stimCodeAttr(place)) return(NULL)
+    return(gsub(" ", "&#32;", .stimEscape(x), fixed = TRUE))
+  }
+  if (kind == "inert" || (kind == "raw" && place$name %in% c("textarea", "title"))) return(.stimEscape(x))
   NULL
 }
 
 #where a place in markup is, for a message
-.stimPlaceOf <- function(kind, name) {
-  if (kind == "raw") return(paste0("inside a <", name, ">"))
-  if (kind == "comment") return("in an HTML comment")
+.stimPlaceOf <- function(place) {
+  if (place$kind == "raw") return(paste0("inside a <", place$name, ">"))
+  if (place$kind == "comment") return("in an HTML comment")
+  if (place$kind == "tag" && !is.null(place$attr)) return(paste0("inside the ", place$attr, " attribute, whose value is code"))
+  if (place$kind == "tag") return("inside a tag, outside an attribute's value")
   "here"
 }
 
@@ -137,8 +148,19 @@
   parts
 }
 
-#the part holding character position at
-.stimPartAt <- function(parts, at) {
-  for (p in parts) if (at >= p$start && at < p$end) return(p)
+#where character position at stands: its part and, in a tag, the attribute
+.stimPlaceAt <- function(s, parts, at) {
+  for (p in parts) {
+    if (at >= p$start && at < p$end) {
+      if (p$kind != "tag") return(p)
+      pre <- substr(s, p$start, at - 1)
+      m <- regmatches(pre, regexec("([^\\s\"'<>/=]+)\\s*=\\s*(\"[^\"]*|'[^']*|[^\\s\"'>]*)$", pre, perl = TRUE))[[1]]
+      if (length(m)) {
+        p$attr <- tolower(m[2])
+        p$value <- sub("^[\"']", "", m[3])
+      }
+      return(p)
+    }
+  }
   list(kind = "text", name = "")
 }
