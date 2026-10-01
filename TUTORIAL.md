@@ -1206,7 +1206,11 @@ extra      N/A   N/A     N/A       N/A  N/A                          N/A        
 The first row is a colour-group trial where both pictures were squares of
 different colours and the participant pressed D ("Same"): wrong for this group,
 so `correct` is 0. The last row is the extra round's summary from the block
-hook.
+hook. A row like it carries `Exp_Name`, `Group`, `sn`, the page answers, the
+block's `BlockName`, `BlockNum`, `BlockIt`, `BlockKey` and `SessionKey`, and
+the hook's values; `Cond_Name`, `Sess_Name` and every trial column are `N/A`.
+An analysis that selects rows by `Cond_Name` therefore leaves the block scores
+out; select them by `BlockName` and join them to the trials by `sn`.
 
 ### `fields.txt`: the columns the server keeps
 
@@ -1301,8 +1305,8 @@ browser, when a session starts or a trial is built. Two examples that pass the
 pre-flight and then stop a run: a switch rule that jumps back to an earlier
 block (the session is refused as it starts, with "This study could not be
 started"), and a frame with no timer and no key (the run stops at the first
-such trial, minutes in, with "Something has gone wrong and the study cannot
-continue"). A hook's mistakes, and a picture at a wrong address, are not seen
+such trial, which may come minutes into the run, with "Something has gone
+wrong and the study cannot continue"). A hook's mistakes, and a picture at a wrong address, are not seen
 either. The walk is what finds these.
 
 ### The test walk
@@ -1319,9 +1323,12 @@ option offered and a `wrong` walk with the last; they name positions, not right
 answers. It types 25 into an empty number box, ticks a radio button where none
 is ticked, and clicks a page's button. `--skip-build` uses the folder as it is;
 without it, the pipeline first runs a script called `build_config.R` inside the
-folder, which this study does not have. The server is stopped and the copy
-removed when it finishes. Only one pipeline can run on a machine at a time,
-because the port is fixed.
+folder, with the folder as the working directory. This tutorial's script lives
+beside the study, not in it. To have the pipeline rebuild the study each time,
+save the script as `shapeMatch/build_config.R` and change one line,
+`OUT_DIR <- "."`, so it writes into its own folder; then leave out
+`--skip-build`. The server is stopped and the copy removed when it finishes.
+Only one pipeline can run on a machine at a time, because its ports are fixed.
 
 It writes `pipeline_report/report.txt` inside the study folder. For each walk,
 read three things: `completed: true`, the list of screens the run put up, and
