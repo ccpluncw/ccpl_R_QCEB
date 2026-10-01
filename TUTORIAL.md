@@ -55,8 +55,8 @@ in that sense from now on.
 - A **hook** is a JavaScript function of your own that the engine calls at a
   fixed moment, such as the start of each trial or the end of a block.
 
-The files are JSON, a plain-text format for lists and values. The QCEB script
-writes them; you never edit them by hand.
+The configuration files are JSON, a plain-text format for lists and values.
+The QCEB script writes them; you never edit them by hand.
 
 ### The study this tutorial builds
 
@@ -94,8 +94,8 @@ run of the finished build.
 7. The key-map screen ("D = Same, K = Different"), which the engine shows by
    itself before the first block that takes key presses.
 8. The blocks: four practice trials, each followed by "Correct" or "Not
-   quite"; four more practice trials if needed; a short page starting the main
-   block; 24 main trials; a screen with the score; the offer of an extra round;
+   quite"; if needed, a short page and four more practice trials; a short page
+   starting the main block; 24 main trials; a screen with the score; the offer of an extra round;
    and, for those who accept, 8 more trials and their score.
 9. The page placed at the end of the session: a debriefing.
 10. A saving screen, the end message, and a last screen saying the window may
@@ -119,8 +119,8 @@ shapeMatch/
   instructions_shape.html     each group's instructions (chapter 7)
   instructions_colour.html
   customHooks.js              the hooks (chapter 8)
-  practice_again.html         pages shown when a block starts (chapter 9)
-  main_start.html
+  main_start.html             pages shown when a block starts (chapters 7, 9)
+  practice_again.html
   aboutYou.html, age.html,    the pages, their descriptions and where they
   debrief.html, *.page.json,  play (chapter 10)
   pages.json
@@ -132,8 +132,8 @@ shapeMatch/
 ## 2. The build script: one R script writes every file
 
 The whole study comes from one R script. You run it from the folder where the
-study should appear, for example with `Rscript build.R`, and it writes the
-study's folder from nothing. Nothing in the folder is edited by hand. When you
+study should appear, for example with `Rscript build.R`, and it writes every
+file of the study's folder. Nothing in the folder is edited by hand. When you
 want to change the study, you change the script and run it again. That way the
 script is always a complete, readable record of the study, and a rebuild can
 never lose a change.
