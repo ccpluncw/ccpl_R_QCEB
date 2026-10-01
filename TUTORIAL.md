@@ -479,3 +479,85 @@ participant saw. General descriptors (`leftShape`, `colourMatch`, and so on) are
 what an analysis groups and compares by. You decide which descriptors a trial
 carries; for pictures of faces they might be gender, race and the rating each
 face received. Every value is written as text.
+
+## 6. Sets and the trial structure: pools, drawing n, randomising
+
+### Sets are pools
+
+A set is every scenario whose set name is the same; here, every pair in one
+design cell. The **trial structure** file says, block by block, how many trials
+to draw from each set for each participant and in what order to run them. The
+engine makes the draw itself, separately for every participant, each time a
+block starts.
+
+A set's entry in a block is made with `addSetToQCEsetInfoList()`. This
+function makes the four entries, one per cell, with `n` trials each:
+
+```r
+cells <- sort(unique(design$cell))
+
+cellSets <- function(n) {
+  si <- NULL
+  for (cl in cells) {
+    si <- addSetToQCEsetInfoList(si, scenarios, setName = cl,
+            numberOfTrialsPerSet = n,
+            selectionType = "randomWithoutReplacement")
+  }
+  si
+}
+```
+
+`numberOfTrialsPerSet` is the number drawn. `selectionType` is how:
+
+- `"randomWithoutReplacement"` draws `n` different scenarios at random. `n`
+  may not be larger than the set.
+- `"randomWithReplacement"` draws at random and may draw one scenario twice.
+- `"fixed"` takes the scenarios in the order they were added to the stimulus
+  file.
+
+Drawing the same number from every cell is how this study balances its design:
+each participant gets equal numbers of each kind of pair, whatever the sizes of
+the cells.
+
+### Order within a block
+
+The **block iterator** says how the drawn trials are ordered, and how many
+times the block runs:
+
+```r
+mixed <- createBlockIteratorList(numberOfIterations = 1,
+           randomizeTrialInSetOrder = TRUE, randomizeSetOrder = "randomFirst",
+           randomizeAllTrials = TRUE)
+```
+
+- `numberOfIterations`: how many times the block runs.
+- `randomizeAllTrials = TRUE` puts the trials drawn from all the sets into one
+  list and shuffles it, so the cells are mixed together. This is what the
+  study wants.
+- With `randomizeAllTrials = FALSE`, the sets run one after another instead:
+  `randomizeSetOrder` says in what order (`"fixed"`, the order they were added;
+  `"randomFirst"`, shuffled on the first iteration and then kept;
+  `"randomAll"`, shuffled on every iteration), and `randomizeTrialInSetOrder`
+  says whether trials are shuffled within each set.
+
+When trials are shuffled across sets, a fixed set order contradicts the
+shuffle, and the engine refuses a block that asks for both. So a mixed block
+names `"randomFirst"` or `"randomAll"`; with one iteration the two do the same.
+
+### The first two blocks
+
+A **block** puts the sets and the iterator together. The practice block draws
+one pair from each cell; the main block draws six from each, 24 in all:
+
+```r
+bPractice <- addBlockToQCETrialStructureList(NULL, cellSets(1), mixed,
+               blockNumber = 1, blockName = "practice")[[1]]
+bMain <- addBlockToQCETrialStructureList(NULL, cellSets(6), mixed,
+           blockNumber = 2, blockName = "main",
+           entryInstruction = "main_start.html")[[1]]
+```
+
+Both blocks draw from the same four pools. Nothing yet stops the main block from
+drawing a pair the practice block already showed; chapter 9 adds that.
+`entryInstruction` names a page shown when the block starts (written in chapter
+7). Chapter 7 explains `blockNumber`, `blockName` and the `[[1]]`.
