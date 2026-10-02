@@ -105,9 +105,9 @@ Read a table with `read.csv("<set>.csv", colClasses = "character", check.names =
 FALSE, na.strings = "", encoding = "UTF-8")`, so every cell comes back as typed
 (an id `007` stays `007`, a level `T` stays `T`, a word `NA` stays a word) and
 every column keeps the researcher's name; convert a number attribute with
-`as.numeric()`. The platform
-lets a build script read a file inside the study named by its path, written as
-it stands. A pattern that
+`as.numeric()`. A build script the platform runs may read and write any file
+inside the study's build folder, and read the sets it was given, however the
+path is written; a path outside them stops the script. A pattern that
 rates six pictures drawn from one category of a picture set and then every word
 of a word set:
 
