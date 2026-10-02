@@ -300,8 +300,8 @@ outline <- function(shape) {
     diamond  = list(x = c(0.5, 0.9, 0.5, 0.1), y = c(0.1, 0.5, 0.9, 0.5)))
 }
 
-drawPicture <- function(shape, fill, file) {
-  png(file, width = 200, height = 200, bg = "white")
+drawPicture <- function(shape, fill, picture) {
+  png(picture, width = 200, height = 200, bg = "white")
   par(mar = c(0, 0, 0, 0))
   plot.new()
   plot.window(xlim = c(0, 1), ylim = c(0, 1), asp = 1)
