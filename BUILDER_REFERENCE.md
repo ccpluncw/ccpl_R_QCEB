@@ -59,9 +59,8 @@ JSON file per configuration role:
    see the specification). `saveJsonFile()` writes the result.
 6. **Preload manifest (preloadFile.json) — every build writes one.** Call
    `savePreloadFiles()` from the output directory. It writes the image, video
-   and audio paths it is given, plus the files of every stimulus-set
-   reference passed as `stimSets` (see "Stimulus sets" below); it does not
-   look through the configuration for them. This step is required even for
+   and audio paths it is given, as given; it does not look through the
+   configuration for them. This step is required even for
    a study with no media: the engine fetches `preloadFile.json` by name
    alongside the other configuration files, and while a missing file happens
    not to stop the current engine, that tolerance is an accident of its error
@@ -81,76 +80,6 @@ requires plain JSON cannot load what they produce. Do not use them in new
 builds.
 
 The worked examples below show the full pattern end to end.
-
-### Stimulus sets (engine 10 only)
-
-A study may carry **stimulus sets**: locked collections of pictures, sounds,
-videos or words, each with attributes (a rating, a category). The platform
-places each set in the study's `stimuli/<set>/` directory before the build; a
-build never writes, copies or edits one, and never names a set's files by
-hand. A set is used in three calls:
-
-```r
-faces <- buildQCEstimSetRef("faces", where = list(gender = "f"), n = 6)
-fr <- addFrameToQCEframeList(trialType = "key", frameName = "face",
-        stimulus = "<div>{{stimulus}}</div>", post_trial_gap = 250,
-        choices = choices, background = "#FFFFFF")
-scenarios <- addStimSetToQCEscenarioList(scenarios, faces, fr,
-               createFeedbackList(), "faceSet")
-si <- addSetToQCEsetInfoList(NULL, scenarios, setName = "faceSet",
-        numberOfTrialsPerSet = faces$n,
-        selectionType = "randomWithoutReplacement")
-# ...and, with the output directory as the working directory:
-savePreloadFiles(stimSets = list(faces))
-```
-
-- `buildQCEstimSetRef()` selects items: all of them, or those matching
-  `where` (a single value is an equality test; `list(min = , max = )` is a
-  range on a number attribute). `n` is how many of the matches each
-  participant sees, drawn at random per participant; leave it `NULL` to show
-  every match. Pass `ref$n` as `numberOfTrialsPerSet`.
-- `addStimSetToQCEscenarioList()` writes one scenario per selected item into
-  the set `setName`. In the frames, `{{stimulus}}` becomes the item — an
-  image, sound or video element for a file, and for a word set its text,
-  escaped for where it stands in the frame's markup (plain words, escaped for
-  its JSON, in a survey frame) —
-  and `{{stimulusUrl}}` the file's address alone. Every scenario writes
-  `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per
-  attribute into the data. List them in `fields.txt` (a generated study's
-  `fields.txt` is derived from the configuration, so they are added for it).
-- `savePreloadFiles(stimSets = ...)` preloads the sets' files.
-
-`{{stimulus:<attribute>}}` shows the item's value of an attribute: a text
-value escaped like an item, a number or level as written. A text item or
-value may stand in a frame's text (kept as typed, in its own direction), a
-tag's attribute (`<button data-word='{{stimulus}}'>`, an input's `value`), a
-`<textarea>`, an option or SVG text; one in a frame's `<script>`, `<style>` or
-comment stops the build.
-
-The platform may give the build a copy of a set whose words are placeholders
-(`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<attribute>⟧` for a text attribute's value)
-and put the words in after the build, where it knows how they are shown: a
-frame of a scenario (a second item beside the first, a prime from another
-set), a data column in `outputVariables`, the markup of an `.html` page, or a
-set list. A survey frame shows them as plain words. A placeholder in a
-script, a JSON file of the study's own, or a `<script>`, `<style>` or comment
-is never filled, and the platform refuses the study: a hook reads an item from
-the trial's data (`stim_<attribute>`, or a column added to `outputVariables`),
-never from its own code. Never test, change or print a placeholder: it is not
-the words.
-
-A hook that needs the whole list — free recall scored against it, a foil
-drawn for a recognition test — gets it from `saveQCEstimSetList(ref,
-"wordList.json", dir = OUT_DIR)`, which writes the set's items (and the
-platform fills their words): the hook fetches the file, compares with each
-item's `text` and shows one with its `html`.
-
-A set's files are served to a running session only, through the engine's
-stimulus endpoint, so the addresses work on engine 10.0 and later; an earlier
-engine is refused. A balanced draw — say six items from each of two levels —
-is two references, each with its own `where` and `n`, written into two sets of
-the same block. Yoking an item to one shown in another block cannot be
-expressed.
 
 ### Experiment-local plugins (optional; engine 10 only)
 
@@ -219,7 +148,7 @@ scalars the engine's manifest reader refuses.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-10-01 — 79 exported functions (72 current, 7 deprecated).*
+*Generated from `man/` on 2026-10-02 — 76 exported functions (69 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -393,66 +322,6 @@ Function that gets all the set names from a QCEScenarioList.
 - `QCEScenarioList` — A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial. It is composed of a series of frames, some potential response, and maybe feedback. Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).
 
 **Returns.** a vector containing setnames
-
-## Stimulus sets
-
-### `addStimSetToQCEscenarioList`
-
-Add one scenario per item of a stimulus set to a QCEScenarioList
-
-```r
-addStimSetToQCEscenarioList(
-  QCEScenarioList,
-  stimSetRef,
-  QCEframeList,
-  QCEfeebackList,
-  setName,
-  QCEoutvariableList = NULL,
-  trigger = NULL
-)
-```
-
-Function that expands a stimulus-set reference from `buildQCEstimSetRef` into scenarios: one per selected item, all in the set named `setName`, each a copy of `QCEframeList` with the item written into every frame's stimulus. Three placeholders mark where: `{{stimulus}}` becomes the item itself -- an image, sound or video element for a file, and for a text item its text -- `{{stimulusUrl}}` becomes the file's address alone, for a frame that writes its own element, and `{{stimulus:<attribute>}}` becomes the item's value of that attribute, a number or level as the data column writes it. A text item or text value is written escaped for where it stands in the frame's markup: in its text inside `<span dir='auto' style='white-space:pre-wrap'>`, so its spacing and line breaks show as typed in its own script's direction; in a tag's attribute, a `<textarea>` or `<title>`, an option or SVG text as character references alone (a space in an attribute as `&#32;`). Every character that could end or escape a JSON string is a character reference (a line break `&#10;`, a tab `&#9;`, a backslash `&#92;`), so the frame stays valid inside a JSON string. A placeholder in a frame's script, style or HTML comment is refused: read an item in a hook from the trial's data. A survey frame (`addSurveyFrameToQCEframeList`) shows its text as text, so there a text item or value is written as plain words escaped for the string of the survey's JSON model it stands in, the placeholder's opening bracket written as its JSON escape so an item never takes a placeholder's form. At least one frame must carry a placeholder.
-
-- `QCEScenarioList` — The QCEScenarioList to add to, or `NULL` to start a new one.
-- `stimSetRef` — A reference from `buildQCEstimSetRef`.
-- `QCEframeList` — The frames each scenario shows, from `addFrameToQCEframeList`, with a placeholder in at least one frame's stimulus.
-- `QCEfeebackList` — A feedback list, from `createFeedbackList`, for every scenario.
-- `setName` — A single string naming the set the scenarios belong to; pass it to `addSetToQCEsetInfoList`.
-- `QCEoutvariableList` — A named list of further columns written for every scenario. Its names may not repeat the stimulus columns. Default `NULL`.
-- `trigger` — Optional trial-level triggers from `buildQCETriggerList`, given to every scenario. Default `NULL`.
-
-**Details.** 
-Every scenario records `stimSet`, `stimSetVersion`, `stimId` and one `stim_<attribute>` column per declared attribute (empty when the item has no value) in the data; a number is written in fixed notation with up to 15 significant digits, never in scientific notation. An attribute value holding a tab, line break, other control character or Unicode line or paragraph separator is refused, since it would split a row of the data file; a text item may hold line breaks and tabs, and any other control character or separator is refused. A file's address is the engine's stimulus endpoint, `stimFile.php?set=<set>&id=<id>&v=<version>`, relative to the page; the endpoint serves the file only to a running session of the study, and the version in the address keeps a browser from showing a cached file of an earlier version.
-
-**Returns.** the updated QCEScenarioList
-
-### `buildQCEstimSetRef`
-
-Build a reference to a stimulus set
-
-```r
-buildQCEstimSetRef(
-  stimSet,
-  where = NULL,
-  n = NULL,
-  stimuliDir = "stimuli",
-  engineVersion = "10.0"
-)
-```
-
-Function that reads a locked stimulus set's `manifest.json` and selects the items a block shows. A set is a directory `<stimuliDir>/<stimSet>/` holding `manifest.json` (schema version 1) and, for a set of files, `files/`; the platform places it in the study before the build. The reference is passed to `addStimSetToQCEscenarioList`, which writes one scenario per selected item, and to `savePreloadFiles`, which preloads the set's files. Files are served only inside a running session, through the engine's stimulus endpoint, so a set needs engine 10.0 or later.
-
-- `stimSet` — A single string naming the set: its directory under `stimuliDir` and the `set.name` in its manifest.
-- `where` — A named list filtering the items on their attributes, for example `list(gender = "f", rating = list(min = 3))`. `NULL` keeps every item. Default `NULL`.
-- `n` — A single whole number: how many of the matching items each participant sees, drawn at random per participant by the engine. `NULL` shows every matching item. Pass `ref$n` as `numberOfTrialsPerSet` to `addSetToQCEsetInfoList` with `selectionType = "randomWithoutReplacement"`. Default `NULL`.
-- `stimuliDir` — A string giving the directory that holds the study's sets, relative to the working directory the build runs in. Default `"stimuli"`.
-- `engineVersion` — A string naming the engine the study runs. Sets are refused before engine 10.0, which has no stimulus endpoint. Default `"10.0"`.
-
-**Details.** 
-A filter keeps an item when every named attribute matches: a single value is an equality test (numeric, to within rounding, for a number attribute), and `list(min = , max = )` (either bound may be left out) is a range test on a number attribute. An item with no value for a filtered attribute does not match.
-
-**Returns.** A list describing the reference: `stimSet`, the set's name; `version`, its locked version; `kind`, `"files"` or `"text"`; `attributes`, the declared attributes, each a list with `name`, `type` and, for a category, `levels`; `items`, the matching items, each a list with `id`, `attrs` and either `file` and `mediaType` or `text` and `chars`, the text's length in characters (the manifest's `chars` when it gives one, as a copy whose words are placeholders does); `n`, how many of them each participant sees; `where`, the filter as given.
 
 ## Survey models
 
@@ -2133,17 +2002,15 @@ This function is used to write the preload manifest to preloadFile.json
 savePreloadFiles(
   imageFileArray = NULL,
   videoFileArray = NULL,
-  audioFileArray = NULL,
-  stimSets = NULL
+  audioFileArray = NULL
 )
 ```
 
-Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. Each list is written as an array, empty when nothing of that kind is preloaded. The files of any stimulus sets passed in `stimSets` are added by media type, as their stimulus-endpoint addresses; a set drawn at random per participant preloads every item that could be drawn. Text sets add nothing.
+Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. Each list is written as an array, empty when nothing of that kind is preloaded. A path is written as given, so it is the address the page fetches: a stimulus set's `path` column, or a file of the study's own.
 
 - `imageFileArray` — An array of the image filenames (plus paths) that need to be preloaded. Default `NULL`.
 - `videoFileArray` — An array of the video filenames (plus paths) that need to be preloaded. Default `NULL`.
 - `audioFileArray` — An array of the audio filenames (plus paths) that need to be preloaded. Default `NULL`.
-- `stimSets` — A stimulus-set reference from `buildQCEstimSetRef`, or a list of them, whose files are preloaded too. Default `NULL`.
 
 **Returns.** the json data
 
@@ -2342,23 +2209,6 @@ Function that writes `pluginManifest.local.json` into the working directory. The
 The file is serialized with scalars unboxed: the engine reads this manifest directly (no unwrapping layer), so a value written as a one-element array would be refused at run time.
 
 **Returns.** the json data
-
-### `saveQCEstimSetList`
-
-Write a stimulus set's items to a file a hook can load
-
-```r
-saveQCEstimSetList(stimSetRef, fileName, attributes = NULL, dir = ".")
-```
-
-Writes a JSON file listing the items of a stimulus-set reference from `buildQCEstimSetRef`, for a custom hook that needs the whole list rather than its own trial's item: to score free recall against it, or to draw a foil for a recognition test. The file holds `stimSetList`, with the set's `set` name, `version` and `kind`, and `items`, one per item of the reference, each with its `id` and `attrs` (every attribute, or those named in `attributes`) and, for a text item, `text`, its words, `chars`, their length in characters, and `html`, the item as a frame's text shows it, escaped inside `<span dir='auto' style='white-space:pre-wrap'>`. A platform that gives the build a copy of the set whose words are placeholders puts the words into `text`, `html` and each text value after the build. A hook loads the file with `fetch()` in the trial that uses it, compares with `text` and shows an item with `html`.
-
-- `stimSetRef` — A reference from `buildQCEstimSetRef`. Every item it selects is listed, whatever its `n`.
-- `fileName` — A single string naming the file: a file name ending in `.json`, with no directory.
-- `attributes` — A character vector naming the attributes each item carries in the file, or `NULL` for all of them. Default `NULL`.
-- `dir` — A single string naming the directory to write into: the one the configuration files go to, `OUT_DIR` in a builder script. Default `"."`.
-
-**Returns.** Invisibly, the path written.
 
 ### `saveQCEunplacedPages`
 
