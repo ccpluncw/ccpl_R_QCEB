@@ -81,6 +81,126 @@ builds.
 
 The worked examples below show the full pattern end to end.
 
+### Your inputs: a folder and a table
+
+A study may use material the researcher uploaded: pictures, sounds, films or a
+list of words, each set with descriptors such as a rating or a category. The
+platform gives the build one table per set, `<set>.csv`, in the study folder
+beside the build script, and serves the set's files from a folder of their own.
+The build uses them as it would use any files and table of its own, with the
+functions above: there is no stimulus-set function.
+
+One row per item; the columns, in this order, each where it applies:
+
+| column | holds |
+|---|---|
+| `path` | a set of files: the file's address as a page's `src` takes it, used as it stands; it is also what the data records |
+| `text` | a set of words: the item's words, or a token (below) |
+| `chars` | a set of words given as tokens: the length of the words in characters |
+| `id` | the item's id |
+| `mediaType` | a set of files: `image/png`, `audio/mpeg`, ... |
+| one per attribute | named as the researcher named it; an attribute named like one of the columns above is written with `.1` after it |
+
+Read a table with `read.csv("<set>.csv", stringsAsFactors = FALSE, na.strings =
+"", encoding = "UTF-8")`, so a word such as `NA` stays a word. A pattern that
+rates six pictures drawn from one category of a picture set and then every word
+of a word set:
+
+```r
+library(QCEB)
+
+OUT_DIR <- "output"
+dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
+km <- buildKeyMap(data.frame(Like = c("d"), Dislike = c("k")))
+keyChoice <- getKeyChoicesFromKeyMap(km)
+readTable <- function(f) read.csv(f, stringsAsFactors = FALSE, na.strings = "", encoding = "UTF-8")
+htmlText <- function(x) gsub(">", "&gt;", gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE), fixed = TRUE)
+faces <- subset(readTable("faces_demo.csv"), gender == "f")
+words <- readTable("words_demo.csv")
+NFACES <- 6
+scenarios <- NULL
+for (i in seq_len(nrow(faces))) {
+  faceFrame <- addFrameToQCEframeList(trialType = "key", frameName = "face",
+    stimulus = paste0("<div><img src='", faces$path[i], "' width='96' height='96' alt=''></div>",
+      "<p>D = like, K = dislike</p>"),
+    post_trial_gap = 100, choices = keyChoice, background = "#FFFFFF")
+  ov <- createQCEoutputVariableList(data.frame(facePath = faces$path[i], faceGender = faces$gender[i],
+    attractiveness = faces$attractiveness[i]))
+  scenarios <- addScenarioToQCEscenarioList(scenarios, faceFrame, createFeedbackList(), ov, "faceSet")
+}
+addWords <- function(scenarios, tab) {
+  for (i in seq_len(nrow(tab))) {
+    wordFrame <- addFrameToQCEframeList(trialType = "key", frameName = "word",
+      stimulus = paste0("<p style='font-size:32px'>", htmlText(tab$text[i]), "</p><p>D = like, K = dislike</p>"),
+      post_trial_gap = 100, choices = keyChoice, background = "#FFFFFF")
+    ov <- createQCEoutputVariableList(data.frame(wordId = tab$id[i], word = tab$text[i]))
+    scenarios <- addScenarioToQCEscenarioList(scenarios, wordFrame, createFeedbackList(), ov, "wordSet")
+  }
+  scenarios
+}
+scenarios <- addWords(scenarios, words)
+NWORDS <- nrow(words)
+blockIter <- createBlockIteratorList(numberOfIterations = 1, randomizeTrialInSetOrder = TRUE,
+  randomizeSetOrder = "fixed", randomizeAllTrials = FALSE)
+b1 <- addBlockToQCETrialStructureList(NULL,
+  addSetToQCEsetInfoList(NULL, scenarios, "faceSet", NFACES, selectionType = "randomWithoutReplacement"),
+  blockIter, blockNumber = 1, blockName = "faces")[[1]]
+b2 <- addBlockToQCETrialStructureList(NULL,
+  addSetToQCEsetInfoList(NULL, scenarios, "wordSet", NWORDS, selectionType = "randomWithoutReplacement"),
+  blockIter, blockNumber = 2, blockName = "words")[[1]]
+ts <- list("1" = b1, "2" = b2)
+groupDb <- buildQCEgroupDbFile(condName = "rate", keyMap = km, randomizeKeyMap = FALSE)
+expDb <- buildQCEexpDbFile(expName = "stimdemo",
+  instructionFile = "instructions.html",
+  welcomeMsg = "<p>Welcome. Press any key to begin.</p>",
+  endOfExpMsg = "<p>Thank you. You may close this window.</p>")
+sessions <- addSessionToSessionList(NULL, sessionOrder = 1, sessionName = "rate",
+  dbFile = "rate_dbfile.json", tsFile = "rate_tsfile.json", stimFile = "rate_stimfile.json")
+expInfo <- addSessionListToQCEGroupList(NULL, sessions, "everyone")
+invisible(saveJsonFile(scenarios, file.path(OUT_DIR, "rate_stimfile.json")))
+invisible(saveJsonFile(ts, file.path(OUT_DIR, "rate_tsfile.json")))
+invisible(saveJsonFile(groupDb, file.path(OUT_DIR, "rate_dbfile.json")))
+invisible(saveJsonFile(expDb, file.path(OUT_DIR, "expDBfile.json")))
+invisible(saveJsonFile(expInfo, file.path(OUT_DIR, "expInfo.json")))
+home <- setwd(OUT_DIR)
+invisible(savePreloadFiles(imageFileArray = faces$path))
+setwd(home)
+outs <- unique(unlist(lapply(scenarios, function(s) names(s$outputVariables))))
+writeLines(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey", "BlockName", "BlockKey",
+  "BlockNum", "BlockIt", "Trial", "TrialInSession", "TrialinBlock", "trial_index", "trial_type", "StimNum",
+  "FrameNum", "FrameName", "respType", "posttgap", "stim_dur", "Response", "rt", "Key", "Set", "stimRef",
+  "ShowFeedBack", "FeedBack", outs), file.path(OUT_DIR, "fields.txt"))
+```
+
+- **Choosing, crossing and balancing** are ordinary R on the table before any
+  scenario is written: `subset()`, `expand.grid()`, `merge()`, `sample()`. A
+  set of scenarios is a pool; `numberOfTrialsPerSet` draws that many from it
+  per participant. Six from each of two levels is two pools in one block.
+- **Presentation is the frame's HTML,** written by the script: any number of
+  items on one screen, a path as a CSS background or in a `<canvas>` drawn by a
+  hook, a sound in an `<audio>` tag. A hook may compute or choose a path at run
+  time; the path column is the list it chooses from.
+- **What the data records** is each trial's output variables: the path of what
+  it showed, so the exact file can be found again, and the descriptors the
+  analysis needs. List them in `fields.txt`. The researcher approves them.
+- **Preload** every file of every pool a participant's trials can be drawn
+  from, each path as it stands (`savePreloadFiles()`, run in the output
+  directory). The engine preloads first and draws afterwards.
+- **A table of words** holds the words themselves when the researcher has let
+  the assistant read them; escape `&`, `<` and `>` before putting a word into
+  HTML, as `htmlText()` above does.
+- **A set the assistant may not read** has a token in place of each item's
+  words (`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<attribute>⟧` for a text attribute's
+  value). Put a token exactly where the words go: a frame's HTML, an output
+  variable, a page, a hook's script, a stylesheet, or a JSON file the script
+  writes (for a hook that needs the whole list). The platform puts the words in
+  after the build, escaped for where each token stands; inside a string of code
+  the words fill the string, and where a value goes they become a string of
+  their own. Never change, test, split or print a token: it is not the words.
+  `chars` is their length.
+- Never write into a set's table or its files, and never assume where the files
+  sit: use each path as the table gives it.
+
 ### Experiment-local plugins (optional; engine 10 only)
 
 A study that needs a trial type the deployment's central plugin manifest does
