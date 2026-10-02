@@ -102,7 +102,9 @@ One row per item; the columns, in this order, each where it applies:
 | one per attribute | named as the researcher named it; an attribute named like one of the columns above is written with `.1` after it |
 
 Read a table with `read.csv("<set>.csv", stringsAsFactors = FALSE, na.strings =
-"", encoding = "UTF-8")`, so a word such as `NA` stays a word. A pattern that
+"", encoding = "UTF-8")`, so a word such as `NA` stays a word; the platform
+lets a build script read a file inside the study named by its path, written as
+it stands. A pattern that
 rates six pictures drawn from one category of a picture set and then every word
 of a word set:
 
@@ -113,10 +115,9 @@ OUT_DIR <- "output"
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 km <- buildKeyMap(data.frame(Like = c("d"), Dislike = c("k")))
 keyChoice <- getKeyChoicesFromKeyMap(km)
-readTable <- function(f) read.csv(f, stringsAsFactors = FALSE, na.strings = "", encoding = "UTF-8")
 htmlText <- function(x) gsub(">", "&gt;", gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE), fixed = TRUE)
-faces <- subset(readTable("faces_demo.csv"), gender == "f")
-words <- readTable("words_demo.csv")
+faces <- subset(read.csv("faces_demo.csv", stringsAsFactors = FALSE, na.strings = "", encoding = "UTF-8"), gender == "f")
+words <- read.csv("words_demo.csv", stringsAsFactors = FALSE, na.strings = "", encoding = "UTF-8")
 NFACES <- 6
 scenarios <- NULL
 for (i in seq_len(nrow(faces))) {
@@ -162,14 +163,12 @@ invisible(saveJsonFile(ts, file.path(OUT_DIR, "rate_tsfile.json")))
 invisible(saveJsonFile(groupDb, file.path(OUT_DIR, "rate_dbfile.json")))
 invisible(saveJsonFile(expDb, file.path(OUT_DIR, "expDBfile.json")))
 invisible(saveJsonFile(expInfo, file.path(OUT_DIR, "expInfo.json")))
-home <- setwd(OUT_DIR)
 invisible(savePreloadFiles(imageFileArray = faces$path))
-setwd(home)
 outs <- unique(unlist(lapply(scenarios, function(s) names(s$outputVariables))))
-writeLines(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey", "BlockName", "BlockKey",
+cat(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey", "BlockName", "BlockKey",
   "BlockNum", "BlockIt", "Trial", "TrialInSession", "TrialinBlock", "trial_index", "trial_type", "StimNum",
   "FrameNum", "FrameName", "respType", "posttgap", "stim_dur", "Response", "rt", "Key", "Set", "stimRef",
-  "ShowFeedBack", "FeedBack", outs), file.path(OUT_DIR, "fields.txt"))
+  "ShowFeedBack", "FeedBack", outs), file = file.path(OUT_DIR, "fields.txt"), sep = "\n")
 ```
 
 - **Choosing, crossing and balancing** are ordinary R on the table before any
@@ -184,8 +183,8 @@ writeLines(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey", 
   it showed, so the exact file can be found again, and the descriptors the
   analysis needs. List them in `fields.txt`. The researcher approves them.
 - **Preload** every file of every pool a participant's trials can be drawn
-  from, each path as it stands (`savePreloadFiles()`, run in the output
-  directory). The engine preloads first and draws afterwards.
+  from, each path as it stands (`savePreloadFiles()` writes `preloadFile.json`
+  where the script runs). The engine preloads first and draws afterwards.
 - **A table of words** holds the words themselves when the researcher has let
   the assistant read them; escape `&`, `<` and `>` before putting a word into
   HTML, as `htmlText()` above does.
@@ -193,7 +192,7 @@ writeLines(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey", 
   words (`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<attribute>⟧` for a text attribute's
   value). Put a token exactly where the words go: a frame's HTML, an output
   variable, a page, a hook's script, a stylesheet, or a JSON file the script
-  writes (for a hook that needs the whole list). The platform puts the words in
+  writes with `saveJsonFile()` (for a hook that needs the whole list). The platform puts the words in
   after the build, escaped for where each token stands; inside a string of code
   the words fill the string, and where a value goes they become a string of
   their own. Never change, test, split or print a token: it is not the words.
