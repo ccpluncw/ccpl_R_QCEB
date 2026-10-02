@@ -2619,7 +2619,7 @@ Two facts the patterns rely on:
 - **An address in a stimulus is read relative to the participant's page,**
   `experiment.php`, which sits at the top of the served tree (`wwwFiles/`). A
   file in the study's own folder is therefore addressed as
-  `<type>/<study>/<path>`; the patterns build that start as `addr`.
+  `<type>/<study>/<path>`; the patterns build that start as `url`.
   `TYPE_NAME` is the experiment type the study is registered under (`TestType`
   for a local walk). No folder name is fixed: a study keeps its files wherever
   its script puts them.
@@ -2633,8 +2633,8 @@ library(QCEB)
 
 TYPE_NAME <- "TestType"
 
-drawSquare <- function(picture, colour) {
-  png(picture, width = 150, height = 150, bg = "white")
+drawSquare <- function(file, colour) {
+  png(file, width = 150, height = 150, bg = "white")
   par(mar = c(0, 0, 0, 0))
   plot.new()
   rect(0.1, 0.1, 0.9, 0.9, col = colour, border = NA)
@@ -2695,7 +2695,7 @@ the output variables, so the data names the exact picture each trial showed.
 
 ```r
 dir <- "patternPicture"
-addr <- paste0(TYPE_NAME, "/", dir, "/")
+url <- paste0(TYPE_NAME, "/", dir, "/")
 dir.create(file.path(dir, "img"), recursive = TRUE, showWarnings = FALSE)
 km <- buildKeyMap(data.frame(Red = c("d", "D"), Blue = c("k", "K"),
                              stringsAsFactors = FALSE))
@@ -2707,7 +2707,7 @@ drawSquare(file.path(dir, pics$file[2]), "#2F6DB5")
 
 sc <- NULL
 for (i in seq_len(nrow(pics))) {
-  html <- paste0("<img src='", addr, pics$file[i], "' width='150' height='150'>",
+  html <- paste0("<img src='", url, pics$file[i], "' width='150' height='150'>",
                  "<p>D = red &nbsp; K = blue</p>")
   fr <- addFrameToQCEframeList(NULL, trialType = "key", frameName = "picture",
           stimulus = html, post_trial_gap = 300,
@@ -2717,7 +2717,7 @@ for (i in seq_len(nrow(pics))) {
 }
 si <- addSetToQCEsetInfoList(NULL, sc, setName = "pictures",
         numberOfTrialsPerSet = 2)
-writeStudy(dir, sc, si, km, images = paste0(addr, pics$file))
+writeStudy(dir, sc, si, km, images = paste0(url, pics$file))
 ```
 
 ### Pattern 2 — several items on one screen
@@ -2730,14 +2730,14 @@ The output variables record what stood where.
 
 ```r
 dir <- "patternSeveral"
-addr <- paste0(TYPE_NAME, "/", dir, "/")
+url <- paste0(TYPE_NAME, "/", dir, "/")
 dir.create(file.path(dir, "img"), recursive = TRUE, showWarnings = FALSE)
 drawSquare(file.path(dir, "img/red.png"), "#C0392B")
 drawSquare(file.path(dir, "img/blue.png"), "#2F6DB5")
 km <- buildKeyMap(data.frame(Left = c("d", "D"), Right = c("k", "K"),
                              stringsAsFactors = FALSE))
 side <- function(colour, key) {
-  paste0("<div><img src='", addr, "img/", colour, ".png' width='120' ",
+  paste0("<div><img src='", url, "img/", colour, ".png' width='120' ",
          "height='120'><p>", key, "</p></div>")
 }
 trials <- data.frame(left = c("red", "blue"), right = c("blue", "red"),
@@ -2757,7 +2757,7 @@ for (i in seq_len(nrow(trials))) {
 si <- addSetToQCEsetInfoList(NULL, sc, setName = "pairs",
         numberOfTrialsPerSet = 2)
 writeStudy(dir, sc, si, km,
-           images = paste0(addr, c("img/red.png", "img/blue.png")))
+           images = paste0(url, c("img/red.png", "img/blue.png")))
 ```
 
 ### Pattern 3 — a pool built by crossing lists
