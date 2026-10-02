@@ -101,8 +101,11 @@ One row per item; the columns, in this order, each where it applies:
 | `mediaType` | a set of files: `image/png`, `audio/mpeg`, ... |
 | one per attribute | named as the researcher named it; an attribute named like one of the columns above is written with `.1` after it |
 
-Read a table with `read.csv("<set>.csv", stringsAsFactors = FALSE, na.strings =
-"", encoding = "UTF-8")`, so a word such as `NA` stays a word; the platform
+Read a table with `read.csv("<set>.csv", colClasses = "character", check.names =
+FALSE, na.strings = "", encoding = "UTF-8")`, so every cell comes back as typed
+(an id `007` stays `007`, a level `T` stays `T`, a word `NA` stays a word) and
+every column keeps the researcher's name; convert a number attribute with
+`as.numeric()`. The platform
 lets a build script read a file inside the study named by its path, written as
 it stands. A pattern that
 rates six pictures drawn from one category of a picture set and then every word
@@ -121,8 +124,10 @@ dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 km <- buildKeyMap(data.frame(Like = c("d"), Dislike = c("k")))
 keyChoice <- getKeyChoicesFromKeyMap(km)
 htmlText <- function(x) gsub(">", "&gt;", gsub("<", "&lt;", gsub("&", "&amp;", x, fixed = TRUE), fixed = TRUE), fixed = TRUE)
-faces <- subset(read.csv("faces_demo.csv", stringsAsFactors = FALSE, na.strings = "", encoding = "UTF-8"), gender == "f")
-words <- read.csv("words_demo.csv", stringsAsFactors = FALSE, na.strings = "", encoding = "UTF-8")
+faces <- subset(read.csv("faces_demo.csv", colClasses = "character", check.names = FALSE, na.strings = "", encoding = "UTF-8"), gender == "f")
+words <- read.csv("words_demo.csv", colClasses = "character", check.names = FALSE, na.strings = "", encoding = "UTF-8")
+faces$attractiveness <- as.numeric(faces$attractiveness)
+words$frequency <- as.numeric(words$frequency)
 NFACES <- 6
 scenarios <- NULL
 for (i in seq_len(nrow(faces))) {
@@ -194,7 +199,7 @@ cat(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey", "BlockN
   the assistant read them; escape `&`, `<` and `>` before putting a word into
   HTML, as `htmlText()` above does.
 - **A set the assistant may not read** has a token in place of each item's
-  words (`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<attribute>⟧` for a text attribute's
+  words (`⟦<set>:<id>⟧`, and `⟦<set>:<id>:<n>⟧`, n its place among the set's attributes, for a text attribute's
   value). Put a token exactly where the words go: a frame's HTML, an output
   variable, a page, a hook's script, a stylesheet, or a JSON file the script
   writes with `saveJsonFile()`. A hook that needs the whole list (free recall,
