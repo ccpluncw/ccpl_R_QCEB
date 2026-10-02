@@ -199,7 +199,18 @@ cat(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey", "BlockN
   variable, a page, a hook's script, a stylesheet, or a JSON file the script
   writes with `saveJsonFile()`. A hook that needs the whole list (free recall,
   a foil) reads it from its context: `ctx.scenarios` holds every scenario with
-  its output variables. The platform puts the words in
+  its output variables. An output variable holds the words themselves, so a
+  hook that puts one into the page escapes it first, as `htmlText()` in R
+  does:
+
+  ```js
+  function htmlText(x) {
+    return String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  ```
+
+  In the test walk such a word stands as `[<set> <id> <i>&amp;</i>]`; a screen
+  showing `[<set> <id> &]` put it in unescaped, and the walk report says so. The platform puts the words in
   after the build, escaped for where each token stands; inside a string of code
   the words fill the string, and where a value goes they become a string of
   their own. Never change, test, split or print a token: it is not the words.
