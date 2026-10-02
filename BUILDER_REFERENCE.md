@@ -108,9 +108,14 @@ it stands. A pattern that
 rates six pictures drawn from one category of a picture set and then every word
 of a word set:
 
-```r
-library(QCEB)
+A script the platform builds opens with the preamble below, which loads QCEB
+from the source the platform names; a person building at their own machine
+writes `library(QCEB)` instead.
 
+```r
+suppressPackageStartupMessages(
+  pkgload::load_all(Sys.getenv("QCEB_SRC"), quiet = TRUE, export_all = FALSE)
+)
 OUT_DIR <- "output"
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 km <- buildKeyMap(data.frame(Like = c("d"), Dislike = c("k")))
@@ -2798,7 +2803,9 @@ both orders and the data records the order shown. Values from the configuration
 files reach a hook as one-element arrays, hence `uw()`. The token columns are
 declared as the hook's columns so the build checks `fields.txt` for them. The
 same placement could instead be fixed at build time, one scenario per order;
-both are QCEP mechanisms.
+both are QCEP mechanisms. Every `.js` file a generated study carries (a hook
+file, a plugin) starts with `'use strict';`, which the platform's check of
+generated JavaScript requires.
 
 ```r
 dir <- "patternTokens"
@@ -2821,6 +2828,7 @@ for (i in seq_len(nrow(pairs))) {
           createQCEoutputVariableList(pairs[i, ]), "pairs")
 }
 writeLines(r"---(
+'use strict';
 var QCEPHooks = {
   onTrialStart: function (info, ctx) {
     function uw(v) { return Array.isArray(v) ? v[0] : v; }
@@ -2866,6 +2874,7 @@ for (w in words) {
           createQCEoutputVariableList(data.frame(word = w)), "words")
 }
 writeLines(r"---(
+'use strict';
 var QCEPHooks = (function () {
   function uw(v) { return Array.isArray(v) ? v[0] : v; }
   return {
