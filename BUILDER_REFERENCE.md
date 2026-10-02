@@ -189,6 +189,31 @@ cat(c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name", "SessionKey", "BlockN
   items on one screen, a path as a CSS background or in a `<canvas>` drawn by a
   hook, a sound in an `<audio>` tag. A hook may compute or choose a path at run
   time; the path column is the list it chooses from.
+- **A hook may set any address** on a picture, sound or film element it makes
+  itself (`new Image()`, `new Audio()`, `document.createElement()` with
+  `"img"`, `"audio"`, `"video"` or `"source"`, an SVG `image` made with
+  `createElementNS()`), held in a name it uses for nothing else, and may read
+  any address with `fetch(address)`: no method but GET and no body. A JSON file
+  the script wrote with `saveJsonFile()` is read at `<type>/<study>/<file>`.
+  It sends nothing, and a script, frame, link or anchor still points only at a
+  plain relative path. A sound the engine preloaded plays through Web Audio with
+  jsPsych's own player, panned or timed as the study needs:
+
+  ```js
+  function playPanned(path, pan) {
+    var api = myJsPsych.pluginAPI;
+    var ac = api.audioContext();
+    return api.getAudioPlayer(path).then(function (player) {
+      var source = ac.createBufferSource();
+      source.buffer = player.webAudioBuffer;
+      var panner = ac.createStereoPanner();
+      panner.pan.value = pan;
+      source.connect(panner);
+      panner.connect(ac.destination);
+      source.start(ac.currentTime + 0.05);
+    });
+  }
+  ```
 - **What the data records** is each trial's output variables: the path of what
   it showed, so the exact file can be found again, and the descriptors the
   analysis needs. List them in `fields.txt`. The researcher approves them.
