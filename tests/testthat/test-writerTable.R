@@ -154,7 +154,10 @@ test_that("every described key is written in its form for every shape R can hand
         next
       }
       got <- pick(written(p$file, data), p$steps)
-      expected <- if (dead || sh %in% c("null", "na", "empty", "blank")) {
+      #empty text in a key saved to a data column is a value
+      expected <- if (sh == "blank" && !dead && !is.null(node$column)) {
+        ""
+      } else if (dead || sh %in% c("null", "na", "empty", "blank")) {
         "<absent>"
       } else if (kind == "list" || sh %in% c("two", "list")) {
         if (sh %in% c("one", "asis")) list(v[[1]]) else as.list(v)
@@ -213,6 +216,26 @@ test_that("data and a study's own values are written whole", {
   expect_identical(pp$p, list("PA", "PB"))
   expect_identical(pp$q, "x")
   expect_identical(pp$r, list("y"))
+})
+
+test_that("empty text in a key saved to a data column is written as empty text", {
+  cols <- Filter(function(p) !is.null(p$node$column), keyPaths())
+  expect_gte(length(cols), 12)
+  for (p in cols) {
+    label <- sprintf("%s: %s", p$file, pattern(p$steps))
+    for (v in list("", I(""), list(""))) {
+      expect_identical(pick(written(p$file, buildFile(p$steps, v)), p$steps), "", info = label)
+    }
+    for (v in list(NULL, NA, character(0))) {
+      expect_identical(pick(written(p$file, buildFile(p$steps, v)), p$steps), "<absent>", info = label)
+    }
+  }
+  fb <- list(n1 = list(set = "A", feedback = list(feedback_key = list(
+    Same = list(displayText = "", outputText = "")))))
+  expect_identical(written("stimulus", fb)$n1$feedback$feedback_key$Same, list(outputText = ""))
+  g <- written("groupSettings", list(condName = "", restMsg = ""))
+  expect_identical(g$condName, "")
+  expect_false("restMsg" %in% names(g))
 })
 
 test_that("numbers are written at full precision", {

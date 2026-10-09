@@ -83,7 +83,10 @@ through it, in the form the QCEP settings description gives each key:
   `"instructionFile": ["intro.html"]`, `"choices": ["d"]`, a key-map label
   `"Yes": ["y"]`;
 - a setting that is not set (`NULL`, `NA`, `""`, an empty vector) is left out,
-  except a frame's `choices`, which is written `"NO_KEYS"`;
+  except a frame's `choices`, which is written `"NO_KEYS"`, and empty text in a
+  setting whose value the engine copies into a column of the data file (a name
+  or a label; the description marks it `column`), which is written `""` and
+  saved as an empty cell;
 - a message QCEB would have filled in is left out, and the engine shows its own
   sentence; a message written `""` counts as not set (write `"&nbsp;"` for a
   blank screen);
@@ -2178,7 +2181,7 @@ This function writes any QCEB configuration list to a JSON file
 saveJsonFile(data, filename, fileKind = NULL)
 ```
 
-Function that serializes a QCEB configuration list to plain JSON and writes it to a named file. This is the writer for every configuration file a build produces -- Stimfile, Tsfile, group dbfile, experiment dbfile and expInfo alike. Each value is written in the form the QCEP settings description gives its key: a setting that takes one value is written bare (`"x"`), a setting that takes a list is written as a list also when it holds one item (`["d"]`), a setting that is not set (`NULL`, `NA`, `""` or an empty vector) is left out of the file, and numbers are written at full precision. A frame whose `choices` is not set is written `"NO_KEYS"`. A value the description does not list -- a study's own setting, an output variable, a plugin parameter -- is written whole: one value bare, several values as a list, a value wrapped in `I()` as a list also when it holds one item, and `NA` as `null`. The experiment settings file carries `settingsForm: 2`. A setting that takes one value but is given several stops the build with a message naming it.
+Function that serializes a QCEB configuration list to plain JSON and writes it to a named file. This is the writer for every configuration file a build produces -- Stimfile, Tsfile, group dbfile, experiment dbfile and expInfo alike. Each value is written in the form the QCEP settings description gives its key: a setting that takes one value is written bare (`"x"`), a setting that takes a list is written as a list also when it holds one item (`["d"]`), a setting that is not set (`NULL`, `NA`, `""` or an empty vector) is left out of the file, except that empty text in a setting whose value the engine copies into a column of the data file (a name or a label) is written `""` and saved as an empty cell, and numbers are written at full precision. A frame whose `choices` is not set is written `"NO_KEYS"`. A value the description does not list -- a study's own setting, an output variable, a plugin parameter -- is written whole: one value bare, several values as a list, a value wrapped in `I()` as a list also when it holds one item, and `NA` as `null`. The experiment settings file carries `settingsForm: 2`. A setting that takes one value but is given several stops the build with a message naming it.
 
 - `data` — The list to serialize. Any QCEB configuration list.
 - `filename` — A string giving the path of the file to write. The file is overwritten.

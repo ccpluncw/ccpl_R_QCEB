@@ -739,7 +739,10 @@ expDb <- buildQCEexpDbFile(expName = EXP_NAME,
 - `welcomeMsg` and `endOfExpMsg` are the first and last messages. A message you
   leave out is left out of the file, and the engine shows its own sentence. A
   message given as empty text (`""`) counts as left out; for a blank screen,
-  write a blank, such as `"&nbsp;"` or `"<p></p>"`.
+  write a blank, such as `"&nbsp;"` or `"<p></p>"`. Empty text counts as left
+  out in every setting except one whose value the engine copies into a column
+  of the data file, such as a name or a label: there `""` is written, and the
+  column holds an empty cell.
 - `saveDataEveryNTrials` sends the data to the server every 20 trials as well
   as at the end, so a run abandoned midway keeps the trials saved so far.
 - `strictGroupAssignment = TRUE` makes a run refuse to start when the server

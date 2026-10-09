@@ -17,6 +17,7 @@
       "dead": "read or written, never used by the engine",
       "qcebWrites": "false: QCEB does not write this key for engine 10",
       "absentMeans": "what the engine does when the key is absent, where that is not a default value",
+      "column": "the data column the engine copies this one value into. Empty text here is a value, saved as an empty cell: it is written \"\" and read as \"\", never as not set.",
       "studyOwnUnwrap": "contents belong to the study. In a file without settingsForm a list of exactly one is read as its item and a longer list is kept whole, at the top level (oneLevel) or at every depth (deep). In a file with settingsForm 2 they are untouched."
     }
   },
@@ -403,6 +404,7 @@
             "groupName": {
               "kind": "one",
               "value": "text",
+              "column": "Group",
               "note": "required by the engine; optional to the server",
               "default": {
                 "value": "groupName",
@@ -439,6 +441,7 @@
                   "sessionName": {
                     "kind": "one",
                     "value": "text",
+                    "column": "Sess_Name",
                     "optional": true,
                     "default": {
                       "value": "unspecified",
@@ -504,6 +507,7 @@
           "expName": {
             "kind": "one",
             "value": "text",
+            "column": "Exp_Name",
             "optional": true,
             "default": {
               "value": "defaultExpName",
@@ -862,6 +866,7 @@
           "condName": {
             "kind": "one",
             "value": "text",
+            "column": "Cond_Name",
             "optional": true,
             "default": {
               "value": "defaultCond",
@@ -872,6 +877,7 @@
           "sessionNumber": {
             "kind": "one",
             "value": "text",
+            "column": "Sess_Name",
             "optional": true
           },
           "keyMap": {
@@ -1107,6 +1113,7 @@
               "initialWindowMessageOutput": {
                 "kind": "one",
                 "value": "text",
+                "column": "out_SB",
                 "default": {
                   "value": "initial",
                   "appliedBy": "qceb"
@@ -1139,6 +1146,7 @@
               "aboveThresholdMessageOutput": {
                 "kind": "one",
                 "value": "text",
+                "column": "out_SB",
                 "default": {
                   "value": "above",
                   "appliedBy": "qceb"
@@ -1171,6 +1179,7 @@
               "belowThresholdMessageOutput": {
                 "kind": "one",
                 "value": "text",
+                "column": "out_SB",
                 "default": {
                   "value": "below",
                   "appliedBy": "qceb"
@@ -1262,6 +1271,7 @@
             "blockName": {
               "kind": "one",
               "value": "text",
+              "column": "BlockName",
               "optional": true,
               "default": {
                 "value": "blockName",
@@ -1472,6 +1482,7 @@
                   "frameName": {
                     "kind": "one",
                     "value": "text",
+                    "column": "FrameName",
                     "default": {
                       "value": "frameN",
                       "appliedBy": "qceb"
@@ -1747,6 +1758,7 @@
                       "outputText": {
                         "kind": "one",
                         "value": "text",
+                        "column": "FeedBack",
                         "optional": true,
                         "default": {
                           "value": "the label",
@@ -1789,6 +1801,7 @@
             "stimRef": {
               "kind": "one",
               "value": "text",
+              "column": "stimRef",
               "optional": true
             },
             "showIf": {

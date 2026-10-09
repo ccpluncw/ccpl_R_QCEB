@@ -57,6 +57,12 @@
   length(v) == 1 && (is.na(v) || identical(as.character(v), ""))
 }
 
+#empty text, bare or in a list of one
+.qcebEmptyText <- function(v) {
+  if (.qcebIsArrayList(v) && length(v) == 1) v <- v[[1]]
+  is.atomic(v) && !is.null(v) && length(v) == 1 && !is.na(v) && identical(as.character(v), "")
+}
+
 #a plain vector, without I() and without factor levels
 .qcebPlain <- function(v) {
   if (is.factor(v)) v <- as.character(v)
@@ -179,6 +185,8 @@
 #one value of a file, by its description entry
 .qcebShape <- function(v, node, ctx) {
   node <- .qcebResolve(node, ctx$d)
+  #a key the engine saves to a data column keeps empty text as a value
+  if (!is.null(node$column) && .qcebEmptyText(v)) return(jsonlite::unbox(""))
   if (.qcebNotSet(v)) return(.qcebAbsent)
   if (!is.null(node$anyOf)) return(.qcebShape(v, .qcebPickForm(node, v, ctx$d), ctx))
   if (identical(node$kind, "byTrialType")) {
