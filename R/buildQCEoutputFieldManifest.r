@@ -32,7 +32,7 @@
 #'   it -- the check that catches a silently dropped column. DEFAULT = NULL.
 #' @param engineVersion A string recording which engine's row-stamp list this was
 #'   built against. Stamped into the header so a stale manifest is visible rather
-#'   than silent. DEFAULT = "9.1".
+#'   than silent. DEFAULT = "10.0".
 #'
 #' @return Invisibly, a character vector: the lines of the manifest.
 #' @keywords QCE fields manifest columns output fields.txt
@@ -42,7 +42,7 @@
 #' # buildQCEoutputFieldManifest("myExperiment/")
 #' # buildQCEoutputFieldManifest("myExperiment/", fieldsFile = "myExperiment/fields.txt")
 buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.txt",
-                                        fieldsFile = NULL, engineVersion = "9.1") {
+                                        fieldsFile = NULL, engineVersion = "10.0") {
 
   if (missing(dir) || !isSingleString(dir) || !dir.exists(dir)) {
     stop("dir option must be a single string naming an existing experiment directory.")
@@ -106,8 +106,8 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
       if (is.list(pg) && !is.null(pg$elements)) walk(pg$elements) else character(0)
     }), use.names = FALSE)
   }
-  # Config scalars arrive wrapped as one-element arrays; take the first element.
-  u <- function(x) if (is.list(x) && length(x) >= 1) x[[1]] else x
+  #one value, written bare or inside a list of one
+  u <- function(x) if (is.list(x) && is.null(names(x)) && length(x) >= 1) x[[1]] else x
 
   jsonFiles <- list.files(dir, pattern = "\\.json$", full.names = TRUE)
 
@@ -119,11 +119,13 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
                   "TrialinBlock", "trial_index", "trial_type", "StimNum", "FrameNum",
                   "FrameName", "respType", "posttgap", "stim_dur", "rt", "Set",
                   "stimRef", "ShowFeedBack")
+  #identity columns a study keeps only by listing them in fields.txt
+  optionalEngineCols <- c("SessionKey", "BlockKey")
 
   # --- scan the stimfiles: trial types used, outputVariables, feedback keys --
   typesUsed <- character(0)
   outputVars <- character(0)
-  feedbackKeys <- character(0)
+  feedbackLabels <- character(0)
   surveyCols <- character(0)
   # --- scan for hooks + demographics ----------------------------------------
   hooksFiles <- character(0)
@@ -157,7 +159,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
       }
       if (!is.null(sc$feedback) && is.list(sc$feedback) &&
           !is.null(sc$feedback$feedback_key)) {
-        feedbackKeys <- c(feedbackKeys, as.character(u(sc$feedback$feedback_key)))
+        feedbackLabels <- c(feedbackLabels, names(sc$feedback$feedback_key))
       }
     }
 
@@ -184,7 +186,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
 
   typesUsed    <- sort(unique(typesUsed))
   outputVars   <- sort(unique(outputVars))
-  feedbackKeys <- sort(unique(feedbackKeys))
+  feedbackLabels <- sort(unique(feedbackLabels))
   surveyCols   <- sort(unique(surveyCols))
   hooksFiles   <- sort(unique(hooksFiles))
   hookCols     <- sort(unique(hookCols))
@@ -251,6 +253,8 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     "",
     "# --- stamped by the engine on every row ---",
     engineCols,
+    "# identity columns, kept only when listed in fields.txt:",
+    paste0("#   ", optionalEngineCols),
     "",
     sprintf("# --- from the trial types this experiment uses (%s) ---",
             if (length(typesUsed)) paste(typesUsed, collapse = ", ") else "none found"),
@@ -258,7 +262,8 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     "",
     "# --- declared in your config ---",
     if (length(outputVars)) c("# outputVariables:", outputVars) else "# (no outputVariables declared)",
-    if (length(feedbackKeys)) c("# feedback keys:", feedbackKeys) else NULL,
+    if (length(feedbackLabels)) c("# feedback labels, each saved in the FeedBack column as its outputText:",
+                                  paste0("#   ", feedbackLabels)) else NULL,
     if (length(surveyCols)) c("# survey questions:", surveyCols) else NULL,
     if (length(pageCols)) c("# page fields:", pageCols) else NULL,
     ""
@@ -299,10 +304,10 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     have <- trimws(readLines(fieldsFile, warn = FALSE))
     have <- have[nchar(have) > 0]
     expected <- unique(c(serverCols, demographicCols, engineCols, typeCols,
-                         outputVars, feedbackKeys, surveyCols, pageCols,
+                         outputVars, surveyCols, pageCols,
                          hookCols))
     missingCols <- setdiff(expected, have)
-    extraCols <- setdiff(have, expected)
+    extraCols <- setdiff(have, c(expected, optionalEngineCols))
 
     out <- c(out, "",
              sprintf("# === compared against %s ===", fieldsFile))
