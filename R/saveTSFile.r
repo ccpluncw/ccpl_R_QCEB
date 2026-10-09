@@ -10,13 +10,6 @@
 
 saveTSFile <- function (QCETrialStructureList) {
 
-  filename <- "trialStructure.json"
-
-  #convert the list to a json file and write it out.
-  jsonData <- jsonlite::toJSON(QCETrialStructureList, pretty=T)
-
-  write("var trialStructure =", filename)
-  write(jsonData, filename, append = T)
-
-  return(jsonData)
+  .qcebWriteSettings(QCETrialStructureList, "trialStructure.json", fileKind = "trialStructure",
+                     fn = "saveTSFile", prefix = "var trialStructure =")
 }

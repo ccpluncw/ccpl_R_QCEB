@@ -10,10 +10,6 @@
 
 saveStimFile <- function (QCEScenarioList) {
 
-  #convert the list to a json file and write it out.
-  jsonData <- jsonlite::toJSON(QCEScenarioList, pretty=T)
-  write("var scenarios =", "stimFile.json")
-  write(jsonData, "stimFile.json", append = T)
-
-  return(jsonData)
+  .qcebWriteSettings(QCEScenarioList, "stimFile.json", fileKind = "stimulus",
+                     fn = "saveStimFile", prefix = "var scenarios =")
 }

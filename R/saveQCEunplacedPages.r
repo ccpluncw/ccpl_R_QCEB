@@ -21,6 +21,6 @@ saveQCEunplacedPages <- function(pages, dir = ".") {
   #the list is kept as names without the extension, a path with forward slashes
   names <- unique(sub("\\.html?$", "", gsub("\\", "/", pages, fixed = TRUE), ignore.case = TRUE))
   path <- file.path(dir, "unplacedPages.json")
-  writeLines(jsonlite::toJSON(list(pages = names), auto_unbox = FALSE, pretty = TRUE), path)
+  .qcebWriteSettings(list(pages = names), path, fileKind = "unplacedPages", fn = "saveQCEunplacedPages")
   invisible(path)
 }

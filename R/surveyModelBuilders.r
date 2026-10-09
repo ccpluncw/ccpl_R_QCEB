@@ -193,5 +193,5 @@ surveyModel <- function(..., showQuestionNumbers = "off", modelProps = NULL) {
 # `stimulus` carries (shape (A) in surveyTrialType.js -- a pre-serialized JSON
 # string, the unambiguous form).
 .serializeSurveyModel <- function(model) {
-  as.character(jsonlite::toJSON(.coerceSurveyArrays(model), auto_unbox = TRUE))
+  as.character(.qcebToJson(.qcebWhole(.coerceSurveyArrays(model)), pretty = FALSE))
 }

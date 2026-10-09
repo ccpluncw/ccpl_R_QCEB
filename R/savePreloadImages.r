@@ -10,11 +10,7 @@
 
 savePreloadImages <- function (imageFileArray) {
 
-  #convert the list to a json file and write it out.
   prImages <- list(images = imageFileArray)
-  jsonData <- jsonlite::toJSON(prImages, pretty=T)
-  write("var preloadImages =", "preloadFile.json")
-  write(jsonData, "preloadFile.json", append = T)
-
-  return(jsonData)
+  .qcebWriteSettings(prImages, "preloadFile.json", fileKind = "preload",
+                     fn = "savePreloadImages", prefix = "var preloadImages =")
 }

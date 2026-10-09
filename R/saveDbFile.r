@@ -10,10 +10,5 @@
 
 saveDbFile <- function (QCEdbFileList) {
 
-  #convert the list to a json file and write it out.
-  jsonData <- jsonlite::toJSON(QCEdbFileList, pretty=T)
-  write("var dbInfo =", "dbFile.json")
-  write(jsonData, "dbFile.json", append = T)
-
-  return(jsonData)
+  .qcebWriteSettings(QCEdbFileList, "dbFile.json", fn = "saveDbFile", prefix = "var dbInfo =")
 }

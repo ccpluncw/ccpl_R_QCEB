@@ -56,7 +56,7 @@ saveQCEpageFiles <- function(QCEpagePlacement, pagesFile, sidecars = NULL, dir =
 
   written <- character(0)
   path <- file.path(dir, pagesFile)
-  saveJsonFile(QCEpagePlacement, path)
+  saveJsonFile(QCEpagePlacement, path, fileKind = "pages")
   written <- c(written, path)
 
   if (!is.null(sidecars)) {
@@ -74,7 +74,7 @@ saveQCEpageFiles <- function(QCEpagePlacement, pagesFile, sidecars = NULL, dir =
     }
     for (nm in nms) {
       sp <- file.path(dir, paste0(nm, ".page.json"))
-      saveJsonFile(sidecars[[nm]], sp)
+      saveJsonFile(sidecars[[nm]], sp, fileKind = "pageSidecar")
       written <- c(written, sp)
     }
   }
@@ -149,12 +149,12 @@ saveQCEcardFiles <- function(QCEcardPlacement, cardsFile, sidecars, dir = ".") {
 
   written <- character(0)
   path <- file.path(dir, cardsFile)
-  saveJsonFile(QCEcardPlacement, path)
+  saveJsonFile(QCEcardPlacement, path, fileKind = "cards")
   written <- c(written, path)
 
   for (nm in nms) {
     sp <- file.path(dir, paste0(nm, ".card.json"))
-    saveJsonFile(sidecars[[nm]], sp)
+    saveJsonFile(sidecars[[nm]], sp, fileKind = "cardSidecar")
     written <- c(written, sp)
   }
 

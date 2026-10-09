@@ -49,11 +49,6 @@ savePluginManifestLocal <- function (plugins, filename = "pluginManifest.local.j
     }
   }
 
-  # Unboxed on purpose: the engine parses this file directly, with no
-  # unwrapping layer, so a one-element array where a scalar belongs would be
-  # refused at run time. Asset lists stay arrays -- lists are never unboxed.
-  jsonData <- jsonlite::toJSON(list(plugins = plugins), pretty = TRUE, auto_unbox = TRUE)
-  write(jsonData, filename, append = FALSE)
-
-  return(jsonData)
+  .qcebWriteSettings(list(plugins = plugins), filename, fileKind = "localPluginManifest",
+                     fn = "savePluginManifestLocal")
 }
