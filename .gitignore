@@ -15,3 +15,6 @@
 
 # Derived documentation (rendered from BUILDER_REFERENCE.md; never committed)
 BUILDER_REFERENCE.pdf
+
+# testthat writes this when a run has failures and deletes it after a clean run
+tests/testthat/testthat-problems.rds
