@@ -25,7 +25,7 @@
                      unplacedPages = "unplacedPages.json",
                      stimSetList = "the stimulus-set list")
 
-#the value written for a key that is present but not set, by file and key pattern
+#the value written for a key present but not set, by file and pattern
 .qcebNotSetWritten <- list(stimulus = c("*.frame.*.choices" = "NO_KEYS"))
 
 #keys the engine shows whole, so several values are written and never stopped
@@ -106,14 +106,13 @@
   paste0(paste(shown, collapse = ", "), if (length(v) > 10) ", ..." else "")
 }
 
-#stop for a one-value setting given several values, named by the call that set it
+#stop for a one-value setting given several values
 .qcebStopSeveral <- function(fn, what, v) {
   stop(sprintf("%s: %s is a setting that takes one value, but it was given %d: %s.",
                fn, what, length(v), .qcebShowValues(v)), call. = FALSE)
 }
 
-#stop when an argument for a one-value setting holds several values
-#args is a named list of values, or the names of the caller's arguments
+#stop when a one-value argument, given by name or value, holds several values
 .qcebOneValueArgs <- function(fn, args, env = parent.frame()) {
   if (is.character(args)) {
     given <- args[!vapply(args, function(a) eval(call("missing", as.name(a)), env), logical(1))]

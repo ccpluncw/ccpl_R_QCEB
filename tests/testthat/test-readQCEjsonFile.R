@@ -48,7 +48,8 @@ test_that("a deliberately unboxed value stays unboxed", {
   txt <- paste(readLines(f, warn = FALSE), collapse = "")
   expect_true(grepl('"choices":\\s*"NO_KEYS"', txt))     # still bare
   expect_false(grepl('"choices":\\s*\\["NO_KEYS"\\]', txt))
-  expect_true(grepl('"set":\\s*"setA"', txt))             # one value, bare
+  #one value, bare
+  expect_true(grepl('"set":\\s*"setA"', txt))
 })
 
 test_that("multi-element arrays, nested objects and empties survive", {

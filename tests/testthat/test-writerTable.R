@@ -1,4 +1,4 @@
-#every described key, handed every shape an R value can take, written by the one writer
+#every described key, given every shape an R value can take
 desc <- jsonlite::fromJSON(system.file("settingsDescription.json", package = "QCEB"),
                            simplifyVector = FALSE)
 

@@ -364,7 +364,8 @@ test_that("the manifest finds trial types, outputVariables, feedback keys and pa
     expect_true("selectedValue" %in% out)   # from the mcKeys registry entry
     expect_true("Response" %in% out)        # from the key registry entry
     expect_true("myVar" %in% out)           # outputVariables
-    expect_false("fbKey" %in% out)          # a feedback label is not a data column
+    #a feedback label is not a data column
+    expect_false("fbKey" %in% out)
     expect_true("Birth" %in% out)           # page field's `as` column
     expect_true(grepl("WHITELIST", txt))
 })
