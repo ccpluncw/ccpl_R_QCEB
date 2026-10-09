@@ -1,13 +1,15 @@
 Package: QCEB
 Title: These are functions that build the necessary files for the QCE experiment presenting program
-Version: 0.0.5
+Version: 0.1.0
 Authors@R:
     person(given = "First",
            family = "Last",
            role = c("aut", "cre"),
            email = "first.last@example.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Description: What the package does (one paragraph). QCEB 0.1.0 and above
+    build studies for QCEP engine 10 and above; a study for engine 9.x or
+    earlier is built with QCEB 0.0.5.
 Note: Development of this package was assisted by Claude (Anthropic), an AI
     coding assistant, for code refactoring, documentation, testing, and
     debugging. All scientific decisions, model specifications, and algorithm
