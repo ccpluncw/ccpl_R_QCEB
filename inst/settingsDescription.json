@@ -1,0 +1,2268 @@
+{
+  "about": {
+    "title": "QCEP settings description, engine 10",
+    "purpose": "What every key of every settings file is. The engine reads each settings file through one reader (settingsDoor.js) that uses this description to give every key one form in memory: one value bare, a list always a list, a setting that is not set absent. The launcher, the pre-flight, and later the PHP and QCEB read this same file.",
+    "reading": {
+      "kind": "one | list | group | table | byTrialType. A group with keysNamedBy is a group whose keys someone other than the platform chooses; its entry describes every key. A table is a list of rows; row describes each row. A list describes its items.",
+      "anyOf": "the key takes one of several described forms. An array takes the list or table form when there is one; an object (or an object inside a list of one) takes a group form; anything else takes a one-value form. Of several group forms, the one sharing most keys with the value is taken.",
+      "byTrialType": "the form is set by the frame's trialType; otherTypes covers a trial type not named.",
+      "value": "text, html, number, integer, boolean, oneOf (see oneOf), any, or a name: fileName, columnName, blockName, setName, sessionKey, keyMapName, keyMapLabel, keyName, character, url, email, colour, cssLength, cardRegion, elementId, address, baseName, relativePath, pluginName, trialTypeName, frameName, jsonText.",
+      "optional": "true when the key may be absent. Absent means not set.",
+      "default": "{value, appliedBy}: appliedBy is qceb (written into the file), engine (used when absent), both, or server.",
+      "ref": "names an entry of pieces",
+      "open": "contents belong to a plugin, a stimulus set or the study; passed through untouched",
+      "otherKeys": "what a key not listed is; a key not listed is always passed through untouched",
+      "nullMeans": "the value a JSON null stands for in this key",
+      "data": "a value inside data, not a setting: never cut, converted or reported; read as the file wrote it",
+      "dead": "read or written, never used by the engine",
+      "qcebWrites": "false: QCEB does not write this key for engine 10",
+      "absentMeans": "what the engine does when the key is absent, where that is not a default value",
+      "studyOwnUnwrap": "contents belong to the study. In a file without settingsForm a list of exactly one is read as its item and a longer list is kept whole, at the top level (oneLevel) or at every depth (deep). In a file with settingsForm 2 they are untouched."
+    }
+  },
+  "pieces": {
+    "showIf": {
+      "kind": "group",
+      "anyOf": [
+        {
+          "kind": "group",
+          "keys": {
+            "all": {
+              "kind": "list",
+              "items": {
+                "ref": "showIf"
+              }
+            }
+          }
+        },
+        {
+          "kind": "group",
+          "keys": {
+            "any": {
+              "kind": "list",
+              "items": {
+                "ref": "showIf"
+              }
+            }
+          }
+        },
+        {
+          "kind": "group",
+          "keys": {
+            "stimRef": {
+              "kind": "one",
+              "value": "text"
+            },
+            "operator": {
+              "kind": "one",
+              "value": "oneOf",
+              "oneOf": [
+                "equals",
+                "notEquals",
+                "greaterThan",
+                "lessThan",
+                "greaterThanOrEqual",
+                "lessThanOrEqual",
+                "contains",
+                "wasShown",
+                "wasNotShown"
+              ]
+            },
+            "field": {
+              "kind": "one",
+              "value": "columnName",
+              "optional": true
+            },
+            "value": {
+              "kind": "one",
+              "value": "any",
+              "optional": true
+            }
+          }
+        },
+        {
+          "kind": "group",
+          "keys": {
+            "blockRef": {
+              "kind": "one",
+              "value": "blockName"
+            },
+            "operator": {
+              "kind": "one",
+              "value": "oneOf",
+              "oneOf": [
+                "switchFired",
+                "switchNotFired"
+              ]
+            }
+          }
+        },
+        {
+          "kind": "group",
+          "keys": {
+            "stateRef": {
+              "kind": "one",
+              "value": "text"
+            },
+            "operator": {
+              "kind": "one",
+              "value": "oneOf",
+              "oneOf": [
+                "equals",
+                "notEquals",
+                "greaterThan",
+                "lessThan",
+                "greaterThanOrEqual",
+                "lessThanOrEqual",
+                "contains",
+                "isSet",
+                "isNotSet"
+              ]
+            },
+            "value": {
+              "kind": "one",
+              "value": "any",
+              "optional": true
+            }
+          }
+        },
+        {
+          "kind": "group",
+          "keys": {
+            "formula": {
+              "ref": "formula"
+            }
+          }
+        }
+      ],
+      "note": "told apart by which key is present; QCEB cannot write the formula kind"
+    },
+    "anchor": {
+      "kind": "group",
+      "keys": {
+        "at": {
+          "kind": "one",
+          "value": "oneOf",
+          "oneOf": [
+            "experimentStart",
+            "sessionStart",
+            "sessionEnd",
+            "entry",
+            "exit"
+          ]
+        },
+        "session": {
+          "kind": "one",
+          "value": "sessionKey",
+          "optional": true,
+          "note": "required for entry/exit; absent for experimentStart"
+        },
+        "block": {
+          "kind": "one",
+          "value": "blockName",
+          "optional": true,
+          "note": "required for entry/exit only"
+        },
+        "set": {
+          "kind": "one",
+          "value": "setName",
+          "optional": true
+        }
+      }
+    },
+    "trigger": {
+      "kind": "group",
+      "keys": {
+        "onset": {
+          "kind": "one",
+          "value": "integer",
+          "optional": true
+        },
+        "offset": {
+          "kind": "one",
+          "value": "integer",
+          "optional": true
+        }
+      },
+      "otherKeys": {
+        "kind": "one",
+        "value": "integer",
+        "note": "written by QCEB, never read by the engine"
+      }
+    },
+    "formula": {
+      "kind": "group",
+      "keys": {
+        "fn": {
+          "kind": "one",
+          "value": "oneOf",
+          "oneOf": [
+            "mean",
+            "median",
+            "proportion",
+            "count",
+            "sum",
+            "min",
+            "max",
+            "sd"
+          ]
+        },
+        "column": {
+          "kind": "one",
+          "value": "columnName"
+        },
+        "op": {
+          "kind": "one",
+          "value": "oneOf",
+          "oneOf": [
+            ">=",
+            "<=",
+            ">",
+            "<",
+            "==",
+            "!="
+          ],
+          "optional": true,
+          "note": "gate and showIf only; a card field has none"
+        },
+        "value": {
+          "kind": "one",
+          "value": "number",
+          "optional": true,
+          "note": "gate and showIf only; full precision"
+        },
+        "where": {
+          "kind": "group",
+          "keysNamedBy": "you",
+          "entry": {
+            "anyOf": [
+              {
+                "kind": "one",
+                "value": "any"
+              },
+              {
+                "kind": "group",
+                "keys": {
+                  "op": {
+                    "kind": "one",
+                    "value": "oneOf",
+                    "oneOf": [
+                      ">=",
+                      "<=",
+                      ">",
+                      "<",
+                      "==",
+                      "!="
+                    ]
+                  },
+                  "value": {
+                    "kind": "one",
+                    "value": "any"
+                  }
+                }
+              }
+            ]
+          },
+          "optional": true
+        }
+      }
+    },
+    "switchRule": {
+      "kind": "group",
+      "keys": {
+        "countResponse": {
+          "kind": "one",
+          "value": "keyMapLabel",
+          "optional": true,
+          "note": "exactly one of countResponse, countWhen"
+        },
+        "countWhen": {
+          "kind": "group",
+          "keys": {
+            "field": {
+              "kind": "one",
+              "value": "columnName"
+            },
+            "operator": {
+              "kind": "one",
+              "value": "oneOf",
+              "oneOf": [
+                "equals",
+                "notEquals",
+                "greaterThan",
+                "lessThan",
+                "greaterThanOrEqual",
+                "lessThanOrEqual",
+                "contains"
+              ]
+            },
+            "value": {
+              "kind": "one",
+              "value": "any"
+            }
+          },
+          "optional": true
+        },
+        "threshold": {
+          "kind": "group",
+          "keys": {
+            "values": {
+              "kind": "list",
+              "items": {
+                "kind": "one",
+                "value": "number"
+              },
+              "note": "exactly two for randomIntBetween"
+            },
+            "rule": {
+              "kind": "one",
+              "value": "oneOf",
+              "oneOf": [
+                "fixed",
+                "randomFromList",
+                "randomIntBetween"
+              ],
+              "default": {
+                "value": "fixed",
+                "appliedBy": "qceb"
+              }
+            }
+          }
+        },
+        "switchToSet": {
+          "kind": "one",
+          "value": "setName",
+          "optional": true,
+          "note": "block rule; absent = stop the block"
+        },
+        "watchBlock": {
+          "kind": "one",
+          "value": "blockName",
+          "optional": true,
+          "note": "top-level rule; required there"
+        },
+        "switchToBlock": {
+          "kind": "one",
+          "value": "blockName",
+          "optional": true,
+          "note": "top-level rule; absent = end the session"
+        },
+        "switchInstruction": {
+          "kind": "one",
+          "value": "fileName",
+          "optional": true,
+          "withdrawn": true
+        }
+      }
+    },
+    "cardPosition": {
+      "kind": "group",
+      "keys": {
+        "region": {
+          "kind": "one",
+          "value": "cardRegion",
+          "optional": true,
+          "default": {
+            "value": "top-right",
+            "appliedBy": "engine"
+          }
+        },
+        "top": {
+          "kind": "one",
+          "value": "cssLength",
+          "optional": true
+        },
+        "right": {
+          "kind": "one",
+          "value": "cssLength",
+          "optional": true
+        },
+        "bottom": {
+          "kind": "one",
+          "value": "cssLength",
+          "optional": true
+        },
+        "left": {
+          "kind": "one",
+          "value": "cssLength",
+          "optional": true
+        }
+      },
+      "optional": true
+    }
+  },
+  "files": {
+    "expInfo": {
+      "fileName": "expInfo.json",
+      "root": {
+        "kind": "group",
+        "keysNamedBy": "you",
+        "entry": {
+          "kind": "group",
+          "keys": {
+            "groupName": {
+              "kind": "one",
+              "value": "text",
+              "note": "required by the engine; optional to the server",
+              "default": {
+                "value": "groupName",
+                "appliedBy": "qceb"
+              }
+            },
+            "sessions": {
+              "kind": "group",
+              "keysNamedBy": "you",
+              "entry": {
+                "kind": "group",
+                "keys": {
+                  "dbFile": {
+                    "kind": "one",
+                    "value": "fileName"
+                  },
+                  "tsFile": {
+                    "kind": "one",
+                    "value": "fileName"
+                  },
+                  "stimFile": {
+                    "kind": "one",
+                    "value": "fileName"
+                  },
+                  "sessionOrder": {
+                    "kind": "one",
+                    "value": "integer",
+                    "note": "-1 or 1..N, unique",
+                    "default": {
+                      "value": -1,
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "sessionName": {
+                    "kind": "one",
+                    "value": "text",
+                    "optional": true,
+                    "default": {
+                      "value": "unspecified",
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "plugins": {
+                    "kind": "list",
+                    "items": {
+                      "kind": "one",
+                      "value": "pluginName"
+                    },
+                    "optional": true
+                  }
+                }
+              }
+            },
+            "pages": {
+              "kind": "one",
+              "value": "fileName",
+              "optional": true
+            },
+            "cards": {
+              "kind": "one",
+              "value": "fileName",
+              "optional": true
+            },
+            "nPerBlock": {
+              "kind": "one",
+              "value": "integer",
+              "optional": true,
+              "note": "all groups or none; read by the server only"
+            },
+            "plugins": {
+              "kind": "list",
+              "items": {
+                "kind": "one",
+                "value": "pluginName"
+              },
+              "optional": true,
+              "note": "launcher reads plugins at any depth"
+            }
+          }
+        },
+        "note": "every top-level key is a group"
+      }
+    },
+    "expDBfile": {
+      "fileName": "expDBfile.json",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "settingsForm": {
+            "kind": "one",
+            "value": "oneOf",
+            "oneOf": [
+              2
+            ],
+            "optional": true,
+            "absentMeans": "one value may be written inside a list of one",
+            "note": "2: one value is written bare, a list always as a list, and a setting that is not set is left out"
+          },
+          "expName": {
+            "kind": "one",
+            "value": "text",
+            "optional": true,
+            "default": {
+              "value": "defaultExpName",
+              "appliedBy": "engine"
+            }
+          },
+          "welcomeMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "<p>Welcome to the experiment. Press any key to begin.</p>",
+              "appliedBy": "engine"
+            }
+          },
+          "endOfSessionMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "You have just completed the block. Please press any key to start to the next block",
+              "appliedBy": "engine"
+            }
+          },
+          "endOfExpMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "<p>Thank you for taking part in the experiment.</p>",
+              "appliedBy": "engine"
+            }
+          },
+          "saveMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "<p>Your data is being saved. Please do not close this window. This screen will continue on its own when the save is finished.</p>",
+              "appliedBy": "engine"
+            }
+          },
+          "closeBrowserMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "You may now close this browser window.",
+              "appliedBy": "engine"
+            }
+          },
+          "fullscreenMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "<p>The experiment will switch to full screen mode when you press the button below</p>",
+              "appliedBy": "engine"
+            }
+          },
+          "fullscreenBtn": {
+            "kind": "one",
+            "value": "text",
+            "optional": true,
+            "default": {
+              "value": "Continue",
+              "appliedBy": "engine"
+            }
+          },
+          "preloadMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "<p>Loading the experiment can sometimes take several minutes. Please be patient.</p>",
+              "appliedBy": "engine"
+            }
+          },
+          "exhaustedMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "appliedBy": "engine"
+            }
+          },
+          "saveUnavailableMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "appliedBy": "engine"
+            }
+          },
+          "instructionFile": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "fileName"
+            },
+            "optional": true,
+            "absentMeans": "no pages"
+          },
+          "getDemographicsFile": {
+            "kind": "one",
+            "value": "fileName",
+            "optional": true
+          },
+          "getGenderFile": {
+            "kind": "one",
+            "value": "fileName",
+            "optional": true
+          },
+          "getConsentFile": {
+            "kind": "one",
+            "value": "fileName",
+            "optional": true
+          },
+          "getUserNameFile": {
+            "kind": "one",
+            "value": "fileName",
+            "optional": true,
+            "dead": true,
+            "qcebWrites": false
+          },
+          "completionRedirect": {
+            "kind": "one",
+            "value": "url",
+            "optional": true,
+            "absentMeans": "no redirect"
+          },
+          "saveDataEveryNTrials": {
+            "kind": "one",
+            "value": "integer",
+            "optional": true,
+            "default": {
+              "value": 50,
+              "appliedBy": "both"
+            }
+          },
+          "addQualtricsCode": {
+            "kind": "one",
+            "value": "boolean",
+            "optional": true,
+            "default": {
+              "value": false,
+              "appliedBy": "both"
+            }
+          },
+          "strictGroupAssignment": {
+            "kind": "one",
+            "value": "boolean",
+            "optional": true,
+            "default": {
+              "value": false,
+              "appliedBy": "engine"
+            }
+          },
+          "warnOnLeave": {
+            "kind": "one",
+            "value": "boolean",
+            "optional": true,
+            "default": {
+              "value": true,
+              "appliedBy": "engine"
+            }
+          },
+          "saveCanary": {
+            "kind": "one",
+            "value": "boolean",
+            "optional": true,
+            "default": {
+              "value": true,
+              "appliedBy": "engine"
+            }
+          },
+          "saveTimeoutMs": {
+            "kind": "one",
+            "value": "number",
+            "optional": true,
+            "default": {
+              "value": 20000,
+              "appliedBy": "engine"
+            }
+          },
+          "creditClaimTimeoutMs": {
+            "kind": "one",
+            "value": "number",
+            "optional": true,
+            "default": {
+              "value": 10000,
+              "appliedBy": "engine"
+            }
+          },
+          "maxExperimentMinutes": {
+            "kind": "one",
+            "value": "number",
+            "optional": true
+          },
+          "reservationMinutes": {
+            "kind": "one",
+            "value": "number",
+            "optional": true,
+            "default": {
+              "value": 90,
+              "appliedBy": "server"
+            }
+          },
+          "researcherContact": {
+            "kind": "one",
+            "value": "email",
+            "optional": true
+          },
+          "completionGate": {
+            "kind": "group",
+            "keys": {
+              "formula": {
+                "kind": "table",
+                "row": {
+                  "ref": "formula"
+                },
+                "optional": true,
+                "note": "exactly one of formula, gateFn"
+              },
+              "gateFn": {
+                "kind": "one",
+                "value": "text",
+                "optional": true
+              },
+              "combinator": {
+                "kind": "one",
+                "value": "oneOf",
+                "oneOf": [
+                  "all",
+                  "any"
+                ],
+                "optional": true,
+                "default": {
+                  "value": "all",
+                  "appliedBy": "engine"
+                }
+              },
+              "scoredBy": {
+                "kind": "one",
+                "value": "oneOf",
+                "oneOf": [
+                  "client",
+                  "server"
+                ],
+                "optional": true,
+                "default": {
+                  "value": "client",
+                  "appliedBy": "engine"
+                }
+              },
+              "attemptsAllowed": {
+                "kind": "one",
+                "value": "integer",
+                "optional": true,
+                "default": {
+                  "value": 1,
+                  "appliedBy": "engine and server"
+                }
+              },
+              "retryPrompt": {
+                "kind": "group",
+                "keys": {
+                  "text": {
+                    "kind": "one",
+                    "value": "html"
+                  },
+                  "yesLabel": {
+                    "kind": "one",
+                    "value": "text"
+                  },
+                  "noLabel": {
+                    "kind": "one",
+                    "value": "text"
+                  }
+                },
+                "optional": true,
+                "note": "required when attemptsAllowed > 1"
+              },
+              "creditMsg": {
+                "kind": "one",
+                "value": "html",
+                "optional": true
+              },
+              "noCreditMsg": {
+                "kind": "one",
+                "value": "html",
+                "optional": true,
+                "default": {
+                  "appliedBy": "engine"
+                }
+              },
+              "duplicateMsg": {
+                "kind": "one",
+                "value": "html",
+                "optional": true,
+                "default": {
+                  "appliedBy": "engine"
+                }
+              },
+              "supersededMsg": {
+                "kind": "one",
+                "value": "html",
+                "optional": true,
+                "default": {
+                  "appliedBy": "engine"
+                }
+              },
+              "unscoredMsg": {
+                "kind": "one",
+                "value": "html",
+                "optional": true,
+                "default": {
+                  "appliedBy": "engine"
+                }
+              }
+            },
+            "optional": true
+          },
+          "defaultBackgroundColor": {
+            "kind": "one",
+            "value": "colour",
+            "optional": true,
+            "dead": true,
+            "qcebWrites": false
+          },
+          "restAfterEveryNTrials": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "integer"
+            },
+            "optional": true,
+            "dead": true,
+            "qcebWrites": false
+          },
+          "restMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "dead": true,
+            "qcebWrites": false
+          }
+        }
+      }
+    },
+    "groupSettings": {
+      "fileName": "named by expInfo sessions.<s>.dbFile",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "condName": {
+            "kind": "one",
+            "value": "text",
+            "optional": true,
+            "default": {
+              "value": "defaultCond",
+              "appliedBy": "qceb"
+            },
+            "note": "engine default N/A"
+          },
+          "sessionNumber": {
+            "kind": "one",
+            "value": "text",
+            "optional": true
+          },
+          "keyMap": {
+            "kind": "group",
+            "keysNamedBy": "you",
+            "entry": {
+              "kind": "list",
+              "items": {
+                "kind": "one",
+                "value": "character"
+              }
+            },
+            "optional": true,
+            "note": "labels; a label with one key is still a list",
+            "absentMeans": "no default key map"
+          },
+          "randomizeKeyMap": {
+            "kind": "one",
+            "value": "boolean",
+            "optional": true,
+            "default": {
+              "value": false,
+              "appliedBy": "both"
+            }
+          },
+          "presentKeyMapAfterTrialNumbers": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "integer"
+            },
+            "optional": true,
+            "note": "-1 means never",
+            "absentMeans": "never"
+          },
+          "keyMapInstructionFile": {
+            "kind": "one",
+            "value": "fileName",
+            "optional": true
+          },
+          "keyMaps": {
+            "kind": "group",
+            "keysNamedBy": "you",
+            "entry": {
+              "kind": "group",
+              "keys": {
+                "map": {
+                  "kind": "group",
+                  "keysNamedBy": "you",
+                  "entry": {
+                    "kind": "list",
+                    "items": {
+                      "kind": "one",
+                      "value": "character"
+                    }
+                  }
+                },
+                "randomize": {
+                  "kind": "one",
+                  "value": "boolean",
+                  "optional": true,
+                  "default": {
+                    "value": false,
+                    "appliedBy": "both"
+                  }
+                },
+                "presentAfterTrials": {
+                  "kind": "list",
+                  "items": {
+                    "kind": "one",
+                    "value": "integer"
+                  },
+                  "optional": true
+                },
+                "instructionFile": {
+                  "kind": "one",
+                  "value": "fileName",
+                  "optional": true
+                }
+              }
+            },
+            "optional": true,
+            "reservedNames": [
+              "none"
+            ]
+          },
+          "instructionFile": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "fileName"
+            },
+            "optional": true
+          },
+          "restTrials": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "integer"
+            },
+            "optional": true,
+            "note": "-1 means none",
+            "absentMeans": "never"
+          },
+          "restEveryNMinutes": {
+            "kind": "one",
+            "value": "number",
+            "optional": true
+          },
+          "restMaxTrial": {
+            "kind": "one",
+            "value": "integer",
+            "optional": true
+          },
+          "restMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "<p>Please take a self-timed break. Press any key to resume the experiment.</p>",
+              "appliedBy": "engine"
+            }
+          },
+          "friendlyReminderMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "This is a friendly reminder:<br><br>",
+              "appliedBy": "engine"
+            }
+          },
+          "remindMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "<br>We may present this screen again during the experiment to remind you of the keys.",
+              "appliedBy": "engine"
+            }
+          },
+          "proceedMsg": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "default": {
+              "value": "<br><br>Please hit any key to proceed</center>",
+              "appliedBy": "engine"
+            }
+          },
+          "defaultBackgroundColor": {
+            "kind": "one",
+            "value": "colour",
+            "optional": true,
+            "dead": true,
+            "qcebWrites": false
+          },
+          "speedFeedbackParams": {
+            "kind": "group",
+            "keys": {
+              "showFeedback": {
+                "kind": "one",
+                "value": "boolean",
+                "default": {
+                  "value": true,
+                  "appliedBy": "qceb"
+                }
+              },
+              "speedThresholdUp": {
+                "kind": "one",
+                "value": "boolean",
+                "default": {
+                  "value": true,
+                  "appliedBy": "qceb"
+                }
+              },
+              "frameName": {
+                "kind": "one",
+                "value": "frameName",
+                "default": {
+                  "value": "test",
+                  "appliedBy": "qceb"
+                }
+              },
+              "thresholdWindowSize": {
+                "kind": "one",
+                "value": "integer",
+                "default": {
+                  "value": 20,
+                  "appliedBy": "qceb"
+                }
+              },
+              "thresholdArrayPosition": {
+                "kind": "one",
+                "value": "integer",
+                "default": {
+                  "value": 17,
+                  "appliedBy": "qceb"
+                }
+              },
+              "currentRTWindowSize": {
+                "kind": "one",
+                "value": "integer",
+                "default": {
+                  "value": 1,
+                  "appliedBy": "qceb"
+                }
+              },
+              "thresholdBoundary": {
+                "kind": "one",
+                "value": "number",
+                "default": {
+                  "value": "250 or 40000",
+                  "appliedBy": "qceb"
+                }
+              },
+              "initialWindowRtThreshold": {
+                "kind": "one",
+                "value": "number",
+                "default": {
+                  "value": "999999 or -1",
+                  "appliedBy": "qceb"
+                }
+              },
+              "initialWindowMessageDisplay": {
+                "kind": "one",
+                "value": "html",
+                "default": {
+                  "value": "&nbsp",
+                  "appliedBy": "qceb"
+                }
+              },
+              "initialWindowMessageOutput": {
+                "kind": "one",
+                "value": "text",
+                "default": {
+                  "value": "initial",
+                  "appliedBy": "qceb"
+                }
+              },
+              "initialStimulusDuration": {
+                "kind": "one",
+                "value": "number",
+                "default": {
+                  "value": 1,
+                  "appliedBy": "qceb"
+                }
+              },
+              "initialPostTrialGap": {
+                "kind": "one",
+                "value": "number",
+                "default": {
+                  "value": 1,
+                  "appliedBy": "qceb"
+                }
+              },
+              "aboveThresholdMessageDisplay": {
+                "kind": "one",
+                "value": "html",
+                "default": {
+                  "value": "Too Slow or &nbsp",
+                  "appliedBy": "qceb"
+                }
+              },
+              "aboveThresholdMessageOutput": {
+                "kind": "one",
+                "value": "text",
+                "default": {
+                  "value": "above",
+                  "appliedBy": "qceb"
+                }
+              },
+              "aboveStimulusDuration": {
+                "kind": "one",
+                "value": "number",
+                "default": {
+                  "value": "500 or 1",
+                  "appliedBy": "qceb"
+                }
+              },
+              "abovePostTrialGap": {
+                "kind": "one",
+                "value": "number",
+                "default": {
+                  "value": "500 or 1",
+                  "appliedBy": "qceb"
+                }
+              },
+              "belowThresholdMessageDisplay": {
+                "kind": "one",
+                "value": "html",
+                "default": {
+                  "value": "&nbsp or Too Fast",
+                  "appliedBy": "qceb"
+                }
+              },
+              "belowThresholdMessageOutput": {
+                "kind": "one",
+                "value": "text",
+                "default": {
+                  "value": "below",
+                  "appliedBy": "qceb"
+                }
+              },
+              "belowStimulusDuration": {
+                "kind": "one",
+                "value": "number",
+                "default": {
+                  "value": "1 or 500",
+                  "appliedBy": "qceb"
+                }
+              },
+              "belowPostTrialGap": {
+                "kind": "one",
+                "value": "number",
+                "default": {
+                  "value": "1 or 500",
+                  "appliedBy": "qceb"
+                }
+              }
+            },
+            "optional": true
+          },
+          "triggers": {
+            "kind": "group",
+            "keys": {
+              "enabled": {
+                "kind": "one",
+                "value": "boolean"
+              },
+              "relayPort": {
+                "kind": "one",
+                "value": "integer",
+                "optional": true,
+                "default": {
+                  "value": 5678,
+                  "appliedBy": "both"
+                }
+              }
+            },
+            "optional": true
+          },
+          "customHooksFile": {
+            "kind": "one",
+            "value": "fileName",
+            "optional": true
+          },
+          "customHooksStateKeys": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "text"
+            },
+            "optional": true
+          },
+          "customHooksColumns": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "columnName"
+            },
+            "optional": true,
+            "note": "read by QCEB only"
+          }
+        },
+        "otherKeys": {
+          "note": "a study's own setting, handed whole to hooks as ctx.dbConfig; passed through untouched in both forms"
+        }
+      }
+    },
+    "trialStructure": {
+      "fileName": "named by expInfo sessions.<s>.tsFile",
+      "root": {
+        "kind": "group",
+        "keysNamedBy": "you",
+        "entry": {
+          "kind": "group",
+          "keys": {
+            "blockNumber": {
+              "kind": "one",
+              "value": "integer",
+              "note": "-1 or 1..N",
+              "default": {
+                "value": -1,
+                "appliedBy": "qceb"
+              }
+            },
+            "blockName": {
+              "kind": "one",
+              "value": "text",
+              "optional": true,
+              "default": {
+                "value": "blockName",
+                "appliedBy": "qceb"
+              },
+              "note": "unique; falls back to the key"
+            },
+            "blockIterator": {
+              "kind": "group",
+              "keys": {
+                "N": {
+                  "kind": "one",
+                  "value": "integer",
+                  "default": {
+                    "value": 1,
+                    "appliedBy": "qceb"
+                  }
+                },
+                "randomizeSetOrder": {
+                  "kind": "one",
+                  "value": "oneOf",
+                  "oneOf": [
+                    "fixed",
+                    "randomFirst",
+                    "randomAll"
+                  ],
+                  "default": {
+                    "value": "randomAll",
+                    "appliedBy": "qceb"
+                  }
+                },
+                "randomizeTrialInSetOrder": {
+                  "kind": "one",
+                  "value": "boolean",
+                  "default": {
+                    "value": true,
+                    "appliedBy": "qceb"
+                  }
+                },
+                "randomizeAllTrials": {
+                  "kind": "one",
+                  "value": "boolean",
+                  "default": {
+                    "value": false,
+                    "appliedBy": "qceb"
+                  }
+                }
+              }
+            },
+            "setInfo": {
+              "kind": "group",
+              "keysNamedBy": "you",
+              "entry": {
+                "kind": "group",
+                "keys": {
+                  "N": {
+                    "kind": "one",
+                    "value": "integer",
+                    "default": {
+                      "value": 1,
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "selection": {
+                    "kind": "one",
+                    "value": "oneOf",
+                    "oneOf": [
+                      "fixed",
+                      "randomWithoutReplacement",
+                      "randomWithReplacement"
+                    ],
+                    "default": {
+                      "value": "randomWithoutReplacement",
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "showIf": {
+                    "ref": "showIf",
+                    "optional": true
+                  },
+                  "trigger": {
+                    "ref": "trigger",
+                    "optional": true
+                  },
+                  "entryInstruction": {
+                    "kind": "list",
+                    "items": {
+                      "kind": "one",
+                      "value": "fileName"
+                    },
+                    "optional": true
+                  },
+                  "excludePreviouslyPresented": {
+                    "kind": "one",
+                    "value": "boolean",
+                    "optional": true,
+                    "default": {
+                      "value": false,
+                      "appliedBy": "engine"
+                    }
+                  },
+                  "keyMapName": {
+                    "kind": "one",
+                    "value": "text",
+                    "optional": true,
+                    "forbidden": true,
+                    "note": "read only to refuse"
+                  }
+                }
+              },
+              "note": "not empty"
+            },
+            "keyMapName": {
+              "kind": "one",
+              "value": "keyMapName",
+              "optional": true,
+              "nullMeans": "none",
+              "absentMeans": "the session's keyMap",
+              "note": "a name from the group settings keyMaps, or \"none\" for no key map (legal only on a block without key-response frames)"
+            },
+            "showKeyMapInstruction": {
+              "kind": "one",
+              "value": "oneOf",
+              "oneOf": [
+                "auto",
+                "always",
+                "never"
+              ],
+              "optional": true,
+              "default": {
+                "value": "auto",
+                "appliedBy": "engine"
+              },
+              "note": "true/false accepted as always/never"
+            },
+            "entryInstruction": {
+              "kind": "list",
+              "items": {
+                "kind": "one",
+                "value": "fileName"
+              },
+              "optional": true
+            },
+            "excludePreviouslyPresented": {
+              "kind": "one",
+              "value": "boolean",
+              "optional": true,
+              "default": {
+                "value": false,
+                "appliedBy": "engine"
+              }
+            },
+            "showIf": {
+              "ref": "showIf",
+              "optional": true
+            },
+            "trigger": {
+              "ref": "trigger",
+              "optional": true
+            },
+            "switchRules": {
+              "kind": "table",
+              "row": {
+                "ref": "switchRule"
+              },
+              "optional": true
+            }
+          }
+        },
+        "reservedKeys": {
+          "switchRules": {
+            "kind": "table",
+            "row": {
+              "ref": "switchRule"
+            },
+            "optional": true
+          }
+        }
+      }
+    },
+    "stimulus": {
+      "fileName": "named by expInfo sessions.<s>.stimFile",
+      "root": {
+        "kind": "group",
+        "keysNamedBy": "you",
+        "entry": {
+          "kind": "group",
+          "keys": {
+            "set": {
+              "kind": "one",
+              "value": "setName",
+              "note": "a scenario is in one set; a list is read as its first entry, with a warning"
+            },
+            "frame": {
+              "kind": "group",
+              "keysNamedBy": "you",
+              "entry": {
+                "kind": "group",
+                "keys": {
+                  "trialType": {
+                    "kind": "one",
+                    "value": "trialTypeName",
+                    "default": {
+                      "value": "key",
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "frameName": {
+                    "kind": "one",
+                    "value": "text",
+                    "default": {
+                      "value": "frameN",
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "stimulus": {
+                    "kind": "byTrialType",
+                    "optional": true,
+                    "byTrialType": {
+                      "key": {
+                        "kind": "one",
+                        "value": "html"
+                      },
+                      "textbox": {
+                        "kind": "one",
+                        "value": "html"
+                      },
+                      "survey": {
+                        "anyOf": [
+                          {
+                            "kind": "one",
+                            "value": "jsonText",
+                            "note": "a SurveyJS model as JSON text"
+                          },
+                          {
+                            "kind": "group",
+                            "keysNamedBy": "plugin",
+                            "open": true,
+                            "note": "a SurveyJS model as an object",
+                            "studyOwnUnwrap": "deep"
+                          }
+                        ]
+                      },
+                      "mcKeys": {
+                        "anyOf": [
+                          {
+                            "kind": "one",
+                            "value": "jsonText"
+                          },
+                          {
+                            "kind": "group",
+                            "keys": {
+                              "stem": {
+                                "kind": "one",
+                                "value": "html",
+                                "optional": true
+                              },
+                              "choices": {
+                                "kind": "table",
+                                "row": {
+                                  "kind": "group",
+                                  "keys": {
+                                    "value": {
+                                      "kind": "one",
+                                      "value": "any"
+                                    },
+                                    "text": {
+                                      "kind": "one",
+                                      "value": "html"
+                                    }
+                                  }
+                                }
+                              },
+                              "correctValue": {
+                                "kind": "one",
+                                "value": "any",
+                                "optional": true,
+                                "note": "required unless scoredBy server"
+                              },
+                              "keys": {
+                                "kind": "list",
+                                "items": {
+                                  "kind": "one",
+                                  "value": "character"
+                                },
+                                "optional": true
+                              },
+                              "labels": {
+                                "kind": "list",
+                                "items": {
+                                  "kind": "one",
+                                  "value": "text"
+                                },
+                                "optional": true
+                              },
+                              "shuffle": {
+                                "kind": "one",
+                                "value": "boolean",
+                                "optional": true,
+                                "default": {
+                                  "value": true,
+                                  "appliedBy": "engine"
+                                }
+                              },
+                              "qid": {
+                                "kind": "one",
+                                "value": "text",
+                                "optional": true
+                              }
+                            },
+                            "otherKeys": {
+                              "studyOwnUnwrap": "deep"
+                            }
+                          }
+                        ]
+                      },
+                      "numberline": {
+                        "kind": "group",
+                        "keysNamedBy": "plugin",
+                        "open": true
+                      },
+                      "angleline": {
+                        "kind": "group",
+                        "keysNamedBy": "plugin",
+                        "open": true
+                      }
+                    },
+                    "otherTypes": {
+                      "open": true,
+                      "note": "whatever the type's stimulusTransform takes"
+                    },
+                    "absentMeans": "nothing shown"
+                  },
+                  "stimulus_duration": {
+                    "kind": "one",
+                    "value": "number",
+                    "optional": true,
+                    "absentMeans": "visible until a response"
+                  },
+                  "post_trial_gap": {
+                    "kind": "one",
+                    "value": "number"
+                  },
+                  "background": {
+                    "kind": "one",
+                    "value": "colour",
+                    "default": {
+                      "value": "#000000",
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "choices": {
+                    "anyOf": [
+                      {
+                        "kind": "list",
+                        "items": {
+                          "kind": "one",
+                          "value": "keyName"
+                        }
+                      },
+                      {
+                        "kind": "one",
+                        "value": "oneOf",
+                        "oneOf": [
+                          "ALL_KEYS",
+                          "NO_KEYS"
+                        ]
+                      }
+                    ],
+                    "optional": true,
+                    "default": {
+                      "value": "ALL_KEYS",
+                      "appliedBy": "qceb"
+                    },
+                    "absentMeans": "no key response",
+                    "note": "a list of keys (a list of one is still a list), or one of the words ALL_KEYS, NO_KEYS written bare"
+                  },
+                  "response_ends_trial": {
+                    "kind": "one",
+                    "value": "boolean",
+                    "optional": true,
+                    "default": {
+                      "value": true,
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "trial_duration": {
+                    "anyOf": [
+                      {
+                        "kind": "one",
+                        "value": "number"
+                      },
+                      {
+                        "kind": "one",
+                        "value": "oneOf",
+                        "oneOf": [
+                          "NO_LIMIT"
+                        ]
+                      }
+                    ],
+                    "optional": true,
+                    "absentMeans": "the stimulus_duration"
+                  },
+                  "cursorVisible": {
+                    "kind": "one",
+                    "value": "boolean",
+                    "optional": true
+                  },
+                  "output": {
+                    "kind": "one",
+                    "value": "boolean",
+                    "optional": true,
+                    "default": {
+                      "value": true,
+                      "appliedBy": "qceb"
+                    }
+                  },
+                  "pluginParams": {
+                    "kind": "group",
+                    "keysNamedBy": "plugin",
+                    "optional": true,
+                    "keys": {
+                      "kind": {
+                        "kind": "one",
+                        "value": "oneOf",
+                        "oneOf": [
+                          "string",
+                          "number",
+                          "other"
+                        ],
+                        "optional": true,
+                        "default": {
+                          "value": "string",
+                          "appliedBy": "qceb"
+                        },
+                        "note": "textbox only"
+                      }
+                    },
+                    "note": "the plugin's own parameters, spread onto the trial",
+                    "studyOwnUnwrap": "oneLevel"
+                  },
+                  "trigger": {
+                    "ref": "trigger",
+                    "optional": true
+                  }
+                }
+              }
+            },
+            "outputVariables": {
+              "kind": "group",
+              "keysNamedBy": "you",
+              "optional": true,
+              "open": true,
+              "entry": {
+                "anyOf": [
+                  {
+                    "kind": "one",
+                    "value": "text"
+                  },
+                  {
+                    "kind": "one",
+                    "value": "number"
+                  }
+                ],
+                "data": true
+              },
+              "note": "data, not settings: passed through whole, as written, in both forms; each column holds one value, and a missing value is null in a file with settingsForm 2"
+            },
+            "feedback": {
+              "kind": "group",
+              "keys": {
+                "feedback_key": {
+                  "kind": "group",
+                  "keysNamedBy": "you",
+                  "entry": {
+                    "kind": "group",
+                    "keys": {
+                      "displayText": {
+                        "kind": "one",
+                        "value": "html",
+                        "optional": true
+                      },
+                      "outputText": {
+                        "kind": "one",
+                        "value": "text",
+                        "optional": true,
+                        "default": {
+                          "value": "the label",
+                          "appliedBy": "qceb"
+                        }
+                      }
+                    }
+                  }
+                },
+                "showFeedback": {
+                  "kind": "one",
+                  "value": "boolean",
+                  "optional": true,
+                  "default": {
+                    "value": false,
+                    "appliedBy": "qceb"
+                  }
+                },
+                "stimulus_duration": {
+                  "kind": "one",
+                  "value": "number",
+                  "optional": true,
+                  "default": {
+                    "value": 500,
+                    "appliedBy": "qceb"
+                  }
+                },
+                "post_trial_gap": {
+                  "kind": "one",
+                  "value": "number",
+                  "optional": true,
+                  "default": {
+                    "value": 500,
+                    "appliedBy": "qceb"
+                  }
+                }
+              },
+              "optional": true
+            },
+            "stimRef": {
+              "kind": "one",
+              "value": "text",
+              "optional": true
+            },
+            "showIf": {
+              "ref": "showIf",
+              "optional": true
+            },
+            "trigger": {
+              "ref": "trigger",
+              "optional": true
+            }
+          },
+          "otherKeys": {
+            "note": "a study's own scenario key, handed to hooks in ctx.scenarios; passed through untouched in both forms"
+          }
+        },
+        "note": "passed whole to hooks as ctx.scenarios"
+      }
+    },
+    "preload": {
+      "fileName": "preloadFile.json",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "images": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "address"
+            },
+            "optional": true,
+            "absentMeans": "nothing to preload"
+          },
+          "video": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "address"
+            },
+            "optional": true,
+            "absentMeans": "nothing to preload"
+          },
+          "audio": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "address"
+            },
+            "optional": true,
+            "absentMeans": "nothing to preload"
+          }
+        }
+      }
+    },
+    "pages": {
+      "fileName": "named by expInfo <group>.pages",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "placements": {
+            "kind": "table",
+            "row": {
+              "kind": "group",
+              "keys": {
+                "at": {
+                  "kind": "one",
+                  "value": "oneOf",
+                  "oneOf": [
+                    "experimentStart",
+                    "sessionStart",
+                    "sessionEnd",
+                    "entry",
+                    "exit"
+                  ]
+                },
+                "session": {
+                  "kind": "one",
+                  "value": "sessionKey",
+                  "optional": true
+                },
+                "block": {
+                  "kind": "one",
+                  "value": "blockName",
+                  "optional": true
+                },
+                "set": {
+                  "kind": "one",
+                  "value": "setName",
+                  "optional": true
+                },
+                "file": {
+                  "kind": "one",
+                  "value": "baseName"
+                },
+                "playOnce": {
+                  "kind": "one",
+                  "value": "boolean",
+                  "optional": true,
+                  "default": {
+                    "value": false,
+                    "appliedBy": "both"
+                  }
+                }
+              }
+            },
+            "note": "anchor fields sit flat in each row"
+          }
+        }
+      }
+    },
+    "pageSidecar": {
+      "fileName": "<page>.page.json",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "contBtn": {
+            "kind": "one",
+            "value": "elementId",
+            "optional": true,
+            "default": {
+              "value": "Go",
+              "appliedBy": "engine"
+            }
+          },
+          "dataScope": {
+            "kind": "one",
+            "value": "oneOf",
+            "oneOf": [
+              "global",
+              "row"
+            ],
+            "optional": true,
+            "default": {
+              "value": "global",
+              "appliedBy": "both"
+            }
+          },
+          "fields": {
+            "kind": "table",
+            "row": {
+              "kind": "group",
+              "keys": {
+                "input": {
+                  "kind": "one",
+                  "value": "text"
+                },
+                "type": {
+                  "kind": "one",
+                  "value": "oneOf",
+                  "oneOf": [
+                    "text",
+                    "number",
+                    "hidden",
+                    "radio",
+                    "checkbox",
+                    "select"
+                  ],
+                  "optional": true,
+                  "default": {
+                    "value": "text",
+                    "appliedBy": "both"
+                  }
+                },
+                "as": {
+                  "kind": "one",
+                  "value": "columnName",
+                  "optional": true
+                },
+                "required": {
+                  "kind": "one",
+                  "value": "boolean",
+                  "optional": true,
+                  "default": {
+                    "value": false,
+                    "appliedBy": "both"
+                  }
+                },
+                "emptyValue": {
+                  "kind": "one",
+                  "value": "any",
+                  "optional": true
+                },
+                "requiredMessage": {
+                  "kind": "one",
+                  "value": "text",
+                  "optional": true
+                }
+              }
+            },
+            "optional": true
+          }
+        }
+      }
+    },
+    "cards": {
+      "fileName": "named by expInfo <group>.cards",
+      "root": {
+        "kind": "table",
+        "row": {
+          "kind": "group",
+          "keys": {
+            "card": {
+              "kind": "one",
+              "value": "baseName"
+            },
+            "mount": {
+              "ref": "anchor",
+              "optional": true,
+              "default": {
+                "value": {
+                  "at": "sessionStart"
+                },
+                "appliedBy": "qceb"
+              }
+            },
+            "unmount": {
+              "ref": "anchor",
+              "optional": true,
+              "default": {
+                "value": {
+                  "at": "sessionEnd"
+                },
+                "appliedBy": "qceb"
+              }
+            },
+            "position": {
+              "ref": "cardPosition",
+              "optional": true
+            }
+          }
+        }
+      }
+    },
+    "cardSidecar": {
+      "fileName": "<card>.card.json",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "template": {
+            "kind": "one",
+            "value": "html",
+            "optional": true,
+            "note": "one of template, renderFn, widgets"
+          },
+          "renderFn": {
+            "kind": "one",
+            "value": "text",
+            "optional": true
+          },
+          "refreshMs": {
+            "kind": "one",
+            "value": "number",
+            "optional": true
+          },
+          "position": {
+            "kind": "group",
+            "keys": {
+              "region": {
+                "kind": "one",
+                "value": "cardRegion",
+                "optional": true,
+                "default": {
+                  "value": "top-right",
+                  "appliedBy": "engine"
+                }
+              },
+              "top": {
+                "kind": "one",
+                "value": "cssLength",
+                "optional": true
+              },
+              "right": {
+                "kind": "one",
+                "value": "cssLength",
+                "optional": true
+              },
+              "bottom": {
+                "kind": "one",
+                "value": "cssLength",
+                "optional": true
+              },
+              "left": {
+                "kind": "one",
+                "value": "cssLength",
+                "optional": true
+              }
+            },
+            "optional": true
+          },
+          "widgets": {
+            "kind": "table",
+            "row": {
+              "kind": "group",
+              "keys": {
+                "type": {
+                  "kind": "one",
+                  "value": "text"
+                },
+                "bind": {
+                  "kind": "one",
+                  "value": "text"
+                },
+                "label": {
+                  "kind": "one",
+                  "value": "text",
+                  "optional": true
+                }
+              }
+            },
+            "optional": true
+          },
+          "fields": {
+            "kind": "group",
+            "keysNamedBy": "you",
+            "entry": {
+              "kind": "group",
+              "keys": {
+                "formula": {
+                  "ref": "formula",
+                  "optional": true,
+                  "note": "exactly one of formula, bind; no op or value"
+                },
+                "bind": {
+                  "kind": "one",
+                  "value": "text",
+                  "optional": true
+                },
+                "digits": {
+                  "kind": "one",
+                  "value": "integer",
+                  "optional": true
+                },
+                "emptyValue": {
+                  "kind": "one",
+                  "value": "any",
+                  "optional": true
+                }
+              }
+            },
+            "optional": true
+          }
+        }
+      }
+    },
+    "localPluginManifest": {
+      "fileName": "pluginManifest.local.json",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "plugins": {
+            "kind": "group",
+            "keysNamedBy": "you",
+            "entry": {
+              "kind": "group",
+              "keys": {
+                "register": {
+                  "kind": "one",
+                  "value": "relativePath"
+                },
+                "assets": {
+                  "kind": "table",
+                  "row": {
+                    "kind": "group",
+                    "keys": {
+                      "type": {
+                        "kind": "one",
+                        "value": "oneOf",
+                        "oneOf": [
+                          "script",
+                          "css"
+                        ]
+                      },
+                      "src": {
+                        "kind": "one",
+                        "value": "relativePath",
+                        "optional": true
+                      },
+                      "href": {
+                        "kind": "one",
+                        "value": "relativePath",
+                        "optional": true
+                      }
+                    }
+                  },
+                  "optional": true
+                },
+                "description": {
+                  "kind": "one",
+                  "value": "text",
+                  "optional": true,
+                  "unread": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "unplacedPages": {
+      "fileName": "unplacedPages.json",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "pages": {
+            "kind": "list",
+            "items": {
+              "kind": "one",
+              "value": "baseName"
+            }
+          }
+        }
+      }
+    },
+    "stimSetList": {
+      "fileName": "<name>.json (saveQCEstimSetList)",
+      "root": {
+        "kind": "group",
+        "keys": {
+          "stimSetList": {
+            "kind": "group",
+            "keys": {
+              "set": {
+                "kind": "one",
+                "value": "text"
+              },
+              "version": {
+                "kind": "one",
+                "value": "text"
+              },
+              "kind": {
+                "kind": "one",
+                "value": "oneOf",
+                "oneOf": [
+                  "files",
+                  "text"
+                ]
+              }
+            }
+          },
+          "items": {
+            "kind": "table",
+            "row": {
+              "kind": "group",
+              "keys": {
+                "id": {
+                  "kind": "one",
+                  "value": "text"
+                },
+                "text": {
+                  "kind": "one",
+                  "value": "text",
+                  "optional": true
+                },
+                "chars": {
+                  "kind": "one",
+                  "value": "integer",
+                  "optional": true
+                },
+                "html": {
+                  "kind": "one",
+                  "value": "html",
+                  "optional": true
+                },
+                "attrs": {
+                  "kind": "group",
+                  "keysNamedBy": "stimulusSet",
+                  "open": true,
+                  "optional": true,
+                  "note": "a missing attribute is null"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
