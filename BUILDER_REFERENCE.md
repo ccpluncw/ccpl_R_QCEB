@@ -2584,7 +2584,9 @@ cat("Build complete: ", OUT_DIR, "\n")
 ```
 
 After the build, validate with the QCEP preflight tool before deploying
-(see the engine specification for its rule inventory):
+(see the engine specification for its rule inventory). It checks with the
+engine the study's launcher runs; when there is no launcher yet, name the
+engine with `--engine <QCEP>/codebase/customScripts/v10`:
 
 ```
 node <QCEP>/tools/qcep_preflight.js prog

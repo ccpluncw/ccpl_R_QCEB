@@ -1335,9 +1335,9 @@ ALL CHECKS PASS — the sessions will start. This is not a browser validation.
 
 The block counts are the most a participant can be dealt: here every block,
 including the two that run only for some participants. The pre-flight checks
-against the engine version you name with `--engine`, and without it uses the
-scripts of the older engine 9.1, so a study whose launcher names 10.0 must say
-`--engine codebase/customScripts/v10`.
+with the engine the study's launcher runs, here 10.0, and says which on its
+`engine by:` line; `--engine` names the engine yourself, which a folder needs
+only when it has no launcher yet.
 
 A pass does not mean the study runs. The pre-flight shows no screen, calls no
 hook and saves nothing, and some of the engine's own checks run only in the
