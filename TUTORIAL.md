@@ -181,7 +181,9 @@ written in the form the engine reads it:
   item: `"instructionFile": ["instructions_shape.html"]`;
 - a setting you did not set is left out of the file, and the engine uses its
   own default;
-- numbers are written as R holds them, at full precision.
+- numbers are written to 15 significant digits (`jsonlite`'s `digits = NA`), so
+  a number you type is written exactly; a long integer that must stay exact,
+  such as an identifier, is given as text.
 
 A setting that takes one value and is handed several stops the build, with a
 message naming the function, the argument and the values. A value of the
