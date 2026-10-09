@@ -47,7 +47,7 @@ test_that("empty stateRef throws", {
 
 test_that("non-string stateRef throws", {
     expect_error(buildQCEstateCondition(c("a", "b"), "isSet"),
-                 "non-empty single string")
+                 "takes one value")
 })
 
 test_that("invalid operator throws and lists valid ops", {

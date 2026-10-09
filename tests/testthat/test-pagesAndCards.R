@@ -30,7 +30,7 @@ test_that("buildQCEpageField rejects a bad requiredMessage and warns when it can
     expect_error(buildQCEpageField("age", required = TRUE, requiredMessage = ""),
                  "non-empty string")
     expect_error(buildQCEpageField("age", required = TRUE, requiredMessage = c("a", "b")),
-                 "non-empty string")
+                 "takes one value")
     # A message on an optional field is dead config, not an error.
     expect_warning(buildQCEpageField("age", required = FALSE, requiredMessage = "hi"),
                    "never be shown")
@@ -38,7 +38,7 @@ test_that("buildQCEpageField rejects a bad requiredMessage and warns when it can
 
 test_that("buildQCEpageField rejects bad input, type, and required", {
     expect_error(buildQCEpageField(""), "non-empty string")
-    expect_error(buildQCEpageField(c("a", "b")), "non-empty string")
+    expect_error(buildQCEpageField(c("a", "b")), "takes one value")
     expect_error(buildQCEpageField("x", type = "slider"), "type option must be one of")
     expect_error(buildQCEpageField("x", required = NA), "TRUE or FALSE")
     expect_error(buildQCEpageField("x", as = ""), "non-empty string")
@@ -320,7 +320,7 @@ test_that("group list carries pages and cards when given", {
 
 test_that("group list validates pages/cards filenames", {
     expect_error(addSessionListToQCEGroupList(NULL, list(a = 1), "g", pages = ""), "pages option")
-    expect_error(addSessionListToQCEGroupList(NULL, list(a = 1), "g", cards = c("a", "b")), "cards option")
+    expect_error(addSessionListToQCEGroupList(NULL, list(a = 1), "g", cards = c("a", "b")), "takes one value")
 })
 
 # --- registry outputColumns --------------------------------------------------
@@ -550,7 +550,7 @@ test_that("unscoped anchors refuse block, set and (for experimentStart) session"
 
 test_that("anchor fields must be single non-NA strings", {
     expect_error(QCEanchor("entry", session = NA_character_, block = "b"), "single non-NA string")
-    expect_error(QCEanchor("entry", session = c("1", "2"), block = "b"), "single non-NA string")
+    expect_error(QCEanchor("entry", session = c("1", "2"), block = "b"), "takes one value")
 })
 
 test_that("the same page file may be placed at several anchors", {

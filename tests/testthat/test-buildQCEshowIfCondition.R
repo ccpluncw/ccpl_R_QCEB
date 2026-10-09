@@ -50,21 +50,21 @@ test_that("value-op without field throws teaching error", {
 test_that("non-string stimRef throws", {
     expect_error(
         buildQCEshowIfCondition(c("a", "b"), "equals", "y", "z"),
-        "stimRef option must be a single string"
+        "takes one value"
     )
 })
 
 test_that("non-string operator throws", {
     expect_error(
         buildQCEshowIfCondition("x", c("equals", "notEquals"), "y", "z"),
-        "operator option must be a single string"
+        "takes one value"
     )
 })
 
 test_that("non-string field throws", {
     expect_error(
         buildQCEshowIfCondition("x", "equals", "y", c("a", "b")),
-        "field option must be a single string"
+        "takes one value"
     )
 })
 

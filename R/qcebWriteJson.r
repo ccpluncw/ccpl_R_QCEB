@@ -102,7 +102,7 @@
 .qcebShowValues <- function(v) {
   v <- if (is.list(v)) vapply(v, function(x) paste(format(unlist(x)), collapse = " "), character(1))
        else .qcebPlain(v)
-  shown <- if (is.character(v)) paste0("\"", utils::head(v, 10), "\"") else format(utils::head(v, 10))
+  shown <- if (is.character(v)) paste0("\"", utils::head(v, 10), "\"") else as.character(utils::head(v, 10))
   paste0(paste(shown, collapse = ", "), if (length(v) > 10) ", ..." else "")
 }
 
@@ -358,7 +358,7 @@
   allHave <- function(keys) {
     length(entries) > 0 && all(vapply(entries, function(e) is.list(e) && any(keys %in% names(e)), logical(1)))
   }
-  if (allHave("frame")) return("stimulus")
+  if (allHave(c("frame", "set"))) return("stimulus")
   if (allHave(c("setInfo", "blockIterator"))) return("trialStructure")
   if (allHave("sessions")) return("expInfo")
   d <- .qcebDescription()

@@ -218,7 +218,7 @@ test_that("multi-element excludePreviouslyPresented throws", {
             NULL, .makeScenariosTwoSets(), "setA", 10,
             excludePreviouslyPresented = c(TRUE, FALSE)
         ),
-        "must be a single boolean"
+        "takes one value"
     )
 })
 

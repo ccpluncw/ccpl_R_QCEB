@@ -82,7 +82,7 @@ test_that("non-string countResponse throws", {
             countResponse = c("Yes", "No"),
             threshold     = makeFixedThreshold()
         ),
-        "countResponse option must be a non-empty single string"
+        "takes one value"
     )
 })
 
@@ -196,7 +196,7 @@ test_that("non-string switchToSet throws", {
             threshold     = makeFixedThreshold(),
             switchToSet   = c("A", "B")
         ),
-        "switchToSet option must be a non-empty single string"
+        "takes one value"
     )
 })
 

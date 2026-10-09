@@ -2,35 +2,23 @@
 #'
 #' Reads a JSON file that \code{saveJsonFile()} wrote and returns it in the same
 #' shape the package's builders produce, so it can be extended and saved again
-#' without changing the structure of anything that was already in it.
-#'
-#' This exists because reading and writing are not symmetric by default.
-#' \code{saveJsonFile()} deliberately writes every scalar as a one-element array,
-#' because that is what the experiment engine's reader expects. A plain
-#' \code{jsonlite::fromJSON(simplifyVector = FALSE)} hands those back as
-#' one-element \emph{lists}, and saving again wraps them a second time:
-#' \code{"set": ["someSet"]} becomes \code{"set": [["someSet"]]}. Every scalar in
-#' the file is affected. Nothing reports it -- the save succeeds, the file is
-#' valid JSON, and the build prints its usual summary -- but a set name nested one
-#' level too deep matches no setInfo entry, so the first symptom is a session that
-#' runs no trials.
-#'
-#' Reading with this function instead makes the round trip lossless:
+#' without changing anything that was already in it:
 #' \code{saveJsonFile(readQCEjsonFile(f), f)} leaves the file unchanged.
 #'
-#' Values the package writes \emph{unboxed} on purpose -- a bare
-#' \code{"choices": "NO_KEYS"} rather than \code{["NO_KEYS"]} -- are read back
-#' still unboxed, so re-saving does not turn a scalar the engine expects into a
-#' one-element array. That distinction is only visible before the JSON is
-#' simplified, which is why this reads the file unsimplified and restores the
-#' shapes itself.
+#' A bare value is read as a vector of length one. A list of one item is read as
+#' that item wrapped in \code{I()}, which is how a list of one is marked for
+#' \code{saveJsonFile()}: a setting the description lists as one value is still
+#' written bare, and a study's own value, an output variable or a plugin parameter
+#' written as a list of one stays a list of one. A longer list of single values is
+#' read as a vector, a list of objects as a list of lists, and nested lists stay
+#' nested; objects and lists are never collapsed into data frames or matrices.
 #'
-#' Arrays of objects are kept as lists of lists rather than collapsed into data
-#' frames, and equal-length nested arrays are kept as nested lists rather than
-#' collapsed into matrices. Both of those simplifications would lose the config's
-#' structure and are switched off.
+#' A file written by QCEB 0.0.5 or earlier holds every single value as a list of
+#' one. Read it with \code{unboxLists = TRUE}, which reads every list of one as the
+#' value inside it, so that saving it again writes each single value bare.
 #'
 #' @param filename A string giving the path of the JSON file to read.
+#' @param unboxLists A single Boolean. \code{TRUE} reads every list of one as the value inside it, for a file written by QCEB 0.0.5 or earlier. Default \code{FALSE}.
 #'
 #' @return A list in the same shape the package's builders produce.
 #' @keywords QCE json read config round trip
@@ -42,7 +30,7 @@
 #' saveJsonFile(cfg, "myExp_Tsfile.json")
 #' }
 
-readQCEjsonFile <- function (filename) {
+readQCEjsonFile <- function (filename, unboxLists = FALSE) {
 
   if(!isSingleString(filename)) {
     stop("filename option must be a single string giving the path of the file to read.")
@@ -52,63 +40,47 @@ readQCEjsonFile <- function (filename) {
     stop(paste0("readQCEjsonFile cannot find the file '", filename, "'."))
   }
 
-  # Read unsimplified, then restore the shapes by hand. jsonlite's own
-  # simplification cannot do this job: it maps both "x" and ["x"] onto the same
-  # length-1 vector, so the difference between a value written unboxed and a
-  # value written boxed is gone before this function could act on it -- and that
-  # difference is exactly what has to survive the round trip.
+  if(!(is.logical(unboxLists) && length(unboxLists) == 1 && !is.na(unboxLists))) {
+    stop("unboxLists option must be TRUE or FALSE.")
+  }
+
+  #read unsimplified, so a bare value and a list of one stay distinct
   .qceRestoreJsonShape(
     jsonlite::fromJSON(filename,
                        simplifyVector    = FALSE,
                        simplifyDataFrame = FALSE,
-                       simplifyMatrix    = FALSE)
+                       simplifyMatrix    = FALSE),
+    unboxLists
   )
 }
 
-# Turn an unsimplified parse back into the shape the builders produce, so that
-# saving it again reproduces the file it came from.
-#
-# Unsimplified, a JSON array is always an unnamed list and a JSON object is
-# always a named one, so the two are distinguishable -- which is what makes the
-# mapping below possible:
-#
-#   ["a","b"] -> list("a","b")  -> c("a","b")     toJSON writes the array back
-#   ["x"]     -> list("x")      -> "x"            toJSON re-boxes the scalar
-#   "x"       -> "x"            -> unbox("x")     stays a bare scalar
-#
-# Without the last line, a value the package deliberately unboxed would come
-# back as a one-element array, silently changing what the engine is handed.
-.qceRestoreJsonShape <- function (x) {
+#an unsimplified parse in the shape the builders produce
+.qceRestoreJsonShape <- function (x, unboxLists = FALSE) {
 
   if (is.list(x)) {
     if (length(x) == 0L) {
-      return(x)                       # [] and {} both survive as they are
+      return(x)
     }
 
     nms <- names(x)
     if (!is.null(nms) && any(nzchar(nms))) {
-      out <- lapply(x, .qceRestoreJsonShape)   # JSON object -- recurse, keep names
+      out <- lapply(x, .qceRestoreJsonShape, unboxLists = unboxLists)
       names(out) <- nms
       return(out)
     }
 
-    # JSON array. If every element is a single primitive it was an array of
-    # primitives, which is what an atomic vector serialises back to.
+    #a list of single values is a vector
     allScalar <- all(vapply(x, function (e) {
-      !is.list(e) && is.atomic(e) && length(e) == 1L
+      is.null(e) || (!is.list(e) && is.atomic(e) && length(e) == 1L)
     }, logical(1)))
     if (allScalar) {
-      return(unlist(x, use.names = FALSE))
+      v <- unlist(lapply(x, function (e) if (is.null(e)) NA else e), use.names = FALSE)
+      if (length(v) == 1L && !unboxLists) return(I(v))
+      return(v)
     }
-
-    return(lapply(x, .qceRestoreJsonShape))    # array of objects/arrays
+    return(lapply(x, .qceRestoreJsonShape, unboxLists = unboxLists))
   }
 
-  # A primitive that was NOT inside an array: it was written unboxed, and has to
-  # be marked so it is written unboxed again.
-  if (is.atomic(x) && length(x) == 1L) {
-    return(jsonlite::unbox(x))
-  }
-
+  if (is.null(x)) return(NA)
   x
 }

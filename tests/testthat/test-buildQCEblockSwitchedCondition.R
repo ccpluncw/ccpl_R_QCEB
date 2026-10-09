@@ -20,7 +20,7 @@ test_that("empty blockRef throws", {
 
 test_that("non-string blockRef throws", {
     expect_error(buildQCEblockSwitchedCondition(c("a", "b"), "switchFired"),
-                 "non-empty single string")
+                 "takes one value")
 })
 
 test_that("invalid operator throws", {

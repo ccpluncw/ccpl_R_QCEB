@@ -69,7 +69,7 @@ test_that("randomIntBetween with 3 values throws", {
 test_that("non-string rule throws", {
     expect_error(
         buildQCEswitchThreshold(values = 5, rule = c("fixed", "randomFromList")),
-        "rule option must be a single string"
+        "takes one value"
     )
 })
 

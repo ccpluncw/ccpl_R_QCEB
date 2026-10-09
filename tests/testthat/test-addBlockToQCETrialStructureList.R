@@ -258,7 +258,7 @@ test_that("keyMapName: vector throws", {
     inp <- .makeBlockInputs()
     expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
                                                   keyMapName = c("a", "b")),
-                 "non-empty single string")
+                 "takes one value")
 })
 
 test_that("entryInstruction: vector of .html files included on block entry", {
@@ -319,7 +319,7 @@ test_that("showKeyMapInstruction: multi-element vector throws", {
     inp <- .makeBlockInputs()
     expect_error(addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter,
                                                   showKeyMapInstruction = c("auto", "always")),
-                 "single string")
+                 "takes one value")
 })
 
 test_that("showIf accepts blockRef leaf (Phase 3.5 Decision G)", {

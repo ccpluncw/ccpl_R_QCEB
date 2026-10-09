@@ -91,7 +91,7 @@ test_that("empty / non-string watchBlock throws", {
     expect_error(
         buildQCEblockSwitchRule(watchBlock = c("a", "b"), countResponse = "Yes",
                                 threshold = makeFixedThreshold()),
-        "non-empty single string"
+        "takes one value"
     )
 })
 

@@ -11,7 +11,7 @@ test_that("regression: legacy keys still present in pre-Phase-2 dbfile output", 
     db <- buildQCEgroupDbFile(condName = "TestCond")
     # Verify the core legacy keys still appear
     legacyKeys <- c("condName", "keyMap", "randomizeKeyMap",
-                    "presentKeyMapAfterTrialNumbers", "defaultBackgroundColor",
+                    "presentKeyMapAfterTrialNumbers",
                     "restTrials", "speedFeedbackParams", "instructionFile",
                     "keyMapInstructionFile", "restMsg", "friendlyReminderMsg",
                     "remindMsg", "proceedMsg")

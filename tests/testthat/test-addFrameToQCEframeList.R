@@ -276,7 +276,7 @@ test_that("cursorVisible rejects anything that is neither NULL nor a single logi
         stimulus_duration = 1000, post_trial_gap = 0, cursorVisible = cv)
     expect_error(mk("TRUE"), "must be NULL")
     expect_error(mk(1), "must be NULL")
-    expect_error(mk(c(TRUE, FALSE)), "must be NULL")
+    expect_error(mk(c(TRUE, FALSE)), "takes one value")
     expect_error(mk(NA), "must be NULL")
 })
 
@@ -318,7 +318,7 @@ test_that("trial_duration rejects non-positive, non-finite, and unknown strings"
     expect_error(base(-100), "positive number")
     expect_error(base(Inf), "positive number")
     expect_error(base("forever"), "NO_LIMIT")
-    expect_error(base(c(100, 200)), "positive number")
+    expect_error(base(c(100, 200)), "takes one value")
 })
 
 test_that("no-exit guard: NO_LIMIT with NO_KEYS is refused", {

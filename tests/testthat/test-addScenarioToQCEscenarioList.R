@@ -71,7 +71,7 @@ test_that("non-string stimRef throws", {
             NULL, .makeFrames(), NULL, list(out = "x"), "setA",
             stimRef = c("a", "b")
         ),
-        "stimRef option must be a single string"
+        "takes one value"
     )
 })
 

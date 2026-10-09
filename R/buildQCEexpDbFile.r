@@ -47,7 +47,11 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   if (is.list(completionGate)) {
     gateOne <- intersect(names(completionGate), c("gateFn", "combinator", "scoredBy", "attemptsAllowed",
       "creditMsg", "noCreditMsg", "duplicateMsg", "supersededMsg", "unscoredMsg"))
-    .qcebOneValueArgs("buildQCEexpDbFile", structure(completionGate[gateOne], names = paste0("completionGate$", gateOne)))
+    if (length(gateOne) > 0) {
+      gateArgs <- completionGate[gateOne]
+      names(gateArgs) <- paste0("completionGate$", gateOne)
+      .qcebOneValueArgs("buildQCEexpDbFile", gateArgs)
+    }
   }
 
   #the engine does not use these, so they are not written

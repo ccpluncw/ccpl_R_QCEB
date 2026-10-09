@@ -35,7 +35,7 @@ test_that("nPerBlock must be a single positive whole number", {
   expect_error(mk(-1), "nPerBlock option")
   expect_error(mk(1.5), "nPerBlock option")
   expect_error(mk("60"), "nPerBlock option")
-  expect_error(mk(c(1, 2)), "nPerBlock option")
+  expect_error(mk(c(1, 2)), "takes one value")
   expect_error(mk(NA), "nPerBlock option")
   expect_error(mk(NA_real_), "nPerBlock option")
   expect_error(mk(Inf), "nPerBlock option")
@@ -59,12 +59,12 @@ test_that("a whole number stored as a double is accepted", {
                                             nPerBlock = 3L)$`1`$nPerBlock, 3L)
 })
 
-test_that("nPerBlock survives the write as a one-element array", {
-  #the server reads the wrapped form saveJsonFile produces
+test_that("nPerBlock survives the write as one value", {
+  #the server reads one value bare or inside a list of one
   d <- file.path(tempdir(), "npbtest"); dir.create(d, showWarnings = FALSE)
   on.exit(unlink(d, recursive = TRUE), add = TRUE)
   f <- file.path(d, "expInfo.json")
-  g <- addSessionListToQCEGroupList(NULL, list(a = 1), "grp", nPerBlock = 60)
+  g <- addSessionListToQCEGroupList(NULL, addSessionToSessionList(NULL), "grp", nPerBlock = 60)
   saveJsonFile(g, f)
   back <- jsonlite::fromJSON(f, simplifyVector = FALSE)
   expect_equal(length(back[["1"]]$nPerBlock), 1)
@@ -110,7 +110,7 @@ test_that("a three-group ratio round-trips through the written file", {
   f <- file.path(d, "expInfo.json")
   g <- NULL
   for (i in seq_along(c("low", "mid", "high"))) {
-    g <- addSessionListToQCEGroupList(g, list(a = i),
+    g <- addSessionListToQCEGroupList(g, addSessionToSessionList(NULL, sessionOrder = i),
                                       c("low", "mid", "high")[i],
                                       nPerBlock = c(2, 1, 1)[i])
   }

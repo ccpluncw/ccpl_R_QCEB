@@ -86,7 +86,7 @@ test_that("completionGate validation rejects malformed configs", {
   # gateFn not a single string
   expect_error(
     buildQCEexpDbFile(expName = "e1", completionGate = list(gateFn = c("a", "b"))),
-    "single string")
+    "takes one value")
 })
 
 test_that("where ordering ops require a finite numeric bound", {
@@ -119,7 +119,7 @@ test_that("where ordering ops require a finite numeric bound", {
 test_that("maxExperimentMinutes validation rejects non-positive / non-scalar", {
   expect_error(buildQCEexpDbFile(expName = "e1", maxExperimentMinutes = -5), "positive number")
   expect_error(buildQCEexpDbFile(expName = "e1", maxExperimentMinutes = 0), "positive number")
-  expect_error(buildQCEexpDbFile(expName = "e1", maxExperimentMinutes = c(1, 2)), "single positive")
+  expect_error(buildQCEexpDbFile(expName = "e1", maxExperimentMinutes = c(1, 2)), "takes one value")
 })
 
 test_that("run-integrity flags are absent unless supplied", {
@@ -151,11 +151,11 @@ test_that("run-integrity flags reject non-Boolean and non-scalar", {
   expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = "TRUE"), "single Boolean")
   expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = 1), "single Boolean")
   expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = NA), "single Boolean")
-  expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = c(TRUE, FALSE)), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = c(TRUE, FALSE)), "takes one value")
   expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = "yes"), "single Boolean")
   expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = 0), "single Boolean")
   expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = NA), "single Boolean")
-  expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = c(TRUE, TRUE)), "single Boolean")
+  expect_error(buildQCEexpDbFile(expName = "e1", strictGroupAssignment = c(TRUE, TRUE)), "takes one value")
 })
 
 test_that("run-integrity flags survive the JSON round trip as scalars", {
@@ -199,7 +199,7 @@ test_that("attemptsAllowed must be a whole number of 1 or more", {
   expect_error(mk(-1), "whole number")
   expect_error(mk(1.5), "whole number")
   expect_error(mk("2"), "whole number")
-  expect_error(mk(c(2, 3)), "whole number")
+  expect_error(mk(c(2, 3)), "takes one value")
   expect_error(mk(Inf), "whole number")
 })
 
@@ -389,7 +389,7 @@ test_that("reservationMinutes rejects non-positive / non-scalar / unusable", {
   expect_error(mk(0), "positive number")
   expect_error(mk(-5), "positive number")
   expect_error(mk("90"), "positive number")
-  expect_error(mk(c(30, 60)), "positive number")
+  expect_error(mk(c(30, 60)), "takes one value")
   expect_error(mk(NA), "positive number")
   expect_error(mk(NA_real_), "positive number")
   expect_error(mk(Inf), "positive number")
