@@ -172,12 +172,26 @@ of `wwwFiles/`, and the run stops at the loading screen. `TestType` is the type
 the local test run in chapter 12 uses; before you build for a real server, set
 `TYPE_NAME` to the type your study is registered under.
 
-The script writes each configuration file with `saveJsonFile()`. QCEB writes
-every single value as a list of one (`"expName": ["shapeMatch"]`), because that
-is the form the engine reads. Leave the files as QCEB writes them. If a later
-step of a script ever has to read one back, use `readQCEjsonFile()`, which keeps
-that form; a general JSON reader does not, and the file it writes back looks
-right and no longer works.
+The script writes each configuration file with `saveJsonFile()`. Each setting is
+written in the form the engine reads it:
+
+- a setting that takes one value is written bare: `"expName": "shapeMatch"`,
+  `"saveDataEveryNTrials": 20`, `"randomizeKeyMap": false`;
+- a setting that takes a list is written as a list, also when it holds one
+  item: `"instructionFile": ["instructions_shape.html"]`;
+- a setting you did not set is left out of the file, and the engine uses its
+  own default;
+- numbers are written as R holds them, at full precision.
+
+A setting that takes one value and is handed several stops the build, with a
+message naming the function, the argument and the values. A value of the
+study's own (chapter 7) and an output variable are written as you give them:
+one value bare, several as a list. To write a list that holds one item, wrap it
+in `I()`: `I("shape")` is written `["shape"]`.
+
+Leave the files as QCEB writes them. If a later step of a script ever has to
+read one back, use `readQCEjsonFile()`, which returns each value in the form
+QCEB writes it again.
 
 `saveJsonFile()` and `savePreloadFiles()` also return the JSON they wrote. A
 value left at the top level of a script is printed when the script runs, so
@@ -197,6 +211,19 @@ writeLines('<?php require "../../bin/QCEB.10.0.php"; ?>',
 
 The path `../../bin/` is fixed by the server's layout: the engine lives in
 `wwwFiles/bin/`, two folders above the study.
+
+### Which QCEB builds for which engine
+
+QCEB 0.1.0 and above build studies for QCEP engine 10 and above, in the form
+described above, and mark the experiment settings file with `"settingsForm": 2`.
+A study for engine 9.x or earlier is built with QCEB 0.0.5. Its files differ:
+every single value is written inside a list of one (`"expName":
+["shapeMatch"]`), a setting left unset is often written empty (`{}` or `[]`),
+numbers are rounded to four decimals, QCEB writes its own text for each message
+left unset, and a hook reads a value from a configuration file as `x[0]`. A
+setting that takes one value and is handed several stops the build only in QCEB
+0.1.0 and above. Keep 0.0.5 installed where 9.x studies are built, and load
+0.1.0 for engine 10.
 
 ## 3. A trial: frames, the stimulus as HTML, responses and key maps
 
@@ -259,9 +286,12 @@ What the arguments mean:
   means until the participant responds.
 - `post_trial_gap` is a blank pause after the frame, in milliseconds. It has no
   default; you must give it, even as 0.
-- `choices` is the keys that end the frame. `NULL` means no key ends it, so the
-  fixation frame ends on its timer. A frame with neither a timer nor a key would
-  never end, and the engine refuses it.
+- `choices` is the keys that end the frame. `NULL` means no key ends it (QCEB
+  writes `"NO_KEYS"`), so the fixation frame ends on its timer. A frame with
+  neither a timer nor a key would never end, and the engine refuses it. QCEB
+  also has a ready-made fixation, `addFixationToQCEframeList()`: a cross on a
+  timer that no key ends. A fixation that a key press should end is an ordinary
+  frame, as here, with the keys in `choices`.
 - `background` is the colour of the page while the frame is shown. QCEB's
   default is black, so a study on white says so.
 - `output` says whether the frame's row is kept in the data file. The engine
@@ -398,8 +428,8 @@ local({
 ```
 
 The addresses are the same ones the `<img>` tags use. Sounds and videos go in
-`audioFileArray` and `videoFileArray`. Every study writes this file, an empty
-list included.
+`audioFileArray` and `videoFileArray`. Every study writes this file; a kind
+with nothing to preload is left out of it.
 
 The order of events matters here. The engine preloads first. Only then, when
 each block starts, does it shuffle the block's pools and choose the trials this
@@ -627,7 +657,9 @@ for (g in groups) {
 - `judge` is the study's own setting. QCEB has no argument for it, so the script
   adds it to the list. The engine passes the whole settings file to the hooks,
   where chapter 8 reads it. Any value a group needs at run time can be carried
-  this way.
+  this way. It is written as given: `"judge": "shape"`. A list of values is
+  written as a list, and a list that should stay a list with one item is
+  wrapped in `I()`.
 
 The settings files are kept in `dbfiles` for now; chapters 8 and 9 add to them,
 and chapter 11 writes them.
@@ -704,7 +736,10 @@ expDb <- buildQCEexpDbFile(expName = EXP_NAME,
 ```
 
 - `expName` is written to every row as `Exp_Name`.
-- `welcomeMsg` and `endOfExpMsg` are the first and last messages.
+- `welcomeMsg` and `endOfExpMsg` are the first and last messages. A message you
+  leave out is left out of the file, and the engine shows its own sentence. A
+  message given as empty text (`""`) counts as left out; for a blank screen,
+  write a blank, such as `"&nbsp;"` or `"<p></p>"`.
 - `saveDataEveryNTrials` sends the data to the server every 20 trials as well
   as at the end, so a run abandoned midway keeps the trials saved so far.
 - `strictGroupAssignment = TRUE` makes a run refuse to start when the server
@@ -750,7 +785,6 @@ from five pieces so each can be explained.
 ```r
 hookHead <- r"---(
 var QCEPHooks = (function () {
-  function uw(v) { return Array.isArray(v) ? v[0] : v; }
   var SCORED = { practice: true, practiceAgain: true, main: true, extra: true };
 
   function bar(nRight, n) {
@@ -765,9 +799,8 @@ var QCEPHooks = (function () {
 )---"
 ```
 
-`uw()` is needed because QCEB writes every single value as a list of one
-(chapter 2), and values read from the configuration files reach the hooks in
-that form: the group's `judge` arrives as `["shape"]`. `SCORED` names the blocks
+A hook is handed each value as its file wrote it (chapter 2): the group's
+`judge` arrives as `"shape"`, and a list arrives as a list. `SCORED` names the blocks
 whose trials are scored; the engine calls every hook on every trial of every
 block, so each hook first checks which block it is in. `bar()` draws a score bar
 in SVG, for the block feedback below.
@@ -777,8 +810,8 @@ in SVG, for the block feedback below.
 ```r
 hookTrialStart <- r"---(
     onTrialStart: function (info, ctx) {
-      if (!SCORED[uw(info.data.BlockName)]) return {};
-      return { stimulusReplacements: { property: uw(ctx.dbConfig.judge) } };
+      if (!SCORED[info.data.BlockName]) return {};
+      return { stimulusReplacements: { property: ctx.dbConfig.judge } };
     },
 )---"
 ```
@@ -797,9 +830,9 @@ variables.
 ```r
 hookTrialFinish <- r"---(
     onTrialFinish: function (data, ctx) {
-      var block = uw(data.BlockName);
+      var block = data.BlockName;
       if (!SCORED[block]) return {};
-      var truth = uw(data[uw(ctx.dbConfig.judge) + 'Match']);
+      var truth = data[ctx.dbConfig.judge + 'Match'];
       var correct = (data.Key === 'Same') === (truth === 'same');
       var c = ctx.qceState.custom;
       if (!c.tally) c.tally = {};
