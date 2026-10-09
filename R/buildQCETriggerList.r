@@ -35,6 +35,7 @@
 #' custom <- buildQCETriggerList(onset = 10000, offset = 10001, response = 10002)
 
 buildQCETriggerList <- function (onset = NULL, offset = NULL, ...) {
+  .qcebOneValueArgs("buildQCETriggerList", c("onset", "offset"))
   extras <- list(...)
   tmpList <- list()
   if (!is.null(onset))  tmpList$onset  <- as.integer(onset)

@@ -54,6 +54,8 @@ addSurveyFrameToQCEframeList <- function(QCEframeList = NULL, surveyModel, frame
                                          stimulus_duration = NULL, post_trial_gap = 300,
                                          background = "#FFFFFF", cursorVisible = TRUE,
                                          output = TRUE, trigger = NULL) {
+  .qcebOneValueArgs("addSurveyFrameToQCEframeList", c("frameName", "stimulus_duration",
+    "post_trial_gap", "background", "cursorVisible", "output"))
 
   # "survey" must be a registered trialType (it is, by default). This guard
   # keeps the R-side error friendly and consistent with addFrameToQCEframeList.

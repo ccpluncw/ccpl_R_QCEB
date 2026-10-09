@@ -40,6 +40,7 @@
 #'   ),
 #'   contBtn = "startBtn")
 buildQCEpageSidecar <- function(fields = NULL, contBtn = NULL, dataScope = "global") {
+  .qcebOneValueArgs("buildQCEpageSidecar", c("contBtn", "dataScope"))
 
   if (!is.null(contBtn) && (!isSingleString(contBtn) || nchar(contBtn) == 0)) {
     stop("contBtn option must be a single non-empty string, or NULL.")

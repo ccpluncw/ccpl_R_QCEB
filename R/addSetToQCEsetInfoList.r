@@ -34,6 +34,8 @@
 
 
 addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL, setName, numberOfTrialsPerSet = 1, selectionType = "randomWithoutReplacement", trigger = NULL, showIf = NULL, excludePreviouslyPresented = NULL, entryInstruction = NULL) {
+  .qcebOneValueArgs("addSetToQCEsetInfoList", c("numberOfTrialsPerSet", "selectionType",
+    "excludePreviouslyPresented"))
 
   # Hard error with migration guidance if researcher passes the old vector form
   if (missing(setName) || is.null(setName) || length(setName) != 1 || !is.character(setName)) {

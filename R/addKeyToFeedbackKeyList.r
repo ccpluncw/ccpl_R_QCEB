@@ -12,6 +12,7 @@
 #' @examples addKeyToFeedbackKeyList (feedback_key, myKeyMap["yes"], displayText = "<span>You Are Correct!</span>", outputText = "correct")
 
 addKeyToFeedbackKeyList <- function (feedback_key = NULL, QCEkeyMapKey = NULL, displayText = NULL, outputText = NULL) {
+  .qcebOneValueArgs("addKeyToFeedbackKeyList", c("outputText"))
 
   if(is.null(QCEkeyMapKey) | (length(QCEkeyMapKey) > 1)) {
     stop("QCEkeyMapKey option must be a single key entry from a OCEPkeyMap list.")

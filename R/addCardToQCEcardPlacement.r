@@ -43,6 +43,7 @@ addCardToQCEcardPlacement <- function(QCEcardPlacement = NULL, card,
                                       mount = QCEanchor("sessionStart"),
                                       unmount = QCEanchor("sessionEnd"),
                                       position = NULL) {
+  .qcebOneValueArgs("addCardToQCEcardPlacement", c("card"))
 
   if (missing(card) || !isSingleString(card) || nchar(card) == 0) {
     stop("card option must be a single non-empty string: the card's base name with ",

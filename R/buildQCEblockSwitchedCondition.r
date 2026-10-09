@@ -43,6 +43,7 @@
 #' c2 <- buildQCEblockSwitchedCondition("Practice", "switchNotFired")
 
 buildQCEblockSwitchedCondition <- function(blockRef, operator) {
+  .qcebOneValueArgs("buildQCEblockSwitchedCondition", c("blockRef", "operator"))
 
   validOps <- c("switchFired", "switchNotFired")
 

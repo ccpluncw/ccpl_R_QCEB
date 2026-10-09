@@ -47,6 +47,7 @@
 #'   refreshMs = 1000)
 buildQCEcardSidecar <- function(template = NULL, fields = NULL, refreshMs = NULL,
                                 position = NULL, widgets = NULL, renderFn = NULL) {
+  .qcebOneValueArgs("buildQCEcardSidecar", c("template", "refreshMs", "renderFn"))
 
   if (!is.null(template) && (!isSingleString(template) || nchar(template) == 0)) {
     stop("template option must be a single non-empty HTML string, or NULL.")

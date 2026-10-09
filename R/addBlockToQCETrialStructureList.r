@@ -42,6 +42,8 @@
 #'   switchRules = list(rule))
 
 addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEsetInfoList, QCEblockIteratorList, blockNumber = -1, blockName = "blockName", trigger = NULL, showIf = NULL, switchRules = NULL, keyMapName = NULL, entryInstruction = NULL, excludePreviouslyPresented = NULL, showKeyMapInstruction = NULL) {
+  .qcebOneValueArgs("addBlockToQCETrialStructureList", c("blockNumber", "blockName",
+    "keyMapName", "excludePreviouslyPresented", "showKeyMapInstruction"))
 
   if (!is.null(showIf)) {
     validateShowIfShape(showIf, "showIf")

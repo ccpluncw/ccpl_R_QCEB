@@ -50,6 +50,9 @@
 #'   post_trial_gap = 0, choices = c("f", "j"))
 
 addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", frameName = NULL, stimulus = NULL,	stimulus_duration = NULL, post_trial_gap = NULL, response_ends_trial = TRUE, choices = "ALL_KEYS", kind = "string", background = "#000000", cursorVisible = NULL, output = TRUE, trigger = NULL, pluginParams = NULL, trial_duration = NULL) {
+  .qcebOneValueArgs("addFrameToQCEframeList", c("trialType", "frameName", "stimulus_duration",
+    "post_trial_gap", "response_ends_trial", "background", "cursorVisible", "output",
+    "trial_duration"))
 
   # trialType is validated against the QCEB trialType registry (mirrors the
   # engine's trialTypeRegistry.js), NOT a hard-coded list, so custom/third-party

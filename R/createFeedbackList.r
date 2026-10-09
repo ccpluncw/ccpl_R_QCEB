@@ -12,6 +12,8 @@
 #' @examples createFeedbackList (feedback_key, showFeedback = TRUE, stimulus_duration = 500, post_trial_gap = 200)
 
 createFeedbackList <- function (feedback_key = NULL, showFeedback = FALSE, stimulus_duration = 500, post_trial_gap = 500) {
+  .qcebOneValueArgs("createFeedbackList", c("showFeedback", "stimulus_duration",
+    "post_trial_gap"))
 
   if(!isSingleNumeric(stimulus_duration)) {
     stop("stimulus_duration option must be a single integer.")

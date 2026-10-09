@@ -21,6 +21,8 @@
 
 
 addSessionToSessionList <- function (QCEsessionList = NULL, sessionOrder = -1, sessionName = "unspecified", dbFile = "dbfile.txt", tsFile = "tsFile.txt", stimFile = "stimulus.txt", plugins = NULL) {
+  .qcebOneValueArgs("addSessionToSessionList", c("sessionOrder", "sessionName", "dbFile",
+    "tsFile", "stimFile"))
 
   if (!is.null(plugins)) {
     if (!is.character(plugins) || length(plugins) < 1 || any(is.na(plugins)) || any(nchar(plugins) == 0)) {

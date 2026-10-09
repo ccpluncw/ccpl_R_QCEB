@@ -12,6 +12,8 @@
 #' @examples createBlockIteratorList (1,  randomizeTrialInSetOrder = FALSE, randomizeSetOrder = "fixed", randomizeAllTrials = FALSE)
 
 createBlockIteratorList <- function (numberOfIterations = 1, randomizeTrialInSetOrder = TRUE, randomizeSetOrder = "randomAll", randomizeAllTrials = FALSE) {
+  .qcebOneValueArgs("createBlockIteratorList", c("numberOfIterations",
+    "randomizeTrialInSetOrder", "randomizeSetOrder", "randomizeAllTrials"))
 
   validRandomizeSetOrders <- c("fixed", "randomFirst", "randomAll")
 

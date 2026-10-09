@@ -97,6 +97,7 @@
 buildQCEswitchRule <- function(threshold,
                                 countResponse = NULL, countWhen = NULL,
                                 switchToSet = NULL, switchInstruction = NULL) {
+  .qcebOneValueArgs("buildQCEswitchRule", c("countResponse", "switchToSet"))
 
   # XOR validation: exactly one of countResponse or countWhen
   hasResp <- !is.null(countResponse)

@@ -63,6 +63,7 @@
 #' QCEanchor("entry", session = "1", block = "practice")
 #' QCEanchor("exit",  session = "1", block = "practice", set = "warmup")
 QCEanchor <- function(at, session = NULL, block = NULL, set = NULL) {
+  .qcebOneValueArgs("QCEanchor", c("at", "session", "block", "set"))
 
   if (missing(at)) {
     stop("at option must be a single string: ", paste(.qcebAnchorEvents, collapse = ", "), ".")

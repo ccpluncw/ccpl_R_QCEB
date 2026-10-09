@@ -34,6 +34,7 @@
 #' th3 <- buildQCEswitchThreshold(values = c(3, 7), rule = "randomIntBetween")
 
 buildQCEswitchThreshold <- function(values, rule = "fixed") {
+  .qcebOneValueArgs("buildQCEswitchThreshold", c("rule"))
 
   validRules <- c("fixed", "randomFromList", "randomIntBetween")
 

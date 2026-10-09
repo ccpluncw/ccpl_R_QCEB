@@ -58,6 +58,7 @@
 buildQCEkeyMapEntry <- function(map, randomize = FALSE,
                                  presentAfterTrials = NULL,
                                  instructionFile = NULL) {
+  .qcebOneValueArgs("buildQCEkeyMapEntry", c("randomize", "instructionFile"))
 
   # map: required, non-empty named list (the QCEkeyMap shape)
   if (missing(map) || is.null(map) || !is.list(map) || length(map) == 0) {

@@ -28,6 +28,13 @@
 #' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
 
 buildSpeedFeedbackList <- function (showFeedback = TRUE, speedThresholdUp = TRUE, frameName = "test", thresholdWindowSize = 20, thresholdArrayPosition = 17, thresholdBoundary = NULL, currentRTWindowSize = 1, initialWindowRtThreshold = NULL, initialWindowMessageDisplay = "&nbsp", initialWindowMessageOutput = "initial", initialStimulusDuration = 1, initialPostTrialGap = 1, aboveThresholdMessageDisplay = NULL, aboveThresholdMessageOutput = "above", aboveStimulusDuration = NULL, abovePostTrialGap= NULL, belowThresholdMessageDisplay = NULL, belowThresholdMessageOutput = "below", belowStimulusDuration = NULL, belowPostTrialGap = NULL) {
+  .qcebOneValueArgs("buildSpeedFeedbackList", c("showFeedback", "speedThresholdUp", "frameName",
+    "thresholdWindowSize", "thresholdArrayPosition", "thresholdBoundary", "currentRTWindowSize",
+    "initialWindowRtThreshold", "initialWindowMessageDisplay", "initialWindowMessageOutput",
+    "initialStimulusDuration", "initialPostTrialGap", "aboveThresholdMessageDisplay",
+    "aboveThresholdMessageOutput", "aboveStimulusDuration", "abovePostTrialGap",
+    "belowThresholdMessageDisplay", "belowThresholdMessageOutput", "belowStimulusDuration",
+    "belowPostTrialGap"))
 
   if(!is.logical(showFeedback)) {
     stop("showFeedback option must be a boolean (TRUE/FALSE).  Yours, apparently, is not.")

@@ -1,22 +1,22 @@
 #' This  function is used to create a QCEB dbfile for the entire experiment
 #'
-#' Function that create a QCEB dbfile.
+#' Function that create a QCEB dbfile. A message left \code{NULL} (or given as \code{""}) is left out of the file, and the engine shows its own text; for a blank screen write a blank, such as \code{"&nbsp;"}. Each argument that sets one value stops the build when it is given several.
 #' @param expName A string specifying the name of the experiment.  It will be output in a column in the datafile. DEFAULT = "defaultExpName"
 #' @param addQualtricsCode a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.
-#' @param defaultBackgroundColor a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's \code{expStyle.css} may change that), and a frame's background is its own \code{background}. Default \code{"#000000"}.
-#' @param restAfterEveryNTrials An integer or vector of integers that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown. INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- rest breaks are configured at the block level.
+#' @param defaultBackgroundColor a colour, in hexadecimal. Not written: the engine does not use it, so a value given here draws a warning. Pages and messages are shown on a white background with black text (an experiment's \code{expStyle.css} may change that), and a frame's background is its own \code{background}. Default \code{"#000000"}.
+#' @param restAfterEveryNTrials An integer or vector of integers. Not written: the engine does not use it, so a value given here draws a warning. Rest breaks are configured on the group (\code{restTrials} in \code{buildQCEgroupDbFile}). Default \code{-1}.
 #' @param instructionFile A string or vector of strings that specifies the name of the html file(s) that contains the instructions.  It will be shown at the begining of the experiment.  If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.
-#' @param getUserNameFile  A string that specifies the name of the html file that collects the user's identifying information (e.g., a random number). DEFAULT = NULL. INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- no such screen is presented.
+#' @param getUserNameFile  A string that specifies the name of the html file that collects the user's identifying information (e.g., a random number). Not written: the engine presents no such screen, so a value given here draws a warning. DEFAULT = NULL.
 #' @param getConsentFile  A string that specifies the name of the html file that collects the users consent for participating.  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.
 #' @param getDemographicsFile  A string that specifies the name of the html file that collects the users demongraphic information (e.g., age).  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.
 #' @param getGenderFile  A string that specifies the name of the html file that collects the users gender information.  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.
-#' @param welcomeMsg A string that specifies the welcome message to be shown at the beginning of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Welcome to the experiment. Press any key to begin."
-#' @param restMsg A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. INERT at this level: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- rests, and their message, are configured at the block level.
-#' @param endOfExpMsg A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Thank you for taking part in the experiment."
-#' @param endOfSessionMsg A string that specifies the end of a session when a new session is comming up message. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "You have just completed the block. Please press any key to start to the next block."
-#' @param saveMsg A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."
-#' @param closeBrowserMsg A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "You may now close this browser window."
-#' @param fullscreenMsg A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "The experiment will switch to full screen mode when you press the button below."
+#' @param welcomeMsg A string that specifies the welcome message to be shown at the beginning of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Welcome to the experiment. Press any key to begin."
+#' @param restMsg A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  Not written at this level: the engine does not use it, so a value given here draws a warning. Rests, and their message, are configured on the group (\code{restMsg} in \code{buildQCEgroupDbFile}). DEFAULT = NULL.
+#' @param endOfExpMsg A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Thank you for taking part in the experiment."
+#' @param endOfSessionMsg A string that specifies the end of a session when a new session is comming up message. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "You have just completed the block. Please press any key to start to the next block."
+#' @param saveMsg A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."
+#' @param closeBrowserMsg A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "You may now close this browser window."
+#' @param fullscreenMsg A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "The experiment will switch to full screen mode when you press the button below."
 #' @param fullscreenBtn A string that specifies a the text to put on the button in full screen mode.  DEFAULT = "Continue".
 #' @param completionRedirect A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific).  It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, omit the argument (or pass NULL), which leaves the key out of the emitted JSON entirely. DEFAULT = NULL.
 #' @param saveDataEveryNTrials A single positive integer specifying how often (in trials) the data is incrementally saved to the server during the experiment. The final save always occurs at the end regardless of this value. DEFAULT = 50.
@@ -38,6 +38,23 @@
 
 buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL, warnOnLeave = NULL, strictGroupAssignment = NULL, creditClaimTimeoutMs = NULL, reservationMinutes = NULL, researcherContact = NULL) {
 
+  .qcebOneValueArgs("buildQCEexpDbFile", c("expName", "addQualtricsCode", "getConsentFile",
+    "getDemographicsFile", "getGenderFile", "welcomeMsg", "endOfSessionMsg", "endOfExpMsg",
+    "saveMsg", "closeBrowserMsg", "fullscreenMsg", "fullscreenBtn", "completionRedirect",
+    "saveDataEveryNTrials", "maxExperimentMinutes", "saveTimeoutMs", "saveCanary",
+    "saveUnavailableMsg", "warnOnLeave", "strictGroupAssignment", "creditClaimTimeoutMs",
+    "reservationMinutes", "researcherContact"))
+  if (is.list(completionGate)) {
+    gateOne <- intersect(names(completionGate), c("gateFn", "combinator", "scoredBy", "attemptsAllowed",
+      "creditMsg", "noCreditMsg", "duplicateMsg", "supersededMsg", "unscoredMsg"))
+    .qcebOneValueArgs("buildQCEexpDbFile", structure(completionGate[gateOne], names = paste0("completionGate$", gateOne)))
+  }
+
+  #the engine does not use these, so they are not written
+  .qcebUnusedArgs("buildQCEexpDbFile", list(defaultBackgroundColor = !missing(defaultBackgroundColor),
+    restAfterEveryNTrials = !missing(restAfterEveryNTrials), getUserNameFile = !is.null(getUserNameFile),
+    restMsg = !is.null(restMsg)))
+
   if(!isSingleString(expName)) {
     stop("expName option must be a single string.  Yours, apparently, is not a single string.")
   }
@@ -48,14 +65,6 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
           stop("instructionFile option must be a single filename that ends in '.html' or NULL.  Yours, apparently, is not.")
       }
     }
-  }
-
-  if(!isColor(defaultBackgroundColor)) {
-    stop("defaultBackgroundColor option must be a valid color.")
-  }
-
-  if(!isValidFilename(getUserNameFile, "html") & !is.null(getUserNameFile)) {
-      stop("getUserNameFile option must be a single filename that ends in '.html' or NULL.  Yours, apparently, is not.")
   }
 
   if(!isValidFilename(getDemographicsFile, "html") & !is.null(getDemographicsFile)) {
@@ -70,69 +79,29 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
       stop("getGenderFile option must be a single filename that ends in '.html' or NULL.  Yours, apparently, is not.")
   }
 
-  if(is.null(welcomeMsg)) {
-    welcomeMsg <- "<p>Welcome to the experiment. Press any key to begin.</p>"
-  } else {
-    if(!isSingleString(welcomeMsg)) {
+  if(!is.null(welcomeMsg) && !isSingleString(welcomeMsg)) {
       stop("welcomeMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the welcomeMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
-    }
   }
 
-  if(is.null(restMsg)) {
-    restMsg <- "<p>Please take a self-timed break. Press any key to resume the experiment.</p>"
-  } else {
-    if(!isSingleString(restMsg)) {
-      stop("restMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the restMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
-    }
-  }
 
-  if(is.null(endOfExpMsg)) {
-    endOfExpMsg <- "<p>Thank you for taking part in the experiment.</p>"
-  } else {
-    if(!isSingleString(endOfExpMsg)) {
+  if(!is.null(endOfExpMsg) && !isSingleString(endOfExpMsg)) {
       stop("endOfExpMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the endOfExpMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
-    }
   }
 
-  if(is.null(endOfSessionMsg)) {
-    endOfSessionMsg <- "You have just completed the block. Please press any key to start to the next block"
-  } else {
-    if(!isSingleString(endOfSessionMsg)) {
+  if(!is.null(endOfSessionMsg) && !isSingleString(endOfSessionMsg)) {
       stop("endOfSessionMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the endOfSessionMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
-    }
   }
 
-  if(is.null(saveMsg)) {
-    ## The saving screen takes no keypress: it ends itself once the write has
-    ## landed. Default text must not invite a control the participant lacks.
-    saveMsg <- "<p>Your data is being saved. Please do not close this window. This screen will continue on its own when the save is finished.</p>"
-  } else {
-    if(!isSingleString(saveMsg)) {
+  if(!is.null(saveMsg) && !isSingleString(saveMsg)) {
       stop("saveMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the saveMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
-    }
   }
 
-  if(is.null(fullscreenMsg)) {
-    fullscreenMsg <- "<p>The experiment will switch to full screen mode when you press the button below</p>"
-  } else {
-    if(!isSingleString(fullscreenMsg)) {
+  if(!is.null(fullscreenMsg) && !isSingleString(fullscreenMsg)) {
       stop("fullscreenMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the fullscreenMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
-    }
   }
 
-  if(is.null(closeBrowserMsg)) {
-    closeBrowserMsg <- "You may now close this browser window."
-  } else {
-    if(!isSingleString(closeBrowserMsg)) {
+  if(!is.null(closeBrowserMsg) && !isSingleString(closeBrowserMsg)) {
       stop("closeBrowserMsg option must be a single string composed in html or NULL.  I won't check your html grammer, but I will check to see that the closeBrowserMsg option is a single string or NULL.  Yours, apparently, is neither a single string or NULL.")
-    }
-  }
-
-  if(!is.null(restAfterEveryNTrials)) {
-    restAfterEveryNTrials <- as.integer(restAfterEveryNTrials)
-    if(any(is.na(restAfterEveryNTrials))) {
-      stop("restAfterEveryNTrials option must an integer, a vector of integers, or NULL.")
-    }
   }
 
   saveDataEveryNTrials <- as.integer(saveDataEveryNTrials)
@@ -141,7 +110,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
   }
 
 
-  tmpList <- list (expName = expName, addQualtricsCode = addQualtricsCode, defaultBackgroundColor = defaultBackgroundColor, restAfterEveryNTrials = restAfterEveryNTrials,  instructionFile = instructionFile, getUserNameFile = getUserNameFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, restMsg = restMsg, endOfSessionMsg = endOfSessionMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg, closeBrowserMsg = closeBrowserMsg, fullscreenMsg = fullscreenMsg, fullscreenBtn = fullscreenBtn, completionRedirect = completionRedirect, saveDataEveryNTrials = saveDataEveryNTrials)
+  tmpList <- list (expName = expName, addQualtricsCode = addQualtricsCode, instructionFile = instructionFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, endOfSessionMsg = endOfSessionMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg, closeBrowserMsg = closeBrowserMsg, fullscreenMsg = fullscreenMsg, fullscreenBtn = fullscreenBtn, completionRedirect = completionRedirect, saveDataEveryNTrials = saveDataEveryNTrials)
 
   # Experiment-wide completion gate -- emit only when supplied, so legacy dbfiles
   # are byte-identical and the redirect fires unconditionally as before. Exactly

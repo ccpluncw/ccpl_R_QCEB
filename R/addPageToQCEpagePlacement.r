@@ -44,6 +44,7 @@
 #' pages <- addPageToQCEpagePlacement(pages, QCEanchor("sessionEnd"), "debrief")
 addPageToQCEpagePlacement <- function(QCEpagePlacement = NULL, anchor, file,
                                       playOnce = FALSE) {
+  .qcebOneValueArgs("addPageToQCEpagePlacement", c("file", "playOnce"))
 
   if (missing(anchor)) {
     stop("anchor option is required. Build it with QCEanchor(), e.g. ",

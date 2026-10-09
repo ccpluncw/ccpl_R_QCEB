@@ -1,11 +1,11 @@
 #' This  function is used to add a fixation frameto a QCEframeList
 #'
-#' Function that creates or modifys an QCEframeList by adding a fixation frame.
+#' Function that creates or modifys an QCEframeList by adding a fixation frame. A fixation is a timed frame that takes no key: it is written with \code{choices} \code{"NO_KEYS"} and ends when its \code{stimulus_duration} runs out. A fixation that a key press should end is an ordinary frame, built with \code{addFrameToQCEframeList}.
 #' @param QCEframeList A list that specifies the frames to show a participant in a single scenario.  These frames are presented in succession: 1, 2, ... N.  If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEframeList that you are adding an effect to. DEFAULT = NULL
 #' @param frameSymbol A string that specifies the character symbol to use for the fixation. DEFAULT = "+"
 #' @param fixationFontSize A string that specifies the font size of the fixation. Font size is specified by an integer followed by px. For example, "50px" DEFAULT = "50px"
 #' @param fixationColor an RGB color, specified in hexadecimal, that controls the color of the fixation symbol. DEFAULT = "#FF6464" (reddish).
-#' @param stimulus_duration  An integer that specifies how long to present the fixation in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = 500
+#' @param stimulus_duration  A single number that specifies how long to present the fixation in milliseconds. DEFAULT = 500
 #' @param post_trial_gap  An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = 500
 #' @param stimTableWidth An integer specifying the width of the stimuli in the other frames.  This is generally not necessary. Rather, the fixation will be centered on the screen.  DEFAULT = 100.
 #' @param background an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
@@ -21,6 +21,8 @@
 
 addFixationToQCEframeList <- function (QCEframeList = NULL, frameSymbol = '+', fixationFontSize = "50px", fixationColor = "#FF6464", stimulus_duration = 500,  post_trial_gap = 500, stimTableWidth = 100, background = "#000000", output = FALSE, trigger = NULL) {
 
+  .qcebOneValueArgs("addFixationToQCEframeList", c("stimulus_duration", "post_trial_gap",
+    "background", "output"))
   if(!isSingleString(frameSymbol)) {
     stop("frameSymbol option must be a single string.")
   }
@@ -37,16 +39,10 @@ addFixationToQCEframeList <- function (QCEframeList = NULL, frameSymbol = '+', f
     stop("background option must be a valid color.")
   }
 
-  if(is.null(stimulus_duration)) {
-    stimulus_duration <- numeric()
-  }
-  if(is.null(post_trial_gap)) {
-    post_trial_gap <- numeric()
-  }
-
   stimulus <- paste("<table style = \"font-family:Courier, monospace; width:", stimTableWidth, "; text-align: center\"><tr><td style=\"font-size: ", fixationFontSize, "; color: ", fixationColor, "\">", frameSymbol,"</td></tr></table>", sep="")
 
-  choices <- "ALL_KEYS"
+  #a fixation takes no key and ends on its timer
+  choices <- "NO_KEYS"
   trialType <- "key"
   frameName <- "fixation"
 

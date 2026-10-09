@@ -23,6 +23,7 @@
 #'                               nPerBlock = 1)
 
 addSessionListToQCEGroupList <- function (QCEGroupList = NULL, QCEsessionList, groupName = "groupName", pages = NULL, cards = NULL, nPerBlock = NULL) {
+  .qcebOneValueArgs("addSessionListToQCEGroupList", c("groupName", "pages", "cards", "nPerBlock"))
 
   if (!is.null(pages) && (!isSingleString(pages) || nchar(pages) == 0)) {
     stop("pages option must be a single non-empty filename naming this group's page ",

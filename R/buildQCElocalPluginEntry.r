@@ -12,6 +12,7 @@
 #' @examples buildQCElocalPluginEntry ("myPluginRegister.js", scriptAssets = c("myPluginBundle.js"))
 
 buildQCElocalPluginEntry <- function (registerScript, scriptAssets = NULL, cssAssets = NULL, description = NULL) {
+  .qcebOneValueArgs("buildQCElocalPluginEntry", c("registerScript", "description"))
 
   validatePath <- function (p, what) {
     if (!is.character(p) || length(p) != 1 || is.na(p) || nchar(p) == 0) {

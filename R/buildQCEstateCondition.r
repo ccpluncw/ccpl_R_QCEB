@@ -57,6 +57,7 @@
 #' ))
 
 buildQCEstateCondition <- function(stateRef, operator, value = NULL) {
+  .qcebOneValueArgs("buildQCEstateCondition", c("stateRef", "operator", "value"))
 
   valueOps <- c("equals", "notEquals", "greaterThan", "lessThan",
                 "greaterThanOrEqual", "lessThanOrEqual", "contains")

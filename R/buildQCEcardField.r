@@ -48,6 +48,7 @@
 #' buildQCEcardField(bind = "partnerName")
 buildQCEcardField <- function(formula = NULL, bind = NULL, digits = NULL,
                               emptyValue = NULL) {
+  .qcebOneValueArgs("buildQCEcardField", c("bind", "digits", "emptyValue"))
 
   hasFormula <- !is.null(formula)
   hasBind    <- !is.null(bind)

@@ -28,6 +28,9 @@
 #the value written for a key that is present but not set, by file and key pattern
 .qcebNotSetWritten <- list(stimulus = c("*.frame.*.choices" = "NO_KEYS"))
 
+#keys the engine shows whole, so several values are written and never stopped
+.qcebNeverStopped <- list(stimulus = c("*.frame.*.stimulus", "*.feedback.feedback_key.*.displayText"))
+
 .qcebAbsent <- structure(list(), class = "qcebAbsent")
 
 .qcebIsAbsent <- function(x) inherits(x, "qcebAbsent")
@@ -110,11 +113,25 @@
 }
 
 #stop when an argument for a one-value setting holds several values
-.qcebOneValueArgs <- function(fn, args) {
+#args is a named list of values, or the names of the caller's arguments
+.qcebOneValueArgs <- function(fn, args, env = parent.frame()) {
+  if (is.character(args)) {
+    given <- args[!vapply(args, function(a) eval(call("missing", as.name(a)), env), logical(1))]
+    args <- structure(lapply(given, function(a) get(a, envir = env)), names = given)
+  }
   for (a in names(args)) {
     v <- args[[a]]
     if (is.null(v) || is.data.frame(v)) next
     if ((is.atomic(v) || .qcebIsArrayList(v)) && length(v) > 1) .qcebStopSeveral(fn, a, v)
+  }
+  invisible(TRUE)
+}
+
+#warn for each argument given a value that the engine does not use
+.qcebUnusedArgs <- function(fn, given) {
+  for (a in names(given)[unlist(given)]) {
+    warning(sprintf("%s: %s is not used by the engine, so it is not written to the file.", fn, a),
+            call. = FALSE)
   }
   invisible(TRUE)
 }
@@ -170,8 +187,6 @@
     form <- if (!is.null(tt) && !is.na(tt) && tt %in% names(node$byTrialType)) node$byTrialType[[tt]]
             else if (!is.null(node$otherTypes)) node$otherTypes
             else list(open = TRUE)
-    #a survey or mcKeys stimulus is the study's own, so it is never stopped
-    if (!is.null(tt) && !is.na(tt) && tt %in% c("survey", "mcKeys")) ctx$strict <- FALSE
     return(.qcebShape(v, form, ctx))
   }
   if (!is.null(node$studyOwnUnwrap)) return(.qcebStudyOwnGroup(v, node, ctx))
@@ -289,6 +304,7 @@
     }
     resolved <- .qcebResolve(child, ctx$d)
     if (identical(resolved$qcebWrites, FALSE)) next
+    if (kctx$pattern %in% .qcebNeverStopped[[ctx$file]]) kctx$strict <- FALSE
     r <- .qcebShape(x, child, kctx)
     notSet <- .qcebNotSetWritten[[ctx$file]]
     if (.qcebIsAbsent(r) && kctx$pattern %in% names(notSet)) {

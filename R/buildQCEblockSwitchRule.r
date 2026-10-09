@@ -106,6 +106,7 @@
 buildQCEblockSwitchRule <- function(threshold, watchBlock,
                                      countResponse = NULL, countWhen = NULL,
                                      switchToBlock = NULL) {
+  .qcebOneValueArgs("buildQCEblockSwitchRule", c("watchBlock", "countResponse", "switchToBlock"))
 
   # watchBlock required non-empty string
   if (missing(watchBlock) || is.null(watchBlock)) {

@@ -63,6 +63,7 @@
 
 addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStateKeys = NULL,
                                      customHooksColumns = NULL) {
+  .qcebOneValueArgs("addHooksToQCEgroupDbFile", c("customHooksFile"))
 
   if (is.null(QCEdbfile) || !is.list(QCEdbfile)) {
     stop("QCEdbfile option must be a QCEdbfile (output of buildQCEgroupDbFile).")

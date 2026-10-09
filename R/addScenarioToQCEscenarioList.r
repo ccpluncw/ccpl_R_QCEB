@@ -34,6 +34,7 @@
 
 
 addScenarioToQCEscenarioList <- function(QCEScenarioList, QCEframeList, QCEfeebackList, QCEoutvariableList, setName, trigger = NULL, stimRef = NULL, showIf = NULL) {
+  .qcebOneValueArgs("addScenarioToQCEscenarioList", c("setName", "stimRef"))
 
   if (!is.null(stimRef)) {
     if (!isSingleString(stimRef)) {

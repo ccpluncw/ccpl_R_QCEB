@@ -40,6 +40,7 @@
 #' c2 <- buildQCEshowIfCondition("instructions", "wasShown")
 
 buildQCEshowIfCondition <- function(stimRef, operator, value = NULL, field = NULL) {
+  .qcebOneValueArgs("buildQCEshowIfCondition", c("stimRef", "operator", "value", "field"))
 
   valueOps <- c("equals", "notEquals", "greaterThan", "lessThan",
                 "greaterThanOrEqual", "lessThanOrEqual", "contains")

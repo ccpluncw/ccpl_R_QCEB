@@ -46,6 +46,8 @@
 #'                   emptyValue = "Choose...")
 buildQCEpageField <- function(input, type = "text", as = NULL, required = FALSE,
                               emptyValue = NULL, requiredMessage = NULL) {
+  .qcebOneValueArgs("buildQCEpageField", c("input", "type", "as", "required", "emptyValue",
+    "requiredMessage"))
 
   if (missing(input) || !isSingleString(input) || nchar(input) == 0) {
     stop("input option must be a single non-empty string naming the HTML control's 'name' attribute.")
