@@ -1,9 +1,11 @@
 # QCEB Builder Reference
 
-> **Targets:** QCEP engine **v10.0** (v9.1 is frozen and identical except that
-> it has no experiment-local plugin manifest) · QCEP engine specification
-> (`QCEP_SPEC.md` in the QCEP repository) **v0.4** · QCEB package **0.0.4**.
+> **Targets:** QCEP engine **v10.0** · QCEP engine specification
+> (`QCEP_SPEC.md` in the QCEP repository) **v0.4** · QCEB package **0.1.0**.
 > If any of those move, regenerate and re-verify this document.
+>
+> QCEB 0.1.0 and above build studies for QCEP engine 10 and above; a study for
+> engine 9.x or earlier is built with QCEB 0.0.5.
 
 This is the reference for building QCEP experiment configurations with the
 QCEB R package. It covers the **R call surface**: which builder functions
@@ -41,7 +43,8 @@ JSON file per configuration role:
 
 1. **Frames → scenarios (Stimfile).** `addFrameToQCEframeList()` builds each
    display/response frame; `addFixationToQCEframeList()` is the fixation
-   convenience wrapper; `addSurveyFrameToQCEframeList()` embeds a survey
+   convenience wrapper (a timed frame that no key ends: it is written with
+   `"choices": "NO_KEYS"`; a fixation a key should end is an ordinary frame); `addSurveyFrameToQCEframeList()` embeds a survey
    model. Frames are grouped into scenarios with
    `addScenarioToQCEscenarioList()`. `saveJsonFile()` writes the result.
 2. **Sets → blocks (Tsfile).** `addSetToQCEsetInfoList()` declares which
@@ -64,15 +67,49 @@ JSON file per configuration role:
    a study with no media: the engine fetches `preloadFile.json` by name
    alongside the other configuration files, and while a missing file happens
    not to stop the current engine, that tolerance is an accident of its error
-   handling, not a contract — an all-text study still ships an (empty)
-   manifest.
+   handling, not a contract — an all-text study still ships one, with nothing
+   in it (a kind with nothing to preload is left out).
 7. **Manifests and checks.** `buildQCEoutputFieldManifest()` reports the data
    columns the built experiment will produce; `missingQCEoutputFields()`
    cross-checks an expected-column list.
 
 **One writer for every configuration file: `saveJsonFile(data, filename)`.**
 It emits plain JSON and takes the output path as an argument, so a build can
-name its files whatever the deployment expects. `saveStimFile()`,
+name its files whatever the deployment expects. Every save function writes
+through it, in the form the QCEP settings description gives each key:
+
+- a setting that takes one value is written bare: `"blockName": "main"`;
+- a setting that takes a list is a list also with one item:
+  `"instructionFile": ["intro.html"]`, `"choices": ["d"]`, a key-map label
+  `"Yes": ["y"]`;
+- a setting that is not set (`NULL`, `NA`, `""`, an empty vector) is left out,
+  except a frame's `choices`, which is written `"NO_KEYS"`;
+- a message QCEB would have filled in is left out, and the engine shows its own
+  sentence; a message written `""` counts as not set (write `"&nbsp;"` for a
+  blank screen);
+- numbers are written at full precision;
+- a value the description does not list — a study's own setting, an output
+  variable, a plugin parameter, the contents of a survey or mcKeys stimulus —
+  is written whole: one value bare, several as a list, `NA` as `null`, and a
+  value wrapped in `I()` as a list also with one item (`I("x")` is `["x"]`);
+- the experiment settings file carries `"settingsForm": 2`.
+
+A setting the description lists as one value, handed several, stops the build:
+the builder's message names the function, the argument and the values
+(`buildQCEexpDbFile: expName is a setting that takes one value, but it was
+given 2: "a", "b".`). Data, a study's own setting and a frame's stimulus are
+never stopped this way.
+
+`saveJsonFile()` tells which file it is writing from the file name
+(`expDBfile.json`, `expInfo.json`, `*.page.json`, …) or from the list's shape;
+`fileKind` names it outright.
+
+**Building for engine 9.x.** A study for engine 9.x or earlier is built with
+QCEB 0.0.5 (tag `v0.0.5`). Its files hold every single value inside a list of
+one (`"expName": ["myExp"]`), often write a setting left unset as `{}` or `[]`,
+round numbers to four decimals, write QCEB's own text for each message left
+unset, and a hook reads a configuration value as `x[0]`. QCEB 0.0.5 does not
+stop a one-value setting handed several values. `saveStimFile()`,
 `saveTSFile()` and `saveDbFile()` are legacy writers kept for backward
 compatibility: each wraps the JSON in a JavaScript assignment
 (`var scenarios = …`) and writes to a fixed filename, and an engine that
@@ -274,21 +311,20 @@ engine contract for what those files must implement, and the rules a local
 manifest lives under (additive only — a name that exists centrally loads the
 central entry; every path confined to the experiment directory; no external
 URLs), is in the engine specification's extension-contract section — this
-package only writes the manifest. `savePluginManifestLocal()` serializes
-unboxed on purpose; do not write this file with `saveJsonFile()`, whose boxed
-scalars the engine's manifest reader refuses.
+package only writes the manifest. `savePluginManifestLocal()` checks the
+entries and writes the file through the same writer as every other file.
 
 ## Hard rules (violating any of these produces a config the engine misreads or rejects)
 
 1. **Never hand-edit the emitted JSON.** Serialization is part of the
-   contract: the writers box every scalar as a one-element array except where
-   a builder deliberately unboxes, and the engine reads both forms only where
-   it is specified to. Rebuilds also revert hand edits. Change the build
-   script, not the output.
-2. **Round-trip JSON only with `readQCEjsonFile()`.** Generic readers
-   (`jsonlite::fromJSON`) either double-box on re-save or destroy deliberate
-   scalars (turning `"choices": "NO_KEYS"` into `["NO_KEYS"]`), both of which
-   change engine behavior.
+   contract: one value bare, a list always a list, a setting that is not set
+   left out, as described above. Rebuilds also revert hand edits. Change the
+   build script, not the output.
+2. **Round-trip JSON only with `readQCEjsonFile()`.** It reads a list of one
+   as `I()`, so a study's own list of one stays a list when the file is saved
+   again. A generic reader (`jsonlite::fromJSON`) loses the difference between
+   `"x"` and `["x"]`. A file written by QCEB 0.0.5 is read with
+   `readQCEjsonFile(f, unboxLists = TRUE)`.
 3. **`contBtn` arguments take an HTML element `id`, not a button label.**
 4. **`post_trial_gap` is required on frames.** Supply it explicitly.
 5. **`cursorVisible` is three-state.** Leave it `NULL` (the default) to let
@@ -315,7 +351,7 @@ scalars the engine's manifest reader refuses.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-10-02 — 76 exported functions (69 current, 7 deprecated).*
+*Generated from `man/` on 2026-10-09 — 76 exported functions (69 current, 7 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -338,13 +374,13 @@ addFixationToQCEframeList(
 )
 ```
 
-Function that creates or modifys an QCEframeList by adding a fixation frame.
+Function that creates or modifys an QCEframeList by adding a fixation frame. A fixation is a timed frame that takes no key: it is written with `choices` `"NO_KEYS"` and ends when its `stimulus_duration` runs out. A fixation that a key press should end is an ordinary frame, built with `addFrameToQCEframeList`.
 
 - `QCEframeList` — A list that specifies the frames to show a participant in a single scenario. These frames are presented in succession: 1, 2, ... N. If you are building a new list, then this should be NULL. If you are adding a new effect to an old list, then this should be the QCEframeList that you are adding an effect to. DEFAULT = NULL
 - `frameSymbol` — A string that specifies the character symbol to use for the fixation. DEFAULT = "+"
 - `fixationFontSize` — A string that specifies the font size of the fixation. Font size is specified by an integer followed by px. For example, "50px" DEFAULT = "50px"
 - `fixationColor` — an RGB color, specified in hexadecimal, that controls the color of the fixation symbol. DEFAULT = "#FF6464" (reddish).
-- `stimulus_duration` — An integer that specifies how long to present the fixation in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = 500
+- `stimulus_duration` — A single number that specifies how long to present the fixation in milliseconds. DEFAULT = 500
 - `post_trial_gap` — An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = 500
 - `stimTableWidth` — An integer specifying the width of the stimuli in the other frames. This is generally not necessary. Rather, the fixation will be centered on the screen. DEFAULT = 100.
 - `background` — an RGB color, specified in hexadecimal, that controls the background color of the frame page. DEFAULT = "#000000" (black).
@@ -1401,24 +1437,24 @@ buildQCEexpDbFile(
 )
 ```
 
-Function that create a QCEB dbfile.
+Function that create a QCEB dbfile. A message left `NULL` (or given as `""`) is left out of the file, and the engine shows its own text; for a blank screen write a blank, such as `"&nbsp;"`. Each argument that sets one value stops the build when it is given several.
 
 - `expName` — A string specifying the name of the experiment. It will be output in a column in the datafile. DEFAULT = "defaultExpName"
 - `addQualtricsCode` — a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.
-- `defaultBackgroundColor` — a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's `expStyle.css` may change that), and a frame's background is its own `background`. Default `"#000000"`.
-- `restAfterEveryNTrials` — An integer or vector of integers that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1. If -1, then no break will be shown. INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- rest breaks are configured at the block level.
+- `defaultBackgroundColor` — a colour, in hexadecimal. Not written: the engine does not use it, so a value given here draws a warning. Pages and messages are shown on a white background with black text (an experiment's `expStyle.css` may change that), and a frame's background is its own `background`. Default `"#000000"`.
+- `restAfterEveryNTrials` — An integer or vector of integers. Not written: the engine does not use it, so a value given here draws a warning. Rest breaks are configured on the group (`restTrials` in `buildQCEgroupDbFile`). Default `-1`.
 - `instructionFile` — A string or vector of strings that specifies the name of the html file(s) that contains the instructions. It will be shown at the begining of the experiment. If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.
-- `getUserNameFile` — A string that specifies the name of the html file that collects the user's identifying information (e.g., a random number). DEFAULT = NULL. INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- no such screen is presented.
+- `getUserNameFile` — A string that specifies the name of the html file that collects the user's identifying information (e.g., a random number). Not written: the engine presents no such screen, so a value given here draws a warning. DEFAULT = NULL.
 - `getConsentFile` — A string that specifies the name of the html file that collects the users consent for participating. It will be shown at the begining of the experiment. If this is NULL, then this information will not be collected. DEFAULT = NULL.
 - `getDemographicsFile` — A string that specifies the name of the html file that collects the users demongraphic information (e.g., age). It will be shown at the begining of the experiment. If this is NULL, then this information will not be collected. DEFAULT = NULL.
 - `getGenderFile` — A string that specifies the name of the html file that collects the users gender information. It will be shown at the begining of the experiment. If this is NULL, then this information will not be collected. DEFAULT = NULL.
-- `welcomeMsg` — A string that specifies the welcome message to be shown at the beginning of the experiment. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "Welcome to the experiment. Press any key to begin."
-- `restMsg` — A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format. You can use any html codes. DEFAULT = NULL. INERT at this level: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- rests, and their message, are configured at the block level.
-- `endOfSessionMsg` — A string that specifies the end of a session when a new session is comming up message. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "You have just completed the block. Please press any key to start to the next block."
-- `endOfExpMsg` — A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "Thank you for taking part in the experiment."
-- `saveMsg` — A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to. Please press any key to continue."
-- `closeBrowserMsg` — A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "You may now close this browser window."
-- `fullscreenMsg` — A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "The experiment will switch to full screen mode when you press the button below."
+- `welcomeMsg` — A string that specifies the welcome message to be shown at the beginning of the experiment. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Welcome to the experiment. Press any key to begin."
+- `restMsg` — A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format. You can use any html codes. Not written at this level: the engine does not use it, so a value given here draws a warning. Rests, and their message, are configured on the group (`restMsg` in `buildQCEgroupDbFile`). DEFAULT = NULL.
+- `endOfSessionMsg` — A string that specifies the end of a session when a new session is comming up message. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "You have just completed the block. Please press any key to start to the next block."
+- `endOfExpMsg` — A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Thank you for taking part in the experiment."
+- `saveMsg` — A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Your data is being saved. Please do not close this window until you are told to. Please press any key to continue."
+- `closeBrowserMsg` — A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "You may now close this browser window."
+- `fullscreenMsg` — A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "The experiment will switch to full screen mode when you press the button below."
 - `fullscreenBtn` — A string that specifies a the text to put on the button in full screen mode. DEFAULT = "Continue".
 - `completionRedirect` — A string that specifies the return URL that redirects the participant to another site - usually for credit participating (e.g., Prolific). It must be a proper URL. For example, "https://app.prolific.co/submissions/complete?cc=XXXXXXX" If the redirect is for SONA systems, the redirect must take the sona ID as an argument. The program will work if you change the "survey_code" equal to SONA_ID. For example, "https://www.sona-systems.com/webstudy_credit.aspx?experiment_id=769&credit_token=e05ef9d2f821414180dbb0b3f4ae3e59&survey_code=SONA_ID" If it is not appropriate to redirect, omit the argument (or pass NULL), which leaves the key out of the emitted JSON entirely. DEFAULT = NULL.
 - `saveDataEveryNTrials` — A single positive integer specifying how often (in trials) the data is incrementally saved to the server during the experiment. The final save always occurs at the end regardless of this value. DEFAULT = 50.
@@ -1444,9 +1480,9 @@ buildQCEgroupDbFile(
   condName = "defaultCond",
   keyMap = NULL,
   randomizeKeyMap = FALSE,
-  presentKeyMapAfterTrialNumbers = -1,
+  presentKeyMapAfterTrialNumbers = NULL,
   defaultBackgroundColor = "#000000",
-  restTrials = -1,
+  restTrials = NULL,
   speedFeedbackParams = NULL,
   instructionFile = NULL,
   keyMapInstructionFile = NULL,
@@ -1465,21 +1501,21 @@ buildQCEgroupDbFile(
 )
 ```
 
-Function that create a QCEB dbfile.
+Function that create a QCEB dbfile. A message left `NULL` (or given as `""`) is left out of the file, and the engine shows its own text; for a blank screen write a blank, such as `"&nbsp;"`. Each argument that sets one value stops the build when it is given several.
 
 - `condName` — A string specifying the condition of that this dbfile represents. It is really just a placeholder that you can use to code anything that you want. It will be output in a column in the datafile. DEFAULT = "defaultCond"
 - `keyMap` — A list that specifies the mapping of the keys to their meaning for the experiment. Create this list using the buildKeyMap() and addKeyToKeyMap() functions. DEFAULT = NULL
 - `randomizeKeyMap` — a Boolean that specifies whether the maping of the keys to their meaning should be randomized everytime the experiment is run. This is useful if you want to randomize the key to meaning mapping for every subject on a single session experiment. DEFAULT = FALSE.
-- `presentKeyMapAfterTrialNumbers` — An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option. So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = -1. If -1, then no reminder will be shown.
-- `defaultBackgroundColor` — a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's `expStyle.css` may change that), and a frame's background is its own `background`. Default `"#000000"`.
-- `restTrials` — An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1. If -1, then no break will be shown.
+- `presentKeyMapAfterTrialNumbers` — An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option. So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = NULL. If NULL, the key is left out of the file and no reminder is shown.
+- `defaultBackgroundColor` — a colour, in hexadecimal. Not written: the engine does not use it, so a value given here draws a warning. Pages and messages are shown on a white background with black text (an experiment's `expStyle.css` may change that), and a frame's background is its own `background`. Default `"#000000"`.
+- `restTrials` — An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = NULL. If NULL, the key is left out of the file and no break is shown.
 - `speedFeedbackParams` — A speedFeedbackList that specifies the parameters of the speed Feedback. Create this list using the buildSpeedFeedbackList() function. DEFAULT = NULL. If NULL, no speed feedback will be provided.
 - `instructionFile` — A string or vector of strings that specifies the name of the html file(s) that contains the instructions. It will be shown at the begining of the experiment. If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.
 - `keyMapInstructionFile` — A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES). It will be shown at the begining of the experiment. DEFAULT = NULL. If NULL, the engine generates the key map screen itself from the keyMap you supplied, so most experiments should leave this alone. Supply a filename only when you want to replace that generated screen with your own html. NOTE: the string "default" is NOT accepted -- it was a sentinel in engine versions before 9.1, and the current engine reads this field as a literal filename, so "default" would send it looking for a file of that name. Use NULL to mean "generate it for me".
-- `restMsg` — A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "Please take a self-timed break. Press any key to resume the experiment."
-- `friendlyReminderMsg` — A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "This is a friendly reminder."
-- `remindMsg` — A string that specifies a message that the keymap reminder might be shown again. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "We may present this screen again during the experiment to remind you of the keys."
-- `proceedMsg` — A string that specifies a message to hit any key to proceed. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit any key to proceed."
+- `restMsg` — A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Please take a self-timed break. Press any key to resume the experiment."
+- `friendlyReminderMsg` — A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "This is a friendly reminder."
+- `remindMsg` — A string that specifies a message that the keymap reminder might be shown again. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "We may present this screen again during the experiment to remind you of the keys."
+- `proceedMsg` — A string that specifies a message to hit any key to proceed. The string must be in html format. You can use any html codes. DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Please hit any key to proceed."
 - `enableTriggers` — A boolean that enables fNIRS trigger support for this group (session). When TRUE, the engine connects to a local Python relay (tools/fnirsRelay.py) at session start, forwards trigger codes declared at block/set/trial/frame levels to an LSL stream, and writes a separate `_triggers.finalDat` event log alongside the main behavioral data. Silent fallback if the relay is not running (experiment proceeds normally with no triggers sent). DEFAULT = FALSE -- no overhead and identical behavior to pre-Phase-1.5 experiments.
 - `triggerRelayPort` — An integer specifying the port the local Python relay listens on. Only meaningful when enableTriggers = TRUE. Must match the `--port` the relay was started with. DEFAULT = 5678.
 - `restEveryNMinutes` — Optional positive numeric -- fire a rest break every N minutes of elapsed task time, in addition to any thresholds in `restTrials`. The engine measures elapsed time from the most recent rest (or first trial completion). NULL means no time-based rests. DEFAULT = NULL.
@@ -1947,7 +1983,7 @@ buildQCEoutputFieldManifest(
   dir,
   outFile = "output_fields_manifest.txt",
   fieldsFile = NULL,
-  engineVersion = "9.1"
+  engineVersion = "10.0"
 )
 ```
 
@@ -1959,7 +1995,7 @@ could go in one.
 - `dir` — The experiment directory holding the JSON config files.
 - `outFile` — Filename to write the manifest to, inside `dir`. Pass NULL to return the report without writing it. DEFAULT = "output_fields_manifest.txt".
 - `fieldsFile` — Optional path to an existing `fields.txt` to compare against. When given, the manifest flags every expected column missing from it -- the check that catches a silently dropped column. DEFAULT = NULL.
-- `engineVersion` — A string recording which engine's row-stamp list this was built against. Stamped into the header so a stale manifest is visible rather than silent. DEFAULT = "9.1".
+- `engineVersion` — A string recording which engine's row-stamp list this was built against. Stamped into the header so a stale manifest is visible rather than silent. DEFAULT = "10.0".
 
 **Details.** 
 Why it matters: `fields.txt` is a WHITELIST. The save path keeps only the
@@ -2063,41 +2099,29 @@ Function that reads a QCEB json file and returns it in the form of a list
 Read a QCEB-written JSON config back into a list you can save again
 
 ```r
-readQCEjsonFile(filename)
+readQCEjsonFile(filename, unboxLists = FALSE)
 ```
 
 Reads a JSON file that `saveJsonFile()` wrote and returns it in the same
 shape the package's builders produce, so it can be extended and saved again
-without changing the structure of anything that was already in it.
-
-- `filename` — A string giving the path of the JSON file to read.
-
-**Details.** 
-This exists because reading and writing are not symmetric by default.
-`saveJsonFile()` deliberately writes every scalar as a one-element array,
-because that is what the experiment engine's reader expects. A plain
-`jsonlite::fromJSON(simplifyVector = FALSE)` hands those back as
-one-element *lists*, and saving again wraps them a second time:
-`"set": ["someSet"]` becomes `"set": [["someSet"]]`. Every scalar in
-the file is affected. Nothing reports it -- the save succeeds, the file is
-valid JSON, and the build prints its usual summary -- but a set name nested one
-level too deep matches no setInfo entry, so the first symptom is a session that
-runs no trials.
-
-Reading with this function instead makes the round trip lossless:
+without changing anything that was already in it:
 `saveJsonFile(readQCEjsonFile(f), f)` leaves the file unchanged.
 
-Values the package writes *unboxed* on purpose -- a bare
-`"choices": "NO_KEYS"` rather than `["NO_KEYS"]` -- are read back
-still unboxed, so re-saving does not turn a scalar the engine expects into a
-one-element array. That distinction is only visible before the JSON is
-simplified, which is why this reads the file unsimplified and restores the
-shapes itself.
+- `filename` — A string giving the path of the JSON file to read.
+- `unboxLists` — A single Boolean. `TRUE` reads every list of one as the value inside it, for a file written by QCEB 0.0.5 or earlier. Default `FALSE`.
 
-Arrays of objects are kept as lists of lists rather than collapsed into data
-frames, and equal-length nested arrays are kept as nested lists rather than
-collapsed into matrices. Both of those simplifications would lose the config's
-structure and are switched off.
+**Details.** 
+A bare value is read as a vector of length one. A list of one item is read as
+that item wrapped in `I()`, which is how a list of one is marked for
+`saveJsonFile()`: a setting the description lists as one value is still
+written bare, and a study's own value, an output variable or a plugin parameter
+written as a list of one stays a list of one. A longer list of single values is
+read as a vector, a list of objects as a list of lists, and nested lists stay
+nested; objects and lists are never collapsed into data frames or matrices.
+
+A file written by QCEB 0.0.5 or earlier holds every single value as a list of
+one. Read it with `unboxLists = TRUE`, which reads every list of one as the
+value inside it, so that saving it again writes each single value bare.
 
 **Returns.** A list in the same shape the package's builders produce.
 
@@ -2151,13 +2175,14 @@ Function that save the QCEdbFileList to dbfile.json. LEGACY FORMAT WRITER: the o
 This function writes any QCEB configuration list to a JSON file
 
 ```r
-saveJsonFile(data, filename)
+saveJsonFile(data, filename, fileKind = NULL)
 ```
 
-Function that serializes a QCEB configuration list to plain JSON and writes it to a named file. This is the writer for every configuration file a build produces -- Stimfile, Tsfile, group dbfile, experiment dbfile and expInfo alike.
+Function that serializes a QCEB configuration list to plain JSON and writes it to a named file. This is the writer for every configuration file a build produces -- Stimfile, Tsfile, group dbfile, experiment dbfile and expInfo alike. Each value is written in the form the QCEP settings description gives its key: a setting that takes one value is written bare (`"x"`), a setting that takes a list is written as a list also when it holds one item (`["d"]`), a setting that is not set (`NULL`, `NA`, `""` or an empty vector) is left out of the file, and numbers are written at full precision. A frame whose `choices` is not set is written `"NO_KEYS"`. A value the description does not list -- a study's own setting, an output variable, a plugin parameter -- is written whole: one value bare, several values as a list, a value wrapped in `I()` as a list also when it holds one item, and `NA` as `null`. The experiment settings file carries `settingsForm: 2`. A setting that takes one value but is given several stops the build with a message naming it.
 
 - `data` — The list to serialize. Any QCEB configuration list.
 - `filename` — A string giving the path of the file to write. The file is overwritten.
+- `fileKind` — A single string naming which settings file `data` is: one of `"expInfo"`, `"expDBfile"`, `"groupSettings"`, `"trialStructure"`, `"stimulus"`, `"preload"`, `"pages"`, `"pageSidecar"`, `"cards"`, `"cardSidecar"`, `"localPluginManifest"`, `"unplacedPages"` or `"stimSetList"`. `NULL` tells it from the file name (`expDBfile.json`, `expInfo.json`, `*.page.json` and the like) or else from the list's own shape, and warns when it cannot. Default `NULL`.
 
 **Returns.** the json data
 
@@ -2173,7 +2198,7 @@ savePreloadFiles(
 )
 ```
 
-Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. Each list is written as an array, empty when nothing of that kind is preloaded. A path is written as given, so it is the address the page fetches: a stimulus set's `path` column, or a file of the study's own.
+Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. Each list is written as a list, also when it holds one file, and a kind with nothing to preload is left out of the file. A path is written as given, so it is the address the page fetches: a stimulus set's `path` column, or a file of the study's own.
 
 - `imageFileArray` — An array of the image filenames (plus paths) that need to be preloaded. Default `NULL`.
 - `videoFileArray` — An array of the video filenames (plus paths) that need to be preloaded. Default `NULL`.
@@ -2840,8 +2865,9 @@ the trial starts. `onTrialStart` returns `stimulusReplacements`, and the engine
 puts each value in place of its token in every frame of the trial and also
 writes it to the trial's row as a column named after the token. Here a coin flip
 decides which of a scenario's two words is shown on top, so one scenario serves
-both orders and the data records the order shown. Values from the configuration
-files reach a hook as one-element arrays, hence `uw()`. The token columns are
+both orders and the data records the order shown. A hook is handed each value
+as its file wrote it: an output variable written `"cup"` arrives as `"cup"`.
+The token columns are
 declared as the hook's columns so the build checks `fields.txt` for them. The
 same placement could instead be fixed at build time, one scenario per order;
 both are QCEP mechanisms. Every `.js` file a generated study carries (a hook
@@ -2872,9 +2898,8 @@ writeLines(r"---(
 'use strict';
 var QCEPHooks = {
   onTrialStart: function (info, ctx) {
-    function uw(v) { return Array.isArray(v) ? v[0] : v; }
     var o = info.scenario.outputVariables;
-    var a = uw(o.word1), b = uw(o.word2);
+    var a = o.word1, b = o.word2;
     var flip = Math.random() < 0.5;
     return { stimulusReplacements: { top: flip ? b : a, bottom: flip ? a : b } };
   }
@@ -2917,12 +2942,11 @@ for (w in words) {
 writeLines(r"---(
 'use strict';
 var QCEPHooks = (function () {
-  function uw(v) { return Array.isArray(v) ? v[0] : v; }
   return {
     onTrialFinish: function (data, ctx) {
       var c = ctx.qceState.custom;
       if (!c.liked) c.liked = [];
-      if (data.Key === 'Like') c.liked.push(uw(data.word));
+      if (data.Key === 'Like') c.liked.push(data.word);
       return {};
     },
     onBlockEnd: function (blockName, ctx) {
