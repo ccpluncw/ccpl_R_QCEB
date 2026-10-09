@@ -26,7 +26,7 @@ addFixationToQCEframeList(
 
 \item{fixationColor}{an RGB color, specified in hexadecimal, that controls the color of the fixation symbol. DEFAULT = "#FF6464" (reddish).}
 
-\item{stimulus_duration}{An integer that specifies how long to present the fixation in milliseconds. A NULL will present the stimulus until their is a user input. DEFAULT = 500}
+\item{stimulus_duration}{A single number that specifies how long to present the fixation in milliseconds. DEFAULT = 500}
 
 \item{post_trial_gap}{An integer that specifies how long to present a blank frame after this frame in milliseconds. DEFAULT = 500}
 
@@ -42,7 +42,7 @@ addFixationToQCEframeList(
 the updated QCEframeList
 }
 \description{
-Function that creates or modifys an QCEframeList by adding a fixation frame.
+Function that creates or modifys an QCEframeList by adding a fixation frame. A fixation is a timed frame that takes no key: it is written with \code{choices} \code{"NO_KEYS"} and ends when its \code{stimulus_duration} runs out. A fixation that a key press should end is an ordinary frame, built with \code{addFrameToQCEframeList}.
 }
 \examples{
 # Basic

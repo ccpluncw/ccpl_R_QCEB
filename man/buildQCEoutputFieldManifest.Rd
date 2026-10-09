@@ -8,7 +8,7 @@ buildQCEoutputFieldManifest(
   dir,
   outFile = "output_fields_manifest.txt",
   fieldsFile = NULL,
-  engineVersion = "9.1"
+  engineVersion = "10.0"
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ it -- the check that catches a silently dropped column. DEFAULT = NULL.}
 
 \item{engineVersion}{A string recording which engine's row-stamp list this was
 built against. Stamped into the header so a stale manifest is visible rather
-than silent. DEFAULT = "9.1".}
+than silent. DEFAULT = "10.0".}
 }
 \value{
 Invisibly, a character vector: the lines of the manifest.

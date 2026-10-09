@@ -8,9 +8,9 @@ buildQCEgroupDbFile(
   condName = "defaultCond",
   keyMap = NULL,
   randomizeKeyMap = FALSE,
-  presentKeyMapAfterTrialNumbers = -1,
+  presentKeyMapAfterTrialNumbers = NULL,
   defaultBackgroundColor = "#000000",
-  restTrials = -1,
+  restTrials = NULL,
   speedFeedbackParams = NULL,
   instructionFile = NULL,
   keyMapInstructionFile = NULL,
@@ -35,11 +35,11 @@ buildQCEgroupDbFile(
 
 \item{randomizeKeyMap}{a Boolean that specifies whether the maping of the keys to their meaning should be randomized everytime the experiment is run. This is useful if you want to randomize the key to meaning mapping for every subject on a single session experiment. DEFAULT = FALSE.}
 
-\item{presentKeyMapAfterTrialNumbers}{An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = -1.  If -1, then no reminder will be shown.}
+\item{presentKeyMapAfterTrialNumbers}{An integer or vector of integers that specify when the participant will be reminded of the keyMap. The keyMap reminder message will show up after each trial number specified in the option.  So, if you want the keyMap reminder to show up after the first and fifth trial, the option should equal c(1,5). DEFAULT = NULL. If NULL, the key is left out of the file and no reminder is shown.}
 
-\item{defaultBackgroundColor}{a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's \code{expStyle.css} may change that), and a frame's background is its own \code{background}. Default \code{"#000000"}.}
+\item{defaultBackgroundColor}{a colour, in hexadecimal. Not written: the engine does not use it, so a value given here draws a warning. Pages and messages are shown on a white background with black text (an experiment's \code{expStyle.css} may change that), and a frame's background is its own \code{background}. Default \code{"#000000"}.}
 
-\item{restTrials}{An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown.}
+\item{restTrials}{An integer or vector of integers that that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = NULL. If NULL, the key is left out of the file and no break is shown.}
 
 \item{speedFeedbackParams}{A speedFeedbackList that specifies the parameters of the speed Feedback. Create this list using the buildSpeedFeedbackList() function.  DEFAULT = NULL.  If NULL, no speed feedback will be provided.}
 
@@ -47,13 +47,13 @@ buildQCEgroupDbFile(
 
 \item{keyMapInstructionFile}{A string that specifies the name of the html file that contains the mapping between the keys and their meaning (e.g., "Press the "d" key to indicate YES).  It will be shown at the begining of the experiment.  DEFAULT = NULL.  If NULL, the engine generates the key map screen itself from the keyMap you supplied, so most experiments should leave this alone. Supply a filename only when you want to replace that generated screen with your own html. NOTE: the string "default" is NOT accepted -- it was a sentinel in engine versions before 9.1, and the current engine reads this field as a literal filename, so "default" would send it looking for a file of that name. Use NULL to mean "generate it for me".}
 
-\item{restMsg}{A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please take a self-timed break. Press any key to resume the experiment."}
+\item{restMsg}{A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Please take a self-timed break. Press any key to resume the experiment."}
 
-\item{friendlyReminderMsg}{A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "This is a friendly reminder."}
+\item{friendlyReminderMsg}{A string that specifies the "this is a friendly reminder" message to be shown when presenting the keymap reminder. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "This is a friendly reminder."}
 
-\item{remindMsg}{A string that specifies a message that the keymap reminder might be shown again. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "We may present this screen again during the experiment to remind you of the keys."}
+\item{remindMsg}{A string that specifies a message that the keymap reminder might be shown again. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "We may present this screen again during the experiment to remind you of the keys."}
 
-\item{proceedMsg}{A string that specifies a message to hit any key to proceed. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Please hit any key to proceed."}
+\item{proceedMsg}{A string that specifies a message to hit any key to proceed. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Please hit any key to proceed."}
 
 \item{enableTriggers}{A boolean that enables fNIRS trigger support for this group (session). When TRUE, the engine connects to a local Python relay (tools/fnirsRelay.py) at session start, forwards trigger codes declared at block/set/trial/frame levels to an LSL stream, and writes a separate `_triggers.finalDat` event log alongside the main behavioral data. Silent fallback if the relay is not running (experiment proceeds normally with no triggers sent). DEFAULT = FALSE -- no overhead and identical behavior to pre-Phase-1.5 experiments.}
 
@@ -75,7 +75,7 @@ buildQCEgroupDbFile(
 the QCEBdbfileList
 }
 \description{
-Function that create a QCEB dbfile.
+Function that create a QCEB dbfile. A message left \code{NULL} (or given as \code{""}) is left out of the file, and the engine shows its own text; for a blank screen write a blank, such as \code{"&nbsp;"}. Each argument that sets one value stops the build when it is given several.
 }
 \examples{
 # Standard (no fNIRS)

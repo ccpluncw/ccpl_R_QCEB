@@ -4,10 +4,12 @@
 \alias{readQCEjsonFile}
 \title{Read a QCEB-written JSON config back into a list you can save again}
 \usage{
-readQCEjsonFile(filename)
+readQCEjsonFile(filename, unboxLists = FALSE)
 }
 \arguments{
 \item{filename}{A string giving the path of the JSON file to read.}
+
+\item{unboxLists}{A single Boolean. \code{TRUE} reads every list of one as the value inside it, for a file written by QCEB 0.0.5 or earlier. Default \code{FALSE}.}
 }
 \value{
 A list in the same shape the package's builders produce.
@@ -15,34 +17,21 @@ A list in the same shape the package's builders produce.
 \description{
 Reads a JSON file that \code{saveJsonFile()} wrote and returns it in the same
 shape the package's builders produce, so it can be extended and saved again
-without changing the structure of anything that was already in it.
+without changing anything that was already in it:
+\code{saveJsonFile(readQCEjsonFile(f), f)} leaves the file unchanged.
 }
 \details{
-This exists because reading and writing are not symmetric by default.
-\code{saveJsonFile()} deliberately writes every scalar as a one-element array,
-because that is what the experiment engine's reader expects. A plain
-\code{jsonlite::fromJSON(simplifyVector = FALSE)} hands those back as
-one-element \emph{lists}, and saving again wraps them a second time:
-\code{"set": ["someSet"]} becomes \code{"set": [["someSet"]]}. Every scalar in
-the file is affected. Nothing reports it -- the save succeeds, the file is
-valid JSON, and the build prints its usual summary -- but a set name nested one
-level too deep matches no setInfo entry, so the first symptom is a session that
-runs no trials.
+A bare value is read as a vector of length one. A list of one item is read as
+that item wrapped in \code{I()}, which is how a list of one is marked for
+\code{saveJsonFile()}: a setting the description lists as one value is still
+written bare, and a study's own value, an output variable or a plugin parameter
+written as a list of one stays a list of one. A longer list of single values is
+read as a vector, a list of objects as a list of lists, and nested lists stay
+nested; objects and lists are never collapsed into data frames or matrices.
 
-Reading with this function instead makes the round trip lossless:
-\code{saveJsonFile(readQCEjsonFile(f), f)} leaves the file unchanged.
-
-Values the package writes \emph{unboxed} on purpose -- a bare
-\code{"choices": "NO_KEYS"} rather than \code{["NO_KEYS"]} -- are read back
-still unboxed, so re-saving does not turn a scalar the engine expects into a
-one-element array. That distinction is only visible before the JSON is
-simplified, which is why this reads the file unsimplified and restores the
-shapes itself.
-
-Arrays of objects are kept as lists of lists rather than collapsed into data
-frames, and equal-length nested arrays are kept as nested lists rather than
-collapsed into matrices. Both of those simplifications would lose the config's
-structure and are switched off.
+A file written by QCEB 0.0.5 or earlier holds every single value as a list of
+one. Read it with \code{unboxLists = TRUE}, which reads every list of one as the
+value inside it, so that saving it again writes each single value bare.
 }
 \examples{
 \dontrun{

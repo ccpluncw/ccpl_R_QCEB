@@ -21,7 +21,7 @@ savePreloadFiles(
 the json data
 }
 \description{
-Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. Each list is written as an array, empty when nothing of that kind is preloaded. A path is written as given, so it is the address the page fetches: a stimulus set's \code{path} column, or a file of the study's own.
+Function that writes the list of image, video and audio files the experiment should preload to preloadFile.json in the working directory. Each list is written as a list, also when it holds one file, and a kind with nothing to preload is left out of the file. A path is written as given, so it is the address the page fetches: a stimulus set's \code{path} column, or a file of the study's own.
 }
 \examples{
 savePreloadFiles (imageFileArray, videoFileArray, audioFileArray)

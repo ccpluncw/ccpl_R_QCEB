@@ -41,13 +41,13 @@ buildQCEexpDbFile(
 
 \item{addQualtricsCode}{a Boolean that specifies whether to present a time code at the end of the experiment with a message that states asks the user to input the code in a Qualtrics window. This is useful if you want to run the experiment using Qualtrics to randomize conditions and/or assign automatic credits. DEFAULT = FALSE.}
 
-\item{defaultBackgroundColor}{a colour, in hexadecimal, stored in the config and not applied by the engine: pages and messages are shown on a white background with black text (an experiment's \code{expStyle.css} may change that), and a frame's background is its own \code{background}. Default \code{"#000000"}.}
+\item{defaultBackgroundColor}{a colour, in hexadecimal. Not written: the engine does not use it, so a value given here draws a warning. Pages and messages are shown on a white background with black text (an experiment's \code{expStyle.css} may change that), and a frame's background is its own \code{background}. Default \code{"#000000"}.}
 
-\item{restAfterEveryNTrials}{An integer or vector of integers that specify the trial numbers that you want a break to occur after (e.g., 50, 100, 150). DEFAULT = -1.  If -1, then no break will be shown. INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- rest breaks are configured at the block level.}
+\item{restAfterEveryNTrials}{An integer or vector of integers. Not written: the engine does not use it, so a value given here draws a warning. Rest breaks are configured on the group (\code{restTrials} in \code{buildQCEgroupDbFile}). Default \code{-1}.}
 
 \item{instructionFile}{A string or vector of strings that specifies the name of the html file(s) that contains the instructions.  It will be shown at the begining of the experiment.  If you have multiple instruction files, they should be entered in the order you would like them presented. If this is NULL, then no instructions will be shown. DEFAULT = NULL.}
 
-\item{getUserNameFile}{A string that specifies the name of the html file that collects the user's identifying information (e.g., a random number). DEFAULT = NULL. INERT: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- no such screen is presented.}
+\item{getUserNameFile}{A string that specifies the name of the html file that collects the user's identifying information (e.g., a random number). Not written: the engine presents no such screen, so a value given here draws a warning. DEFAULT = NULL.}
 
 \item{getConsentFile}{A string that specifies the name of the html file that collects the users consent for participating.  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.}
 
@@ -55,19 +55,19 @@ buildQCEexpDbFile(
 
 \item{getGenderFile}{A string that specifies the name of the html file that collects the users gender information.  It will be shown at the begining of the experiment.  If this is NULL, then this information will not be collected. DEFAULT = NULL.}
 
-\item{welcomeMsg}{A string that specifies the welcome message to be shown at the beginning of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Welcome to the experiment. Press any key to begin."}
+\item{welcomeMsg}{A string that specifies the welcome message to be shown at the beginning of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Welcome to the experiment. Press any key to begin."}
 
-\item{restMsg}{A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. INERT at this level: the value is accepted and written to the config for backward compatibility, but current engines do not act on it -- rests, and their message, are configured at the block level.}
+\item{restMsg}{A string that specifies the rest message to be shown at the beginning of a break. The string must be in html format.  You can use any html codes.  Not written at this level: the engine does not use it, so a value given here draws a warning. Rests, and their message, are configured on the group (\code{restMsg} in \code{buildQCEgroupDbFile}). DEFAULT = NULL.}
 
-\item{endOfSessionMsg}{A string that specifies the end of a session when a new session is comming up message. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "You have just completed the block. Please press any key to start to the next block."}
+\item{endOfSessionMsg}{A string that specifies the end of a session when a new session is comming up message. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "You have just completed the block. Please press any key to start to the next block."}
 
-\item{endOfExpMsg}{A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Thank you for taking part in the experiment."}
+\item{endOfExpMsg}{A string that specifies the end of experiment message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Thank you for taking part in the experiment."}
 
-\item{saveMsg}{A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."}
+\item{saveMsg}{A string that specifies the data is saving message to be shown at the end of the experiment. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "Your data is being saved. Please do not close this window until you are told to.  Please press any key to continue."}
 
-\item{closeBrowserMsg}{A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "You may now close this browser window."}
+\item{closeBrowserMsg}{A string presented on its own final screen, after the end-of-experiment message, telling the user that they may close the browser. The screen accepts no keypress and remains until the window is closed, so this message should not instruct the user to press a key. It is shown only when no completion redirect will fire, so it never appears on a run that navigates the user elsewhere. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "You may now close this browser window."}
 
-\item{fullscreenMsg}{A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, then the following message will be presented, "The experiment will switch to full screen mode when you press the button below."}
+\item{fullscreenMsg}{A string that specifies a message that clicking the button will put the experiment into full screen mode. The string must be in html format.  You can use any html codes.  DEFAULT = NULL. If NULL, the key is left out of the file and the engine shows its own message, "The experiment will switch to full screen mode when you press the button below."}
 
 \item{fullscreenBtn}{A string that specifies a the text to put on the button in full screen mode.  DEFAULT = "Continue".}
 
@@ -99,7 +99,7 @@ buildQCEexpDbFile(
 the QCEBdbfileList
 }
 \description{
-Function that create a QCEB dbfile.
+Function that create a QCEB dbfile. A message left \code{NULL} (or given as \code{""}) is left out of the file, and the engine shows its own text; for a blank screen write a blank, such as \code{"&nbsp;"}. Each argument that sets one value stops the build when it is given several.
 }
 \examples{
 buildQCEdbFile (expName = "myExp", addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
