@@ -71,6 +71,18 @@ test_that("multi-element arrays, nested objects and empties survive", {
   expect_true(grepl('"emptyObj":\\s*\\{\\}', txt))
 })
 
+test_that("an entry the study named with nothing set in it survives the round trip", {
+  f <- tempfile(fileext = ".json")
+  writeLines(c('{', '  "1": {', '    "set": "A",', '    "feedback": {', '      "feedback_key": {',
+               '        "Same": {},', '        "Different": {', '          "outputText": "no"',
+               '        }', '      },', '      "showFeedback": false', '    }', '  }', '}'), f)
+  before <- readLines(f, warn = FALSE)
+  saveJsonFile(readQCEjsonFile(f), f, fileKind = "stimulus")
+  expect_identical(readLines(f, warn = FALSE), before)
+  expect_identical(jsonlite::fromJSON(f, simplifyVector = FALSE)[["1"]]$feedback$feedback_key$Same,
+                   structure(list(), names = character(0)))
+})
+
 test_that("readQCEjsonFile validates its argument", {
   expect_error(readQCEjsonFile(c("a", "b")), "single string")
   expect_error(readQCEjsonFile(file.path(tempdir(), "definitely-not-here.json")), "cannot find")

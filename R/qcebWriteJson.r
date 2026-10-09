@@ -37,11 +37,13 @@
 
 #a list whose elements carry no names is an array
 .qcebIsArrayList <- function(v) {
-  is.list(v) && !is.data.frame(v) && (is.null(names(v)) || all(names(v) == ""))
+  is.list(v) && !is.data.frame(v) && !.qcebIsObjectList(v) &&
+    (is.null(names(v)) || all(names(v) == ""))
 }
 
+#an empty list with a names attribute is an empty object, as {} reads back
 .qcebIsObjectList <- function(v) {
-  is.list(v) && !is.data.frame(v) && !is.null(names(v)) && any(names(v) != "")
+  is.list(v) && !is.data.frame(v) && !is.null(names(v)) && (length(v) == 0 || any(names(v) != ""))
 }
 
 #the shapes that say a setting was not given
