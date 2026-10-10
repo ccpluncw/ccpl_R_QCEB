@@ -75,7 +75,7 @@ the speedFeedbackList
 Function that builds a speedFeedbackParamsList.
 }
 \examples{
-buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+buildSpeedFeedbackList(frameName = "test", thresholdWindowSize = 20, thresholdArrayPosition = 17)
 }
 \keyword{QCE}
 \keyword{feedback}

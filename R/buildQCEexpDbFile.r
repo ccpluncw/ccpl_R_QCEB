@@ -34,7 +34,7 @@
 #' @return the QCEBdbfileList
 #' @keywords QCE QCEBdbfileList dbfile
 #' @export
-#' @examples buildQCEdbFile (expName = "myExp", addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+#' @examples buildQCEexpDbFile(expName = "myExp", instructionFile = "instructions.html", getConsentFile = "consent.html", saveDataEveryNTrials = 50)
 
 buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FALSE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = -1, instructionFile = NULL, getUserNameFile = NULL, getConsentFile = NULL, getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfSessionMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL, closeBrowserMsg = NULL, fullscreenMsg = NULL, fullscreenBtn = "Continue", completionRedirect = NULL, saveDataEveryNTrials = 50, completionGate = NULL, maxExperimentMinutes = NULL, saveTimeoutMs = NULL, saveCanary = NULL, saveUnavailableMsg = NULL, warnOnLeave = NULL, strictGroupAssignment = NULL, creditClaimTimeoutMs = NULL, reservationMinutes = NULL, researcherContact = NULL) {
 

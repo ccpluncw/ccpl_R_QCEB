@@ -102,7 +102,7 @@ the QCEBdbfileList
 Function that create a QCEB dbfile. A message left \code{NULL} (or given as \code{""}) is left out of the file, and the engine shows its own text; for a blank screen write a blank, such as \code{"&nbsp;"}. Each argument that sets one value stops the build when it is given several.
 }
 \examples{
-buildQCEdbFile (expName = "myExp", addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+buildQCEexpDbFile(expName = "myExp", instructionFile = "instructions.html", getConsentFile = "consent.html", saveDataEveryNTrials = 50)
 }
 \keyword{QCE}
 \keyword{QCEBdbfileList}

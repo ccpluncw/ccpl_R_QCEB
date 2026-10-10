@@ -114,12 +114,7 @@ QCEB 0.0.5 (tag `v0.0.5`). Its files hold every single value inside a list of
 one (`"expName": ["myExp"]`), often write a setting left unset as `{}` or `[]`,
 round numbers to four decimals, write QCEB's own text for each message left
 unset, and a hook reads a configuration value as `x[0]`. QCEB 0.0.5 does not
-stop a one-value setting handed several values. `saveStimFile()`,
-`saveTSFile()` and `saveDbFile()` are legacy writers kept for backward
-compatibility: each wraps the JSON in a JavaScript assignment
-(`var scenarios = …`) and writes to a fixed filename, and an engine that
-requires plain JSON cannot load what they produce. Do not use them in new
-builds.
+stop a one-value setting handed several values.
 
 The worked examples below show the full pattern end to end.
 
@@ -356,7 +351,7 @@ entries and writes the file through the same writer as every other file.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-10-09 — 76 exported functions (69 current, 7 deprecated).*
+*Generated from `man/` on 2026-10-10 — 65 exported functions (65 current, 0 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -736,11 +731,6 @@ you want in the trial structure.
 - `showIf` — Optional condition (output of buildQCEshowIfCondition or buildQCEshowIfCompound) that gates whether this set runs. Evaluated at set entry -- if FALSE, the entire set is skipped. NULL means always run. DEFAULT = NULL.
 - `excludePreviouslyPresented` — Optional single boolean. When TRUE, this set's pool is filtered at runtime to exclude any scenarioID the participant has already been shown anywhere in the experiment. Honored on regular blocks as well as on sets built inside switchRules blocks: the flag is OR-ed with the block-level exclusion flag, so setting it here filters this set's pool even when the block itself does not ask for filtering. Phase 3 Decision 6 (Semantic C) -- the flag is a property of the destination set's pool, not of the firing rule, so any path that builds the set (rule firing, natural fallthrough, recursive next-natural) honors it consistently. NULL means do not filter. DEFAULT = NULL.
 - `entryInstruction` — Optional character vector of HTML filenames. Each fires as a jsPsychExternalHtml trial at set entry (one screen per file, in order). Phase 3.5 Decision D / Decision 7 close-out -- use for per-set transition screens that should display before the set's first trial. The same screens fire whether the set is reached by rule-fire (executeSwitch path), natural fallthrough (on_timeline_finish path), or as the first set in a switchRules block, OR as a regular set in a non-switchRules block (IsSetFirst hook). Each HTML file must contain a button with id="Go" (current engine convention; Phase 5.5 forms refactor will harmonize). NULL means no set-level entry screens. DEFAULT = NULL.
-
-**Details.** 
-Note: prior to Phase 2 this function accepted a vector of setNames in
-a single call. That multi-set form is now deprecated -- see
-addSetToQCEsetInfoListOldDep for the legacy behavior.
 
 **Returns.** The updated QCEsetInfoList, with the new set appended.
 
@@ -2161,20 +2151,6 @@ addHooksToQCEgroupDbFile(dbfile, "customHooks.js").
 
 **Returns.** (invisibly) the filename written.
 
-### `saveDbFile`
-
-This function is used to save the QCEdbFileList to dbfile.json
-
-```r
-saveDbFile(QCEdbFileList)
-```
-
-Function that save the QCEdbFileList to dbfile.json. LEGACY FORMAT WRITER: the output is wrapped in a JavaScript assignment (`var dbInfo =`) rather than being plain JSON, and the output filename is fixed, so an engine that requires plain JSON cannot load what this writes. Use saveJsonFile(data, filename) for current engines.
-
-- `QCEdbFileList` — A list that specifies the experiment- or group-level options of QCEB.
-
-**Returns.** the json data
-
 ### `saveJsonFile`
 
 This function writes any QCEB configuration list to a JSON file
@@ -2208,48 +2184,6 @@ Function that writes the list of image, video and audio files the experiment sho
 - `imageFileArray` — An array of the image filenames (plus paths) that need to be preloaded. Default `NULL`.
 - `videoFileArray` — An array of the video filenames (plus paths) that need to be preloaded. Default `NULL`.
 - `audioFileArray` — An array of the audio filenames (plus paths) that need to be preloaded. Default `NULL`.
-
-**Returns.** the json data
-
-### `savePreloadImages`
-
-This function is used to write an image-only preload manifest to preloadFile.json
-
-```r
-savePreloadImages(imageFileArray)
-```
-
-Function that writes the list of image files the experiment should preload to preloadFile.json in the working directory. LEGACY FORMAT WRITER: the output is wrapped in a JavaScript assignment (`var preloadImages =`) rather than being plain JSON, so an engine that requires plain JSON cannot load it. Use savePreloadFiles() for current engines.
-
-- `imageFileArray` — An array of the image filenames (plus paths) that need to be preloaded.
-
-**Returns.** the json data
-
-### `saveStimFile`
-
-This function is used to save the QCEScenarioList to stimFile.json
-
-```r
-saveStimFile(QCEScenarioList)
-```
-
-Function that save the QCEScenarioList to stimFile.json. LEGACY FORMAT WRITER: the output is wrapped in a JavaScript assignment (`var scenarios =`) rather than being plain JSON, and the output filename is fixed, so an engine that requires plain JSON cannot load what this writes. Use saveJsonFile(data, filename) for current engines.
-
-- `QCEScenarioList` — A list that specifies all the possible scenarios that participants might see. A scenario is, essentially, a trial. It is composed of a series of frames, some potential response, and maybe feedback. Included in each scenario are an output variable list to code in the datafile and a setName that is used for presentation rules (see trialStructure.json).
-
-**Returns.** the json data
-
-### `saveTSFile`
-
-This function is used to save the QCETrialStructureList to trialStructure.json
-
-```r
-saveTSFile(QCETrialStructureList)
-```
-
-Function that save the QCETrialStructureList to trialStructure.json. LEGACY FORMAT WRITER: the output is wrapped in a JavaScript assignment (`var trialStructure =`) rather than being plain JSON, and the output filename is fixed, so an engine that requires plain JSON cannot load what this writes. Use saveJsonFile(data, filename) for current engines.
-
-- `QCETrialStructureList` — A list that specifies how the trials will be presented in the experiment. This list specifies the selection of stimuli from stimFile.json, the ordering of stimuli, the blocking structure, etc.
 
 **Returns.** the json data
 
@@ -2421,20 +2355,6 @@ Writes `unplacedPages.json`, the list of a study's pages that no page placement,
 - `dir` — A single string naming the directory to write into: the one the configuration files go to. Default `"."`.
 
 **Returns.** Invisibly, the path written.
-
-## Deprecated — do not use in new code
-
-These remain exported for backward compatibility with existing build
-scripts. New code must not call them; each one's documentation names its
-replacement.
-
-- `addBlockToQCETrialStructureListDep` — This function is used to create or modify a QCETrialStructureList. This version is valid for the first incantation of the QCE.
-- `addFixationToQCEframeList_7` — DEPRECATED — use addFixationToQCEframeList() instead
-- `addFixationToQCEframeListOldDep` — This function is used to add a fixation frameto a QCEframeList
-- `addFrameToQCEframeList_7` — DEPRECATED — use addFrameToQCEframeList() instead
-- `addFrameToQCEframeListOldDep` — This function is used to create or modify a QCEframeList
-- `addSetToQCEsetInfoListOldDep` — DEPRECATED multi-set form of addSetToQCEsetInfoList
-- `buildQCEdbFile` — DEPRECATED — use buildQCEgroupDbFile() instead
 
 <!-- END GENERATED API -->
 

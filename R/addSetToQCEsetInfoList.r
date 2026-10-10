@@ -3,10 +3,6 @@
 #' Adds one set entry to a QCEsetInfoList. Call this function once per set
 #' you want in the trial structure.
 #'
-#' Note: prior to Phase 2 this function accepted a vector of setNames in
-#' a single call. That multi-set form is now deprecated -- see
-#' addSetToQCEsetInfoListOldDep for the legacy behavior.
-#'
 #' @param QCEsetInfoList Existing QCEsetInfoList to append to. Pass NULL to start a new one. DEFAULT = NULL.
 #' @param QCEScenarioList The QCEScenarioList that declares which setNames are valid.
 #' @param setName A single string -- the name of the set being added. Must match a setName declared on at least one scenario in QCEScenarioList.
@@ -37,12 +33,9 @@ addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL
   .qcebOneValueArgs("addSetToQCEsetInfoList", c("numberOfTrialsPerSet", "selectionType",
     "excludePreviouslyPresented"))
 
-  # Hard error with migration guidance if researcher passes the old vector form
+  #one set per call
   if (missing(setName) || is.null(setName) || length(setName) != 1 || !is.character(setName)) {
-    stop("setName option must be a single string. ",
-         "If you previously called this function with a vector of setNames, ",
-         "the multi-set form has been deprecated -- call this function once per set instead. ",
-         "If you need the old behavior temporarily, use addSetToQCEsetInfoListOldDep.")
+    stop("setName option must be a single string -- call this function once per set.")
   }
 
   # Validate selectionType

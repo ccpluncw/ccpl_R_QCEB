@@ -410,18 +410,13 @@
 }
 
 #write a settings list as json, in the form the description gives each key
-.qcebWriteSettings <- function(data, filename, fileKind = NULL, fn = "saveJsonFile", prefix = NULL) {
+.qcebWriteSettings <- function(data, filename, fileKind = NULL, fn = "saveJsonFile") {
   if (is.null(fileKind)) fileKind <- .qcebFileKind(data, filename)
   if (is.na(fileKind)) {
     warning(sprintf("%s: %s is not a settings file QCEB recognises, so every value in it is written as given: one value bare, several as a list.",
                     fn, filename), call. = FALSE)
   }
   jsonData <- .qcebToJson(.qcebSettingsForm(data, fileKind, fn))
-  if (is.null(prefix)) {
-    write(jsonData, filename, append = FALSE)
-  } else {
-    write(prefix, filename)
-    write(jsonData, filename, append = TRUE)
-  }
+  write(jsonData, filename, append = FALSE)
   jsonData
 }

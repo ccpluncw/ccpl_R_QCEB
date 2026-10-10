@@ -197,7 +197,7 @@ categories <- list(
   list(title = "Output fields and data manifest",
        pattern = "^(createQCEoutputVariableList|buildQCEoutputFieldManifest|missingQCEoutputFields|buildQCEhookRowManifest|promotedQCEhookRows)$"),
   list(title = "Writing and reading the config files",
-       pattern = "^(saveDbFile|saveStimFile|saveTSFile|saveJsonFile|readQCEjsonFile|readQCEBjsonFileToList|savePreloadFiles|savePreloadImages|saveCustomHooksTemplate)$"),
+       pattern = "^(saveJsonFile|readQCEjsonFile|readQCEBjsonFileToList|savePreloadFiles|saveCustomHooksTemplate)$"),
   list(title = "Utilities",
        pattern = "^(QCEanchor|isColor|isSingleNumeric|isSingleString|isValidFilename)$")
 )

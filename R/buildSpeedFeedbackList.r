@@ -25,7 +25,7 @@
 #' @return the speedFeedbackList
 #' @keywords QCE speed feedback speedFeedback
 #' @export
-#' @examples buildQCEdbFile (expName = "myExp", condName="TestCond", keyMap = myQCEBkeymap, randomizeKeyMap = TRUE, addQualtricsCode = TRUE, defaultBackgroundColor = "#000000", restAfterEveryNTrials = c(50, 100), instructionFile = "instructions.html", keyMapInstructionFile = "kmInst.html", getUserNameFile = NULL, getConsentFile = "consent.html", getDemographicsFile = NULL, getGenderFile = NULL, welcomeMsg = NULL, restMsg = NULL, endOfExpMsg = NULL, saveMsg = NULL)
+#' @examples buildSpeedFeedbackList(frameName = "test", thresholdWindowSize = 20, thresholdArrayPosition = 17)
 
 buildSpeedFeedbackList <- function (showFeedback = TRUE, speedThresholdUp = TRUE, frameName = "test", thresholdWindowSize = 20, thresholdArrayPosition = 17, thresholdBoundary = NULL, currentRTWindowSize = 1, initialWindowRtThreshold = NULL, initialWindowMessageDisplay = "&nbsp", initialWindowMessageOutput = "initial", initialStimulusDuration = 1, initialPostTrialGap = 1, aboveThresholdMessageDisplay = NULL, aboveThresholdMessageOutput = "above", aboveStimulusDuration = NULL, abovePostTrialGap= NULL, belowThresholdMessageDisplay = NULL, belowThresholdMessageOutput = "below", belowStimulusDuration = NULL, belowPostTrialGap = NULL) {
   .qcebOneValueArgs("buildSpeedFeedbackList", c("showFeedback", "speedThresholdUp", "frameName",

@@ -42,11 +42,6 @@ The updated QCEsetInfoList, with the new set appended.
 Adds one set entry to a QCEsetInfoList. Call this function once per set
 you want in the trial structure.
 }
-\details{
-Note: prior to Phase 2 this function accepted a vector of setNames in
-a single call. That multi-set form is now deprecated -- see
-addSetToQCEsetInfoListOldDep for the legacy behavior.
-}
 \examples{
 # Build a setInfo with two sets, one trigger-gated and one showIf-gated.
 sl <- addSetToQCEsetInfoList(NULL, scenarios, "baseline", 10)

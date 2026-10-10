@@ -1,5 +1,4 @@
-# Tests for addSetToQCEsetInfoList -- new single-set canonical form
-# and the deprecation wrapper addSetToQCEsetInfoListOldDep.
+#tests for addSetToQCEsetInfoList, one set per call
 
 # Helper: build a minimal scenario list with two setNames declared
 .makeScenariosTwoSets <- function() {
@@ -59,15 +58,15 @@ test_that("multiple sets via repeated calls", {
     expect_equal(sil$setB$N, 20)
 })
 
-test_that("vector setName throws with migration hint", {
+test_that("vector setName throws and says to call once per set", {
     expect_error(
         addSetToQCEsetInfoList(NULL, .makeScenariosTwoSets(), c("setA", "setB"), 10),
-        "addSetToQCEsetInfoListOldDep",
+        "call this function once per set",
         fixed = TRUE
     )
 })
 
-test_that("NULL setName throws with migration hint", {
+test_that("NULL setName throws", {
     expect_error(
         addSetToQCEsetInfoList(NULL, .makeScenariosTwoSets(), NULL, 10),
         "single string"
@@ -104,63 +103,6 @@ test_that("non-numeric numberOfTrialsPerSet throws", {
     expect_error(
         addSetToQCEsetInfoList(NULL, .makeScenariosTwoSets(), "setA", "ten"),
         "numberOfTrialsPerSet option must be a single integer"
-    )
-})
-
-# --- Deprecation wrapper: addSetToQCEsetInfoListOldDep ---
-
-test_that("OldDep emits .Deprecated() warning", {
-    expect_warning(
-        addSetToQCEsetInfoListOldDep(NULL, .makeScenariosTwoSets(), c("setA", "setB"), 10),
-        "deprecated",
-        ignore.case = TRUE
-    )
-})
-
-test_that("OldDep with vector setName produces multi-key list", {
-    suppressWarnings({
-        sil <- addSetToQCEsetInfoListOldDep(NULL, .makeScenariosTwoSets(), c("setA", "setB"), 10)
-    })
-    expect_equal(names(sil), c("setA", "setB"))
-    expect_equal(sil$setA$N, 10)
-    expect_equal(sil$setB$N, 10)
-})
-
-test_that("OldDep with NULL setName uses validSetNames", {
-    suppressWarnings({
-        sil <- addSetToQCEsetInfoListOldDep(NULL, .makeScenariosTwoSets(), NULL, 5)
-    })
-    expect_equal(sort(names(sil)), c("setA", "setB"))
-    expect_equal(sil$setA$N, 5)
-    expect_equal(sil$setB$N, 5)
-})
-
-test_that("OldDep with named-list trigger keyed by setName attaches per-set", {
-    suppressWarnings({
-        sil <- addSetToQCEsetInfoListOldDep(
-            NULL, .makeScenariosTwoSets(),
-            setName              = c("setA", "setB"),
-            numberOfTrialsPerSet = c(10, 20),
-            trigger = list(
-                setA = buildQCETriggerList(onset = 100, offset = 101)
-                # setB intentionally omitted -- should get no trigger
-            )
-        )
-    })
-    expect_equal(sil$setA$trigger$onset, 100L)
-    expect_null(sil$setB$trigger)
-})
-
-test_that("OldDep mismatched lengths throws", {
-    expect_error(
-        suppressWarnings(
-            addSetToQCEsetInfoListOldDep(
-                NULL, .makeScenariosTwoSets(),
-                setName              = c("setA", "setB"),
-                numberOfTrialsPerSet = c(10, 20, 30)
-            )
-        ),
-        "must be equal"
     )
 })
 
