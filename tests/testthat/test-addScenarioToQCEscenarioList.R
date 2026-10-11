@@ -1,7 +1,6 @@
-# Tests for addScenarioToQCEscenarioList -- stimRef + showIf additions,
-# duplicate-stimRef warning, validation, and JSON round-trip.
+#tests for addScenarioToQCEscenarioList
 
-# Helper: a minimal frame list (just enough to satisfy the function)
+#a minimal frame list
 .makeFrames <- function() {
     addFrameToQCEframeList(
         trialType = "key", frameName = "fix", stimulus = "+",
@@ -16,7 +15,7 @@ test_that("regression: scenario with no stimRef/showIf is byte-identical to lega
     entry <- sl[[1]]
     expect_null(entry$stimRef)
     expect_null(entry$showIf)
-    # The four legacy keys still present in the right order
+    #the four base keys are present in order
     expect_equal(names(entry)[1:4], c("frame", "feedback", "outputVariables", "set"))
 })
 
@@ -79,7 +78,7 @@ test_that("malformed showIf (hand-rolled missing operator) throws", {
     expect_error(
         addScenarioToQCEscenarioList(
             NULL, .makeFrames(), NULL, list(out = "x"), "setA",
-            showIf = list(stimRef = "smoker")  # no operator, not a compound
+            showIf = list(stimRef = "smoker")
         ),
         "is not a valid showIf condition",
         fixed = TRUE
@@ -118,7 +117,7 @@ test_that("JSON round-trip preserves stimRef + showIf on a scenario", {
     json <- jsonlite::toJSON(sl, auto_unbox = FALSE)
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     entry <- parsed[[1]]
-    # jsonlite array-wraps scalars per QCEP convention
+    #jsonlite array-wraps scalars
     expect_equal(entry$stimRef[[1]], "smoker")
     expect_equal(entry$showIf$stimRef[[1]], "over18")
 })

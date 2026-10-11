@@ -1,5 +1,4 @@
-# Tests for addSurveyFrameToQCEframeList + the plugins passthrough on
-# addSessionToSessionList.
+#tests for addSurveyFrameToQCEframeList and the plugins passthrough
 
 mkModel <- function() {
     surveyModel(surveyPage("p1",
@@ -54,11 +53,11 @@ test_that("scenario round-trip: survey frame works with addScenarioToQCEscenario
     sc <- addScenarioToQCEscenarioList(NULL, fl, NULL, NULL, "mvs_pre")
     expect_equal(sc[[1]]$set, "mvs_pre")
     expect_equal(sc[[1]]$frame[[1]]$trialType, "survey")
-    # NULL feedback/outputVariables are dropped (engine reads them defensively).
+    #null feedback and outputVariables are dropped
     expect_null(sc[[1]]$outputVariables)
 })
 
-# --- plugins passthrough on addSessionToSessionList -------------------------
+#plugins passthrough on addSessionToSessionList
 
 test_that("addSessionToSessionList emits plugins only when provided", {
     s0 <- addSessionToSessionList(NULL, sessionName = "noplug")

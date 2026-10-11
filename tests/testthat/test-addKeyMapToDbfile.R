@@ -1,4 +1,4 @@
-# Tests for addKeyMapToDbfile -- incremental add, NULL-init, duplicate warning.
+#tests for addKeyMapToDbfile
 
 make_dbfile <- function() {
     buildQCEgroupDbFile(condName = "testCond",

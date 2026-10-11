@@ -1,12 +1,9 @@
-# Tests for buildQCEblockSwitchRule (Phase 4 Step 2) -- required watchBlock,
-# XOR between countResponse / countWhen, threshold shape delegation, optional
-# switchToBlock, branching shape, JSON-shape expectations.
+#tests for buildQCEblockSwitchRule
 
 makeFixedThreshold <- function(n = 5) {
     buildQCEswitchThreshold(values = n, rule = "fixed")
 }
 
-# ---- happy paths ---------------------------------------------------------
 
 test_that("countResponse sugar produces watchBlock + threshold + countResponse + switchToBlock", {
     r <- buildQCEblockSwitchRule(
@@ -21,7 +18,7 @@ test_that("countResponse sugar produces watchBlock + threshold + countResponse +
     expect_equal(r$threshold$rule, "fixed")
     expect_equal(r$switchToBlock, "T3_spacebar")
     expect_null(r$countWhen)
-    # block rules must NOT carry the set-level fields
+    #block rules carry no set-level fields
     expect_null(r$switchToSet)
     expect_null(r$switchInstruction)
 })
@@ -60,8 +57,7 @@ test_that("randomIntBetween threshold survives", {
 })
 
 test_that("argument order allows threshold-first positional call", {
-    # threshold is the first formal (mirrors buildQCEswitchRule); make sure a
-    # named-arg call in any order works.
+    #threshold is the first formal, so a named call in any order works
     r <- buildQCEblockSwitchRule(
         threshold     = makeFixedThreshold(4),
         watchBlock    = "B1",
@@ -72,7 +68,7 @@ test_that("argument order allows threshold-first positional call", {
     expect_equal(r$threshold$values, 4)
 })
 
-# ---- watchBlock validation ----------------------------------------------
+#watchBlock validation
 
 test_that("missing watchBlock throws", {
     expect_error(
@@ -95,7 +91,7 @@ test_that("empty / non-string watchBlock throws", {
     )
 })
 
-# ---- count XOR validation ------------------------------------------------
+#count xor validation
 
 test_that("missing both countResponse AND countWhen throws", {
     expect_error(
@@ -128,7 +124,7 @@ test_that("malformed countWhen throws via shared validator", {
     expect_error(
         buildQCEblockSwitchRule(
             watchBlock = "T1",
-            countWhen  = list(field = "RT", operator = "lessThan"),  # missing value
+            countWhen  = list(field = "RT", operator = "lessThan"),
             threshold  = makeFixedThreshold()
         ),
         "value is required"
@@ -143,7 +139,7 @@ test_that("malformed countWhen throws via shared validator", {
     )
 })
 
-# ---- threshold validation ------------------------------------------------
+#threshold validation
 
 test_that("missing threshold throws", {
     expect_error(
@@ -156,12 +152,12 @@ test_that("missing threshold throws", {
 test_that("malformed threshold throws via shared validator", {
     expect_error(
         buildQCEblockSwitchRule(watchBlock = "T1", countResponse = "Yes",
-                                threshold = list(rule = "fixed")),  # missing values
+                                threshold = list(rule = "fixed")),
         "values is required"
     )
 })
 
-# ---- switchToBlock validation -------------------------------------------
+#switchToBlock validation
 
 test_that("empty switchToBlock throws", {
     expect_error(
@@ -171,7 +167,7 @@ test_that("empty switchToBlock throws", {
     )
 })
 
-# ---- branching shape (two rules, same watchBlock) ------------------------
+#branching shape, two rules with the same watchBlock
 
 test_that("two rules may share a watchBlock (branching) -- builder does not block it", {
     rA <- buildQCEblockSwitchRule("T1", countResponse = "Left",  switchToBlock = "LeftPath",

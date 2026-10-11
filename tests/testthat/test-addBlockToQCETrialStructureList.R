@@ -1,7 +1,6 @@
-# Tests for addBlockToQCETrialStructureList -- showIf addition,
-# validation, regression, and JSON round-trip.
+#tests for addBlockToQCETrialStructureList
 
-# Helper: build a minimal scenario + setInfo + blockIterator chain
+#a minimal scenario, setInfo and blockIterator chain
 .makeBlockInputs <- function() {
     fr <- addFrameToQCEframeList(
         trialType = "key", frameName = "fix", stimulus = "+",
@@ -18,7 +17,7 @@ test_that("regression: block without showIf is byte-identical to legacy output",
     tsl <- addBlockToQCETrialStructureList(NULL, inp$setInfo, inp$blockIter)
     entry <- tsl[[1]]
     expect_null(entry$showIf)
-    # The four legacy keys still present in the right order
+    #the four base keys are present in order
     expect_equal(names(entry)[1:4], c("blockNumber", "setInfo", "blockIterator", "blockName"))
 })
 
@@ -49,7 +48,7 @@ test_that("malformed showIf throws", {
     expect_error(
         addBlockToQCETrialStructureList(
             NULL, inp$setInfo, inp$blockIter,
-            showIf = list(stimRef = "smoker")  # missing operator
+            showIf = list(stimRef = "smoker")
         ),
         "is not a valid showIf condition",
         fixed = TRUE
@@ -99,14 +98,14 @@ test_that("JSON round-trip preserves showIf on a block", {
     json <- jsonlite::toJSON(tsl, auto_unbox = FALSE)
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     entry <- parsed[[1]]
-    # jsonlite array-wraps scalars per QCEP convention
+    #jsonlite array-wraps scalars
     expect_equal(entry$showIf$stimRef[[1]], "smoker")
     expect_equal(entry$showIf$operator[[1]], "equals")
 })
 
-# --- Phase 3 Chunk G: switchRules ---
+#switchRules
 
-# Helper: a well-formed single rule (countResponse sugar form)
+#a well-formed single rule in countResponse form
 .makeSwitchRule <- function(toSet = "setA") {
     buildQCEswitchRule(
         countResponse = "Yes",
@@ -138,7 +137,7 @@ test_that("block with two sequential switchRules preserves order", {
     r2 <- buildQCEswitchRule(
         countResponse = "No",
         threshold     = buildQCEswitchThreshold(values = 3, rule = "fixed")
-    )  # early-stop rule (no switchToSet)
+    )
     tsl <- addBlockToQCETrialStructureList(
         NULL, inp$setInfo, inp$blockIter,
         switchRules = list(r1, r2)
@@ -173,7 +172,7 @@ test_that("empty list switchRules throws", {
 
 test_that("hand-rolled rule missing both countResponse and countWhen throws", {
     inp <- .makeBlockInputs()
-    badRule <- list(threshold = buildQCEswitchThreshold(5))  # no count condition
+    badRule <- list(threshold = buildQCEswitchThreshold(5))
     expect_error(
         addBlockToQCETrialStructureList(
             NULL, inp$setInfo, inp$blockIter,
@@ -185,7 +184,7 @@ test_that("hand-rolled rule missing both countResponse and countWhen throws", {
 
 test_that("hand-rolled rule missing threshold throws", {
     inp <- .makeBlockInputs()
-    badRule <- list(countResponse = "Yes")  # no threshold
+    badRule <- list(countResponse = "Yes")
     expect_error(
         addBlockToQCETrialStructureList(
             NULL, inp$setInfo, inp$blockIter,
@@ -228,7 +227,7 @@ test_that("JSON round-trip preserves switchRules shape", {
 })
 
 
-# --- Phase 3.5 Chunk G: keyMapName / entryInstruction / excludePreviouslyPresented ---
+#keyMapName, entryInstruction and excludePreviouslyPresented
 
 test_that("regression: legacy block (no new args) byte-identical -- no new fields appear", {
     inp <- .makeBlockInputs()
@@ -330,9 +329,7 @@ test_that("showIf accepts blockRef leaf (Phase 3.5 Decision G)", {
     expect_equal(tsl[[1]]$showIf$operator, "switchFired")
 })
 
-# --- randomizeAllTrials vs selectionType = "fixed" --------------------------
-# The two settings are produced by different builders that cannot see each
-# other, so this function is the first place the pair can be compared.
+#randomizeAllTrials with selectionType fixed
 
 .makeFixedSetInputs <- function(selA = "fixed", selB = NULL, randAll = TRUE) {
     fr <- addFrameToQCEframeList(
@@ -391,12 +388,7 @@ test_that("randomizeAllTrials is legal without any fixed set", {
     expect_true(isTRUE(tsl[[1]]$blockIterator$randomizeAllTrials))
 })
 
-# --- randomizeAllTrials vs a set-level entryInstruction ---------------------
-# A set entry screen needs a moment that is the start of a set. Shuffling across
-# sets removes that moment. Same two builders, same blind spot as above.
-#
-# The SET COUNT is the part worth guarding: one set keeps its boundaries under
-# randomizeAllTrials, so its entry screen is legitimate and must not be refused.
+#randomizeAllTrials with a set entryInstruction, one set is allowed
 
 .makeEntryInputs <- function(entryA = NULL, entryB = NULL, randAll = TRUE,
                              twoSets = TRUE) {

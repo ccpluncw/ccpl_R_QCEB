@@ -1,5 +1,4 @@
-# Tests for addHooksToQCEgroupDbFile + the customHooksFile / customHooksStateKeys
-# path through buildQCEgroupDbFile (Phase 5).
+#tests for addHooksToQCEgroupDbFile and the group builder's hooks path
 
 mkDb <- function() buildQCEgroupDbFile(condName = "hooksTest")
 
@@ -50,7 +49,7 @@ test_that("re-declaring the hooks file warns and overwrites", {
     expect_equal(db$customHooksFile, "second.js")
 })
 
-# --- one-shot path through buildQCEgroupDbFile -------------------------------
+#one-shot path through buildQCEgroupDbFile
 
 test_that("buildQCEgroupDbFile one-shot sets the hooks fields", {
     db <- buildQCEgroupDbFile(condName = "x", customHooksFile = "customHooks.js",

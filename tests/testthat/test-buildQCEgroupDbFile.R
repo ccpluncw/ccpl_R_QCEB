@@ -1,5 +1,4 @@
-# Tests for buildQCEgroupDbFile -- restEveryNMinutes + restMaxTrial
-# additions, validation, and JSON round-trip.
+#tests for buildQCEgroupDbFile
 
 test_that("regression: dbfile without new params has no rest extension keys", {
     db <- buildQCEgroupDbFile(condName = "TestCond")
@@ -9,7 +8,7 @@ test_that("regression: dbfile without new params has no rest extension keys", {
 
 test_that("regression: legacy keys still present in pre-Phase-2 dbfile output", {
     db <- buildQCEgroupDbFile(condName = "TestCond")
-    # Verify the core legacy keys still appear
+    #the core base keys still appear
     legacyKeys <- c("condName", "keyMap", "randomizeKeyMap",
                     "presentKeyMapAfterTrialNumbers",
                     "restTrials", "speedFeedbackParams", "instructionFile",
@@ -88,13 +87,13 @@ test_that("JSON round-trip preserves rest extension params", {
                               restEveryNMinutes = 10, restMaxTrial = 200)
     json <- jsonlite::toJSON(db, auto_unbox = FALSE)
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
-    # jsonlite array-wraps scalars per QCEP convention
+    #jsonlite array-wraps scalars
     expect_equal(parsed$restEveryNMinutes[[1]], 10)
     expect_equal(parsed$restMaxTrial[[1]], 200)
 })
 
 
-# --- Phase 3.5 Chunk G: keyMaps arg (one-shot construction) ---
+#keyMaps arg, one-shot construction
 
 test_that("regression: dbfile without keyMaps arg has no $keyMaps field", {
     db <- buildQCEgroupDbFile(condName = "x",
@@ -137,8 +136,7 @@ test_that("completionGate/maxSessionMinutes are no longer group-level (moved to 
   expect_null(base$completionGate)
   expect_null(base$maxSessionMinutes)
   expect_null(base$maxExperimentMinutes)
-  # the args were removed from this builder -- completion + run clock are
-  # experiment-wide now; passing them here is an unused-argument error.
+  #completion arguments live on the experiment builder, so here they are unused
   expect_error(buildQCEgroupDbFile(condName = "c1", completionGate = list()), "unused argument")
   expect_error(buildQCEgroupDbFile(condName = "c1", maxSessionMinutes = 60), "unused argument")
 })
@@ -147,10 +145,7 @@ test_that("keyMapInstructionFile defaults to absent, not to the removed 'default
   db <- buildQCEgroupDbFile(condName = "c1")
   expect_null(db$keyMapInstructionFile)
 
-  # The engine reads this field as a literal filename and treats absence as
-  # "generate the screen yourself". NULL serialises to {}, which is what the
-  # engine reads as absent -- the string "default" would send it looking for a
-  # file of that name.
+  #a NULL serializes to {} which the engine reads as absent
   j <- as.character(jsonlite::toJSON(db, pretty = FALSE))
   expect_false(grepl('"keyMapInstructionFile":\\["default"\\]', j))
   expect_true(grepl('"keyMapInstructionFile":\\{\\}', j))
@@ -161,8 +156,7 @@ test_that("keyMapInstructionFile rejects 'default' and says what to use instead"
     buildQCEgroupDbFile(condName = "c1", keyMapInstructionFile = "default"),
     "no longer supported"
   )
-  # the message has to name the replacement -- this value fails far from its
-  # cause otherwise, as a 404 in a browser after a deploy.
+  #the message names the replacement
   expect_error(
     buildQCEgroupDbFile(condName = "c1", keyMapInstructionFile = "default"),
     "NULL"

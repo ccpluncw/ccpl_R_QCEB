@@ -1,6 +1,6 @@
 #tests for addSetToQCEsetInfoList, one set per call
 
-# Helper: build a minimal scenario list with two setNames declared
+#a minimal scenario list with two setNames declared
 .makeScenariosTwoSets <- function() {
     fr <- addFrameToQCEframeList(
         trialType = "key", frameName = "fix", stimulus = "+",
@@ -11,7 +11,6 @@
     return(sl)
 }
 
-# --- New canonical form: addSetToQCEsetInfoList ---
 
 test_that("regression: single-set without trigger/showIf produces N + selection only", {
     sil <- addSetToQCEsetInfoList(NULL, .makeScenariosTwoSets(), "setA", 10)
@@ -92,7 +91,7 @@ test_that("malformed showIf throws", {
     expect_error(
         addSetToQCEsetInfoList(
             NULL, .makeScenariosTwoSets(), "setA", 10,
-            showIf = list(stimRef = "smoker")  # missing operator
+            showIf = list(stimRef = "smoker")
         ),
         "is not a valid showIf condition",
         fixed = TRUE
@@ -106,7 +105,7 @@ test_that("non-numeric numberOfTrialsPerSet throws", {
     )
 })
 
-# --- JSON round-trip ---
+#json round-trip
 
 test_that("JSON round-trip preserves single-set with showIf", {
     sil <- addSetToQCEsetInfoList(
@@ -115,13 +114,13 @@ test_that("JSON round-trip preserves single-set with showIf", {
     )
     json <- jsonlite::toJSON(sil, auto_unbox = FALSE)
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
-    # jsonlite array-wraps scalars per QCEP convention
+    #jsonlite array-wraps scalars
     expect_equal(parsed$setA$N[[1]], 10)
     expect_equal(parsed$setA$showIf$stimRef[[1]], "smoker")
     expect_equal(parsed$setA$showIf$operator[[1]], "equals")
 })
 
-# --- Phase 3 Chunk G: excludePreviouslyPresented (set-level / Semantic C) ---
+#excludePreviouslyPresented
 
 test_that("regression: excludePreviouslyPresented absent → field omitted", {
     sil <- addSetToQCEsetInfoList(NULL, .makeScenariosTwoSets(), "setA", 10)
@@ -185,7 +184,7 @@ test_that("JSON round-trip preserves excludePreviouslyPresented", {
 })
 
 
-# --- Phase 3.5 Chunk G: entryInstruction (set-level) ---
+#entryInstruction
 
 .makeSetScenarios <- function() {
     fr <- addFrameToQCEframeList(

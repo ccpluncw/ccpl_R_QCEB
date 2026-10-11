@@ -1,5 +1,4 @@
-# Tests for addFrameToQCEframeList — pluginParams mechanism, kind validation,
-# and JSON round-trip of the engine-facing structure.
+#tests for addFrameToQCEframeList
 
 test_that("textbox frame with kind='number' puts kind in pluginParams", {
     fl <- addFrameToQCEframeList(
@@ -130,12 +129,11 @@ test_that("JSON round-trip: pluginParams.kind survives serialization", {
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
     frame <- parsed[[1]]
     expect_null(frame$kind)
-    # jsonlite wraps scalars as length-1 arrays (standard QCEP convention);
-    # the engine's unwrap() strips one level of wrapping.
+    #jsonlite wraps scalars as length-1 arrays and the engine unwraps one level
     expect_equal(frame$pluginParams$kind[[1]], "number")
 })
 
-# --- choices serialization (jsPsych v8 compatibility) ----------------------
+#choices serialization
 
 test_that("default choices='ALL_KEYS' serializes as JSON scalar string", {
     fl <- addFrameToQCEframeList(
@@ -143,7 +141,7 @@ test_that("default choices='ALL_KEYS' serializes as JSON scalar string", {
         stimulus = "x", stimulus_duration = 0, post_trial_gap = 0
     )
     json <- jsonlite::toJSON(fl, auto_unbox = FALSE)
-    # Scalar emits as "ALL_KEYS"; broken old behavior would emit ["ALL_KEYS"].
+    #a scalar emits as "ALL_KEYS", not ["ALL_KEYS"]
     expect_match(as.character(json), '"choices":"ALL_KEYS"', fixed = TRUE)
     expect_no_match(as.character(json), '"choices":\\["ALL_KEYS"\\]')
 })
@@ -169,8 +167,7 @@ test_that("multi-key vector serializes as JSON array (unchanged)", {
 })
 
 test_that("single non-magic key serializes as 1-element array", {
-    # jsPsych v8 accepts a 1-element array of literal keys; only the magic
-    # ALL_KEYS / NO_KEYS strings need scalar form.
+    #a one-element array of literal keys is valid, only the magic strings box
     fl <- addFrameToQCEframeList(
         trialType = "key", frameName = "f",
         stimulus = "x", stimulus_duration = 0, post_trial_gap = 0,
@@ -190,7 +187,7 @@ test_that("choices=NULL serializes as empty array", {
     expect_match(as.character(json), '"choices":\\[\\]')
 })
 
-# --- trial_duration: three-state resolution + the no-exit guard --------------
+#trial_duration three-state resolution and the no-exit guard
 
 test_that("a frame that never mentions trial_duration omits the key entirely", {
     fl <- addFrameToQCEframeList(
@@ -205,8 +202,7 @@ test_that("omitting trial_duration leaves the emitted frame byte-identical", {
                  stimulus_duration = 1000, post_trial_gap = 0,
                  choices = c("a", "b"), background = "#FFFFFF")
     withNew <- do.call(addFrameToQCEframeList, args)
-    # The reference shape. cursorVisible is absent because it was not stated:
-    # like trial_duration, the key is emitted only when the researcher sets it.
+    #cursorVisible is absent because it was not stated
     expect_equal(names(withNew[[1]]),
                  c("trialType", "frameName", "stimulus", "stimulus_duration",
                    "post_trial_gap", "response_ends_trial", "choices",
@@ -224,8 +220,7 @@ test_that("a stated cursorVisible is emitted, in its historical position", {
                    "background", "cursorVisible", "output"))
     expect_true(fl[[1]]$cursorVisible)
 
-    # FALSE is a value, not an absence: it must survive as an explicit key, since
-    # it is what overrides a pointer type's own answer.
+    #a FALSE is a value, so it stays as an explicit key
     fl2 <- addFrameToQCEframeList(
         trialType = "key", frameName = "f", stimulus = "x",
         stimulus_duration = 1000, post_trial_gap = 0, choices = c("a", "b"),
@@ -235,9 +230,7 @@ test_that("a stated cursorVisible is emitted, in its historical position", {
 })
 
 test_that("a pointer-driven type left unstated omits the key rather than hiding the cursor", {
-    # The regression this three-state form exists for: emitting a default FALSE
-    # here would outrank the engine's own answer and ship a mouse-driven trial
-    # with no pointer.
+    #a default FALSE would outrank the engine and hide the pointer
     for (tt in c("numberline", "angleline")) {
         fl <- addFrameToQCEframeList(
             trialType = tt, frameName = "f", stimulus = "x",
@@ -258,9 +251,7 @@ test_that("hiding the cursor on a pointer-driven type warns", {
 })
 
 test_that("hiding the cursor on a keyboard-driven type is silent", {
-    # Conforming is silent. A key frame with no pointer is the normal case, and
-    # textbox/mcKeys bring a response surface that is not the mouse -- forceResp
-    # must not be mistaken for usesPointer.
+    #conforming is silent, forceResp must not be mistaken for usesPointer
     for (tt in c("key", "textbox", "mcKeys")) {
         expect_silent(
             addFrameToQCEframeList(
@@ -359,16 +350,16 @@ test_that("no-exit guard still catches the original response_ends_trial case", {
 })
 
 test_that("no-exit guard allows the legitimate combinations", {
-    # NO_LIMIT with a real key
+    #a NO_LIMIT with a real key
     expect_silent(addFrameToQCEframeList(
         trialType = "key", frameName = "f", stimulus = "x",
         stimulus_duration = 2000, trial_duration = "NO_LIMIT",
         post_trial_gap = 0, choices = c("f", "j")))
-    # the min-dwell pattern: NO_KEYS, but a duration ends it
+    #a NO_KEYS with a duration that ends the frame
     expect_silent(addFrameToQCEframeList(
         trialType = "key", frameName = "f", stimulus = "x",
         stimulus_duration = 1500, post_trial_gap = 0, choices = "NO_KEYS"))
-    # a timed frame that refuses responses
+    #a timed frame that refuses responses
     expect_silent(addFrameToQCEframeList(
         trialType = "key", frameName = "f", stimulus = "x",
         stimulus_duration = 3000, post_trial_gap = 0,
@@ -376,11 +367,11 @@ test_that("no-exit guard allows the legitimate combinations", {
 })
 
 test_that("forceResp plugins are exempt from the no-exit guard", {
-    # A survey ends on its own submit button, so no keyboard exit is required.
+    #a survey ends on its own submit button
     expect_silent(addFrameToQCEframeList(
         trialType = "survey", frameName = "f", stimulus = "{}",
         trial_duration = "NO_LIMIT", post_trial_gap = 0, choices = "NO_KEYS"))
-    # mcKeys supplies its own digit keys.
+    #mcKeys supplies its own digit keys
     expect_silent(addFrameToQCEframeList(
         trialType = "mcKeys", frameName = "f", stimulus = "{}",
         trial_duration = "NO_LIMIT", post_trial_gap = 0, choices = "NO_KEYS"))

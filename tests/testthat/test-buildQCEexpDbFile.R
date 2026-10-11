@@ -1,12 +1,10 @@
-# Tests for the experiment-wide completionGate + maxExperimentMinutes params on
-# buildQCEexpDbFile (relocated here from buildQCEgroupDbFile: completion and the
-# whole-run clock are experiment-wide, beside completionRedirect).
+#tests for completionGate and maxExperimentMinutes on buildQCEexpDbFile
 
 test_that("legacy call emits neither completionGate nor maxExperimentMinutes", {
   base <- buildQCEexpDbFile(expName = "e1")
   expect_null(base$completionGate)
   expect_null(base$maxExperimentMinutes)
-  # byte-identical legacy surface: the fields are simply absent
+  #the fields are simply absent
   expect_false("completionGate" %in% names(base))
   expect_false("maxExperimentMinutes" %in% names(base))
 })
@@ -39,51 +37,51 @@ test_that("gateFn escape hatch emits when supplied", {
 })
 
 test_that("completionGate validation rejects malformed configs", {
-  # both forms at once
+  #both forms at once
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(gateFn = "f", formula = list(list(fn = "mean", column = "rt", op = ">=", value = 1)))),
     "EITHER")
-  # neither form
+  #neither form
   expect_error(buildQCEexpDbFile(expName = "e1", completionGate = list(noCreditMsg = "x")),
                "non-empty 'formula'")
-  # invalid fn
+  #invalid fn
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "avg", column = "rt", op = ">=", value = 1)))),
     "invalid fn")
-  # invalid op
+  #invalid op
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "mean", column = "rt", op = "~=", value = 1)))),
     "invalid op")
-  # formula missing a value/op/column
+  #formula missing a value, op or column
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "mean", column = "rt", op = ">=")))),
     "'fn', 'column', 'op', and 'value'")
-  # non-numeric value
+  #non-numeric value
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "mean", column = "rt", op = ">=", value = "x")))),
     "single finite number")
-  # proportion value out of [0,1]
+  #proportion value out of 0 to 1
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "proportion", column = "correct", op = ">=", value = 1.5)))),
     "\\[0,1\\]")
-  # bad combinator
+  #bad combinator
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(combinator = "most", formula = list(list(fn = "mean", column = "rt", op = ">=", value = 1)))),
     "'all' or 'any'")
-  # bad where op
+  #bad where op
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "count", column = "rt", op = ">=", value = 1,
                                                 where = list(rt = list(op = "~", value = 200)))))),
     "invalid op")
-  # gateFn not a single string
+  #gateFn not a single string
   expect_error(
     buildQCEexpDbFile(expName = "e1", completionGate = list(gateFn = c("a", "b"))),
     "takes one value")
@@ -95,21 +93,20 @@ test_that("where ordering ops require a finite numeric bound", {
       completionGate = list(formula = list(list(fn = "count", column = "rt", op = ">=", value = 1,
                                                 where = list(rt = list(op = "<", value = v))))))
   }
-  # A non-numeric bound can never match a row: it would silently empty the sample
-  # at run time, so it is rejected at build time instead.
+  #a non-numeric bound would empty the sample at run time, so it is rejected
   expect_error(whereVal("abc"), "must be a single finite number")
   expect_error(whereVal(TRUE),  "must be a single finite number")
   expect_error(whereVal(NULL),  "missing a 'value'")
-  # Numbers and numeric strings are accepted.
+  #numbers and numeric strings are accepted
   expect_silent(whereVal(200))
   expect_silent(whereVal("200"))
 
-  # Equality ops still accept non-numeric values -- that is their purpose.
+  #equality ops still accept non-numeric values
   expect_silent(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "count", column = "rt", op = ">=", value = 1,
                                                 where = list(trialType = list(op = "==", value = "mcKeys")))))))
-  # A bare scalar filter is untouched by the rule.
+  #a bare scalar filter is untouched
   expect_silent(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "count", column = "rt", op = ">=", value = 1,
@@ -129,9 +126,7 @@ test_that("run-integrity flags are absent unless supplied", {
 })
 
 test_that("run-integrity flags emit both Boolean values", {
-  # FALSE must emit, not be treated as "unset": the whole point of warnOnLeave is
-  # to turn OFF a guard that is on by default, so a builder that dropped FALSE
-  # would make the opt-out impossible to express.
+  #a FALSE must emit, it is the opt-out of a guard on by default
   off <- buildQCEexpDbFile(expName = "e1", warnOnLeave = FALSE)
   expect_true("warnOnLeave" %in% names(off))
   expect_false(off$warnOnLeave)
@@ -146,8 +141,7 @@ test_that("run-integrity flags emit both Boolean values", {
 })
 
 test_that("run-integrity flags reject non-Boolean and non-scalar", {
-  # Strings are rejected even though the engine's flag reader accepts them from a
-  # hand-authored dbfile: in R code a string is a mistake, not a spelling.
+  #a string flag is a mistake in R code, though the engine reads one
   expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = "TRUE"), "single Boolean")
   expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = 1), "single Boolean")
   expect_error(buildQCEexpDbFile(expName = "e1", warnOnLeave = NA), "single Boolean")
@@ -159,9 +153,7 @@ test_that("run-integrity flags reject non-Boolean and non-scalar", {
 })
 
 test_that("run-integrity flags survive the JSON round trip as scalars", {
-  # The engine reads these through a flag helper that unwraps jsonlite's
-  # one-element array wrapping. Confirm the wrapping is what that helper expects
-  # and that FALSE does not come back as an empty value.
+  #the engine's flag helper unwraps one-element arrays, FALSE must survive
   db <- buildQCEexpDbFile(expName = "e1", warnOnLeave = FALSE, strictGroupAssignment = TRUE)
   back <- jsonlite::fromJSON(jsonlite::toJSON(db), simplifyVector = FALSE)
   expect_equal(length(back$warnOnLeave), 1)
@@ -169,10 +161,7 @@ test_that("run-integrity flags survive the JSON round trip as scalars", {
   expect_true(back$strictGroupAssignment[[1]])
 })
 
-# --- attempts policy: attemptsAllowed + retryPrompt --------------------------
-# Mirrors the engine's qcepValidateAttemptsPolicy. These ran only at experiment
-# start before, so a mistyped attempts policy reached a participant's browser
-# before anyone heard about it.
+#attempts policy, attemptsAllowed and retryPrompt
 
 .promptOK <- list(text = "Try again?", yesLabel = "Yes", noLabel = "No")
 
@@ -204,20 +193,18 @@ test_that("attemptsAllowed must be a whole number of 1 or more", {
 })
 
 test_that("attempts and prompt are cross-checked in both directions", {
-  # More than one attempt with no way to ask for it: the extra attempts are
-  # unreachable.
+  #more than one attempt with no way to ask for it
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(gateFn = "f", attemptsAllowed = 2)),
     "unreachable")
-  # A prompt with an explicit 1 -- the researcher meant one attempt.
+  #a prompt with an explicit 1 means one attempt
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(gateFn = "f", attemptsAllowed = 1,
                             retryPrompt = .promptOK)),
     "Raise attemptsAllowed")
-  # A prompt with no attemptsAllowed at all -- they probably forgot the key, and
-  # the advice must differ from the case above.
+  #a prompt with no attemptsAllowed, the advice differs from the case above
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(gateFn = "f", retryPrompt = .promptOK)),
@@ -236,9 +223,7 @@ test_that("retryPrompt needs all three non-empty strings", {
 })
 
 test_that("the attempts policy is checked on a formula gate too, not just gateFn", {
-  # ⚠ The engine validates attempts after the shape check, whichever form the
-  # gate took. A check that lived in the formula branch would leave the escape
-  # hatch unguarded, and one in the gateFn branch would leave formulas unguarded.
+  #attempts are validated after the shape check for both gate forms
   expect_error(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(
@@ -248,29 +233,18 @@ test_that("the attempts policy is checked on a formula gate too, not just gateFn
 })
 
 test_that("a stated gate message may not be empty", {
-  # ⚠ duplicateMsg joined the other two: the engine has always read it, so a
-  # study could set it, and it reached the participant on exactly the same
-  # screen with none of the same checking. creditMsg and unscoredMsg joined
-  # for the same reason -- every message the engine can show is checked the
-  # same way, because every one reaches a participant at the moment they are
-  # being told what happened to their credit.
+  #every message the engine can show is checked the same way
   for (m in c("creditMsg", "noCreditMsg", "unscoredMsg",
               "supersededMsg", "duplicateMsg")) {
     cfg <- list(gateFn = "f"); cfg[[m]] <- ""
     expect_error(buildQCEexpDbFile(expName = "e1", completionGate = cfg), m)
   }
-  # Absent is fine -- the engine supplies its own default (or, for creditMsg,
-  # shows no grant screen at all).
+  #absent is fine, the engine supplies its own default
   expect_silent(buildQCEexpDbFile(expName = "e1", completionGate = list(gateFn = "f")))
 })
 
 test_that("creditMsg, unscoredMsg and scoredBy are KNOWN gate keys", {
-  # ⚠⚠ THE SAME DEFECT AS duplicateMsg, CAUGHT THE SAME WAY, ONE ROW DOWN.
-  # The engine reads all three, but they were missing from the key list here,
-  # so a study that set creditMsg was told the engine would ignore it --
-  # advice that, if followed, deletes the screen telling a passing
-  # participant they passed. The key list must track the ENGINE's reads, not
-  # the subset this package has had reason to validate.
+  #the key list must track the engine's reads, creditMsg and unscoredMsg too
   cfg <- list(gateFn = "f", creditMsg = "you passed",
               unscoredMsg = "left for review", scoredBy = "client")
   expect_silent(buildQCEexpDbFile(expName = "e1", completionGate = cfg))
@@ -293,9 +267,7 @@ test_that("scoredBy accepts only the two values the engine accepts", {
 })
 
 test_that("a misspelled gate key warns instead of vanishing", {
-  # ⚠⚠ The mistake nothing else catches: misspell BOTH attempts keys and the
-  # cross-checks stay quiet, leaving a one-attempt gate that never offers a
-  # retry -- the exact failure the feature exists to prevent.
+  #misspelling both attempts keys leaves a gate that never offers a retry
   expect_warning(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(gateFn = "f", attemptsAllowd = 2,
@@ -305,7 +277,7 @@ test_that("a misspelled gate key warns instead of vanishing", {
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(gateFn = "f", attemptsAllowd = 2, retryPromt = .promptOK)),
     "attemptsAllowd")
-  # Every documented key is silent.
+  #every documented key is silent
   expect_silent(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(formula = list(list(fn = "mean", column = "rt", op = ">=", value = 1)),
@@ -317,11 +289,7 @@ test_that("a misspelled gate key warns instead of vanishing", {
 })
 
 test_that("duplicateMsg is a KNOWN gate key", {
-  # ⚠⚠ THIS PACKAGE WARNED ABOUT A VALID CONFIG. The engine has read
-  # duplicateMsg since the key existed, but it was missing from the key list
-  # here, so a study that set it was told the engine would ignore it -- advice
-  # that was both wrong and, if followed, would have removed a message the
-  # participant sees.
+  #duplicateMsg is an engine-read key, so it must not draw a warning
   expect_silent(
     buildQCEexpDbFile(expName = "e1",
       completionGate = list(gateFn = "f", duplicateMsg = "already credited")))
@@ -333,9 +301,7 @@ test_that("duplicateMsg is a KNOWN gate key", {
 })
 
 test_that("attemptsAllowed has a floor and no ceiling", {
-  # The budget is any whole number of 1 or more. Nothing in either repo caps it,
-  # and a plan or a test that assumes 2 is the top hides every defect that only
-  # a third attempt can show.
+  #the budget is any whole number of 1 or more, not capped at 2
   for (n in c(1, 2, 3, 7, 40)) {
     cfg <- list(gateFn = "f", attemptsAllowed = n)
     if (n > 1) cfg$retryPrompt <- .promptOK
@@ -349,7 +315,7 @@ test_that("attemptsAllowed has a floor and no ceiling", {
     "attemptsAllowed")
 })
 
-# --- creditClaimTimeoutMs ---------------------------------------------------
+#creditClaimTimeoutMs
 
 test_that("creditClaimTimeoutMs is absent unless stated", {
   expect_false("creditClaimTimeoutMs" %in% names(buildQCEexpDbFile(expName = "e1")))
@@ -360,16 +326,15 @@ test_that("creditClaimTimeoutMs accepts a usable value and refuses an unusable o
                  creditClaimTimeoutMs = 30000)$creditClaimTimeoutMs, 30000)
   expect_equal(buildQCEexpDbFile(expName = "e1",
                  creditClaimTimeoutMs = 1000)$creditClaimTimeoutMs, 1000)
-  # ⚠ 0 does not mean "no timeout", it REMOVES the bound on the one request that
-  # can hang the end of a run. A string does the same thing by way of NaN.
+  #0 removes the bound on the credit claim, and a string does the same
   expect_error(buildQCEexpDbFile(expName = "e1", creditClaimTimeoutMs = 0), "at least 1000")
   expect_error(buildQCEexpDbFile(expName = "e1", creditClaimTimeoutMs = "30s"), "at least 1000")
-  # A few milliseconds fails every claim, and the claim fails open.
+  #a few milliseconds fails every claim, and the claim fails open
   expect_error(buildQCEexpDbFile(expName = "e1", creditClaimTimeoutMs = 5), "at least 1000")
   expect_error(buildQCEexpDbFile(expName = "e1", creditClaimTimeoutMs = Inf), "at least 1000")
 })
 
-#--- reservationMinutes ------------------------------------------------------
+#reservationMinutes
 
 test_that("reservationMinutes is absent unless stated", {
   expect_false("reservationMinutes" %in% names(buildQCEexpDbFile(expName = "e1")))
@@ -405,7 +370,7 @@ test_that("reservationMinutes survives the JSON round trip as a one-element arra
   expect_equal(back$reservationMinutes[[1]], 90)
 })
 
-#--- researcherContact -------------------------------------------------------
+#researcherContact
 
 test_that("researcherContact is absent unless stated", {
   expect_false("researcherContact" %in% names(buildQCEexpDbFile(expName = "e1")))

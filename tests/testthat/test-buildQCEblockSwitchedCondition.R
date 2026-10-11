@@ -1,5 +1,4 @@
-# Tests for buildQCEblockSwitchedCondition -- blockRef leaf for Phase 3.5
-# Decision G showIf gating.
+#tests for buildQCEblockSwitchedCondition
 
 test_that("switchFired operator produces blockRef+operator leaf", {
     c <- buildQCEblockSwitchedCondition("Block_T2", "switchFired")
@@ -29,8 +28,7 @@ test_that("invalid operator throws", {
 })
 
 test_that("invalid operator names common stimRef operator", {
-    # researcher might confuse blockRef vs stimRef operators -- error
-    # should list valid blockRef operators so they spot the mismatch
+    #the error lists the valid blockRef operators
     expect_error(buildQCEblockSwitchedCondition("B1", "equals"),
                  "switchFired switchNotFired")
 })
