@@ -2085,8 +2085,9 @@ readQCEBjsonFileToList(filename)
 
 Reads a JSON file and returns its contents as `jsonlite::fromJSON`
 returns them. The file may be plain JSON, as every file QCEB writes is, or a
-file whose first line declares a JavaScript variable (`var scenarios =`)
-with the JSON on the lines after it; that first line is left out of the read.
+file that declares a JavaScript variable (`var scenarios =`) before the
+JSON, on the same line or the line before it; the declaration and a trailing
+semicolon are left out of the read.
 To read a settings file back and save it again, use `readQCEjsonFile`,
 which keeps a list of one a list.
 

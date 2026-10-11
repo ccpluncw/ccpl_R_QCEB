@@ -15,6 +15,15 @@ test_that("readQCEBjsonFileToList reads a file that declares a variable on its f
   expect_identical(got[["1"]]$set, "practice")
 })
 
+test_that("readQCEBjsonFileToList reads a file that declares a variable and its JSON on one line", {
+  f <- tempfile(fileext = ".js")
+  on.exit(unlink(f))
+  writeLines('var scenarios = {"1": {"set": "practice", "stimRef": "a1"}};', f)
+  got <- readQCEBjsonFileToList(f)
+  expect_identical(got[["1"]]$set, "practice")
+  expect_identical(got[["1"]]$stimRef, "a1")
+})
+
 test_that("readQCEBjsonFileToList reads a file QCEB writes", {
   f <- tempfile(fileext = ".json")
   on.exit(unlink(f))
