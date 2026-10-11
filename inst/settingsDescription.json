@@ -18,7 +18,7 @@
       "qcebWrites": "false: QCEB does not write this key for engine 10",
       "absentMeans": "what the engine does when the key is absent, where that is not a default value",
       "column": "the data column the engine copies this one value into. Empty text here is a value, saved as an empty cell: it is written \"\" and read as \"\", never as not set.",
-      "studyOwnUnwrap": "contents belong to the study. In a file without settingsForm a list of exactly one is read as its item and a longer list is kept whole, at the top level (oneLevel) or at every depth (deep). In a file with settingsForm 2 they are untouched."
+      "studyOwnUnwrap": "contents belong to the study and are passed through as written, a list of one as a list, at the top level (oneLevel) or at every depth (deep); keys the entry describes are read as described."
     }
   },
   "pieces": {
@@ -501,7 +501,7 @@
               2
             ],
             "optional": true,
-            "absentMeans": "one value may be written inside a list of one",
+            "absentMeans": "the file was not written by QCEB 0.1.0 or later: engine 10 reads it as this form and reports it once, and the pre-flight and the deploy script stop it",
             "note": "2: one value is written bare, a list always as a list, and a setting that is not set is left out"
           },
           "expName": {
@@ -1739,7 +1739,7 @@
                 ],
                 "data": true
               },
-              "note": "data, not settings: passed through whole, as written, in both forms; each column holds one value, and a missing value is null in a file with settingsForm 2"
+              "note": "data, not settings: passed through whole, as written; each column holds one value, and a missing value is null"
             },
             "feedback": {
               "kind": "group",
