@@ -1,5 +1,4 @@
-# Build a stimfile-shaped list. `frames` is a vector of output flags, one per
-# frame, in frame order.
+#a stimfile-shaped list, frames is a vector of output flags in frame order
 mkScenario <- function(frames) {
   fr <- list()
   for (i in seq_along(frames)) {
@@ -38,8 +37,7 @@ test_that("a scenario keeping no row is reported", {
 })
 
 test_that("a scenario ending on a discarded frame is NOT reported", {
-  # The engine routes annotations to the last kept row, so this shape costs
-  # nothing and reporting it would be noise.
+  #annotations go to the last kept row, so this shape costs nothing
   d <- newDir()
   writeDb(d)
   writeStim(d, list(s_trailing = mkScenario(c(TRUE, FALSE))))
@@ -71,12 +69,12 @@ test_that("no declared hooks file means nothing is reported by default", {
   writeStim(d, list(s_filler = mkScenario(c(FALSE, FALSE))))
 
   expect_equal(promotedQCEhookRows(d), character(0))
-  # ...but the shape is still findable when asked for explicitly.
+  #the shape is still findable when asked for explicitly
   expect_equal(promotedQCEhookRows(d, requireHooksFile = FALSE), "s_filler")
 })
 
 test_that("an empty customHooksFile counts as undeclared", {
-  # An unset config field serializes as an empty object, not as absent.
+  #an unset field serializes as an empty object, not as absent
   d <- newDir()
   jsonlite::write_json(list(condName = list("c"),
                             customHooksFile = structure(list(), names = character(0))),
@@ -87,8 +85,7 @@ test_that("an empty customHooksFile counts as undeclared", {
 })
 
 test_that("frame keys are ordered numerically, not as text", {
-  # With text ordering "10" sorts before "2". The reported set does not depend on
-  # order, but nFrames/last in the report do, so the ordering is still asserted.
+  #frame keys order numerically, nFrames and last in the report depend on it
   d <- newDir()
   writeDb(d)
   writeStim(d, list(s_ten = mkScenario(rep(FALSE, 10))))
@@ -106,7 +103,7 @@ test_that("string flags are accepted as well as JSON booleans", {
   writeStim(d, list(s_str = list(frame = fr)))
   expect_equal(promotedQCEhookRows(d), "s_str")
 
-  # A string TRUE must count as kept, or the scenario would be reported wrongly.
+  #a string TRUE counts as kept
   d2 <- newDir()
   writeDb(d2)
   fr2 <- list("1" = list(output = list("TRUE")), "2" = list(output = list("FALSE")))

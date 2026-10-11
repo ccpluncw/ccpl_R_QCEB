@@ -1,5 +1,4 @@
-# Tests for buildQCEswitchThreshold -- shape, rule validation, value
-# constraints (especially randomIntBetween's exact-2 rule), JSON round-trip.
+#tests for buildQCEswitchThreshold
 
 test_that("fixed rule with single value produces 2-key list", {
     th <- buildQCEswitchThreshold(values = 5, rule = "fixed")
@@ -77,8 +76,8 @@ test_that("JSON round-trip preserves shape", {
     th <- buildQCEswitchThreshold(values = c(3, 7), rule = "randomIntBetween")
     json <- jsonlite::toJSON(th, auto_unbox = FALSE)
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
-    # values is a numeric vector → JSON array of numbers
+    #values is a numeric vector, so a json array of numbers
     expect_equal(unlist(parsed$values), c(3, 7))
-    # rule is scalar → wrapped as 1-element array per QCEP convention
+    #rule is a scalar, so a one-element array
     expect_equal(parsed$rule[[1]], "randomIntBetween")
 })

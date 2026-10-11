@@ -9,10 +9,7 @@ test_that("readQCEjsonFile round-trips a saved config without changing its shape
 })
 
 test_that("a scalar is not re-boxed on the way back out", {
-  # The defect this closes: fromJSON() hands a boxed scalar back as a
-  # one-element LIST, which toJSON() then boxes a second time, so "set":
-  # ["setA"] becomes [["setA"]]. A set name nested one level too deep matches
-  # no setInfo entry, and the first symptom is a session that runs no trials.
+  #a boxed scalar must not be boxed twice, set "setA" stays one level deep
   lst <- addScenarioToQCEscenarioList(NULL, NULL, NULL, NULL, "setA")
   f <- tempfile(fileext = ".json")
   saveJsonFile(lst, f)
@@ -38,15 +35,13 @@ test_that("reloading, appending and saving keeps every set a one-element array",
 })
 
 test_that("a deliberately unboxed value stays unboxed", {
-  # addFrameToQCEframeList unboxes `choices` on purpose, because the engine
-  # expects a bare scalar there. Re-boxing it would silently change what the
-  # engine is handed, so the reader has to preserve the distinction.
+  #choices is unboxed on purpose, so the reader keeps the distinction
   f <- tempfile(fileext = ".json")
   writeLines('{\n  "a": {\n    "choices": "NO_KEYS",\n    "set": ["setA"]\n  }\n}', f)
   saveJsonFile(readQCEjsonFile(f), f)
 
   txt <- paste(readLines(f, warn = FALSE), collapse = "")
-  expect_true(grepl('"choices":\\s*"NO_KEYS"', txt))     # still bare
+  expect_true(grepl('"choices":\\s*"NO_KEYS"', txt))
   expect_false(grepl('"choices":\\s*\\["NO_KEYS"\\]', txt))
   #one value, bare
   expect_true(grepl('"set":\\s*"setA"', txt))

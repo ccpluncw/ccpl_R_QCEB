@@ -1,5 +1,4 @@
-# Tests for the schema-agnostic SurveyJS model builders + array-forcing
-# serializer (surveyModelBuilders.r) and the soft catalog (surveyTypeCatalog.r).
+#tests for the survey model builders, serializer and soft catalog
 
 test_that("surveyQuestion builds a minimal element with passthrough props", {
     q <- surveyQuestion("rating", name = "mvs1", title = "How are you?",
@@ -18,7 +17,7 @@ test_that("surveyQuestion omits isRequired when FALSE (default)", {
 })
 
 test_that("surveyQuestion passes through ANY property (schema-agnostic)", {
-    # unknown type warns softly but still builds -- suppress the soft warning
+    #an unknown type warns softly but still builds
     q <- suppressWarnings(surveyQuestion("brandNewType", name = "x", futureProp = list(1, 2, 3)))
     expect_equal(q$type, "brandNewType")
     expect_equal(q$futureProp, list(1, 2, 3))
@@ -48,7 +47,7 @@ test_that("surveyQuestion rejects an empty type", {
 })
 
 test_that("surveyQuestion rejects unnamed ... props", {
-    # fill type/name/title/isRequired so the stray value lands in ...
+    #positional fill of type, name, title and isRequired leaves a stray value
     expect_error(surveyQuestion("text", "a", "T", FALSE, "stray"),
                  "must be")
 })
@@ -83,7 +82,7 @@ test_that("surveyModel sets defaults and assembles pages", {
     expect_equal(length(m$pages), 1L)
 })
 
-# --- serializer: the array-forcing guarantee --------------------------------
+#serializer array-forcing guarantee
 
 test_that("single choice serializes as a JSON ARRAY, not a scalar", {
     q <- surveyQuestion("radiogroup", "x", choices = "OnlyOne")
@@ -157,10 +156,10 @@ test_that("every catalog entry has desc/required/properties/docUrl with the righ
         expect_true(is.list(e$properties) && !is.null(names(e$properties)) &&
                     all(nchar(names(e$properties)) > 0),
                     info = paste(t, "properties is a named list"))
-        # every property carries a single-string description
+        #every property carries a single-string description
         expect_true(all(vapply(e$properties, function(d) is.character(d) && length(d) == 1, logical(1))),
                     info = paste(t, "property descriptions"))
-        # every required prop is also documented in properties
+        #every required prop is also documented in properties
         expect_true(all(e$required %in% names(e$properties)),
                     info = paste(t, "required props documented in properties"))
         expect_match(e$docUrl, "^https://surveyjs\\.io/form-library/documentation/api-reference/",

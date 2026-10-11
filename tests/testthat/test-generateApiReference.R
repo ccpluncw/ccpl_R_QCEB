@@ -1,18 +1,11 @@
-# Tests for the reference generator's optional PDF render step.
-#
-# The generator is a standalone script rather than a package function, so these
-# tests run it the way a user does -- through Rscript, against a throwaway
-# package root built in a temp dir. They are skipped where the script is not
-# on disk (it is excluded from the built package) or where Rscript cannot be
-# found.
+#tests for the reference generator's pdf step, run through Rscript
 
 generator_script <- function() {
     normalizePath(test_path("..", "..", "tools", "generate_api_reference.R"),
                   mustWork = FALSE)
 }
 
-# A minimal package root: the generator needs man/, NAMESPACE, and a
-# BUILDER_REFERENCE.md carrying exactly one BEGIN/END marker pair.
+#a minimal package root with one BEGIN and END marker pair
 make_fixture_root <- function() {
     root <- file.path(tempfile("qcebRef"))
     dir.create(file.path(root, "man"), recursive = TRUE)
@@ -30,8 +23,7 @@ make_fixture_root <- function() {
     root
 }
 
-# A renderer that exits 0 and writes nothing at all -- the failure mode a bare
-# existence check cannot see.
+#a renderer that exits 0 and writes nothing
 make_lying_renderer <- function(root) {
     path <- file.path(root, "lyingRenderer.sh")
     writeLines(c("#!/bin/sh", "exit 0"), path)
@@ -52,7 +44,7 @@ skip_unless_runnable <- function() {
     skip_if_not(file.exists(generator_script()),
                 "generator script is not part of the built package")
     skip_if_not(nzchar(Sys.which("Rscript")), "Rscript not found")
-    skip_on_os("windows")  # the fixture renderer is a shell script
+    skip_on_os("windows")
 }
 
 test_that("a renderer that writes nothing fails, and takes no stale PDF with it", {
@@ -60,18 +52,18 @@ test_that("a renderer that writes nothing fails, and takes no stale PDF with it"
 
     root <- make_fixture_root()
     pdf <- file.path(root, "BUILDER_REFERENCE.pdf")
-    # A PDF left over from an earlier, successful run.
+    #a pdf left over from an earlier run
     writeLines("stale output from an earlier run", pdf)
     expect_true(file.exists(pdf))
 
     out <- run_generator(root, make_lying_renderer(root))
 
-    # The run fails ...
+    #the run fails
     expect_true(any(grepl("wrote no file", out)))
     expect_equal(attr(out, "status"), 1L)
-    # ... and the stale PDF is gone rather than passing as this run's output.
+    #the stale pdf is gone
     expect_false(file.exists(pdf))
-    # The markdown is still regenerated: rendering is the last step.
+    #the markdown is still regenerated, rendering is the last step
     expect_true(any(grepl("fixtureFn",
                           readLines(file.path(root, "BUILDER_REFERENCE.md")))))
 })
@@ -81,7 +73,7 @@ test_that("a renderer whose output has no readable page count fails", {
 
     root <- make_fixture_root()
     renderer <- file.path(root, "garbageRenderer.sh")
-    # Exits 0 and writes a file, but not one with a readable page tree.
+    #exits 0 and writes a file without a readable page tree
     writeLines(c("#!/bin/sh", "printf 'not a pdf' > \"$2\""), renderer)
     Sys.chmod(renderer, "0755")
 
@@ -96,7 +88,7 @@ test_that("a page count is only ever reported as a whole number", {
 
     root <- make_fixture_root()
     renderer <- file.path(root, "countingRenderer.sh")
-    # The smallest thing the page-count scan will accept: a /Count entry.
+    #the smallest file the page-count scan accepts
     writeLines(c("#!/bin/sh", "printf '%%PDF-1.4 /Count 7' > \"$2\""), renderer)
     Sys.chmod(renderer, "0755")
 
@@ -110,8 +102,7 @@ test_that("no renderer named renders nothing and says so", {
     skip_unless_runnable()
 
     root <- make_fixture_root()
-    # The environment variable is the other way to name a renderer, so it has
-    # to be absent for this to be the "named nothing" case.
+    #the environment variable must be absent for the named-nothing case
     had <- Sys.getenv("QCEB_PDF_RENDERER", unset = NA)
     Sys.unsetenv("QCEB_PDF_RENDERER")
     on.exit(if (!is.na(had)) Sys.setenv(QCEB_PDF_RENDERER = had), add = TRUE)

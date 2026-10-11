@@ -1,13 +1,9 @@
-# Tests for buildQCEswitchRule -- XOR validation between countResponse /
-# countWhen, threshold shape delegation, optional switchToSet /
-# switchInstruction, JSON round-trip against engine's expected shape.
+#tests for buildQCEswitchRule
 
-# Helpers used across tests
 makeFixedThreshold <- function(n = 5) {
     buildQCEswitchThreshold(values = n, rule = "fixed")
 }
 
-# ---- happy paths ---------------------------------------------------------
 
 test_that("countResponse sugar produces threshold + countResponse + switchToSet", {
     r <- buildQCEswitchRule(
@@ -35,9 +31,6 @@ test_that("countWhen full form produces threshold + countWhen", {
     expect_null(r$switchToSet)
 })
 
-# test removed -- switchInstruction was removed from the engine
-# from engine, Chunk G deprecated the arg on this builder. New deprecation
-# tests appended at the bottom of the file.
 
 test_that("switchToSet=NULL → early-stop without redirect", {
     r <- buildQCEswitchRule(
@@ -54,7 +47,7 @@ test_that("randomIntBetween threshold survives", {
     expect_equal(r$threshold$rule, "randomIntBetween")
 })
 
-# ---- XOR validation ------------------------------------------------------
+#xor validation
 
 test_that("missing both countResponse AND countWhen throws", {
     expect_error(
@@ -74,7 +67,7 @@ test_that("both countResponse AND countWhen throws", {
     )
 })
 
-# ---- countResponse shape -------------------------------------------------
+#countResponse shape
 
 test_that("non-string countResponse throws", {
     expect_error(
@@ -96,7 +89,7 @@ test_that("empty-string countResponse throws", {
     )
 })
 
-# ---- countWhen shape -----------------------------------------------------
+#countWhen shape
 
 test_that("countWhen as non-list throws", {
     expect_error(
@@ -138,7 +131,7 @@ test_that("countWhen missing value throws", {
     )
 })
 
-# ---- threshold shape -----------------------------------------------------
+#threshold shape
 
 test_that("missing threshold throws", {
     expect_error(
@@ -187,7 +180,7 @@ test_that("threshold randomIntBetween wrong arity throws", {
     )
 })
 
-# ---- switchToSet / switchInstruction shape -------------------------------
+#switchToSet and switchInstruction shape
 
 test_that("non-string switchToSet throws", {
     expect_error(
@@ -211,12 +204,8 @@ test_that("empty switchToSet throws", {
     )
 })
 
-# 2026-05-24 (Phase 3.5 Chunk G): tests for "non-string switchInstruction
-# throws" and "empty switchInstruction throws" were removed. The arg is now
-# deprecated -- it no longer validates shape, just warns and drops. New
-# deprecation tests are appended at the bottom of the file.
 
-# ---- JSON round-trip -----------------------------------------------------
+#json round-trip
 
 test_that("JSON round-trip preserves countResponse-form rule shape", {
     r <- buildQCEswitchRule(
@@ -226,8 +215,7 @@ test_that("JSON round-trip preserves countResponse-form rule shape", {
     )
     json <- jsonlite::toJSON(r, auto_unbox = FALSE)
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
-    # Scalars wrapped as 1-element arrays per QCEP convention; engine's
-    # _u() unwraps at read sites.
+    #scalars are wrapped as one-element arrays, the engine unwraps them
     expect_equal(parsed$countResponse[[1]], "Yes")
     expect_equal(parsed$switchToSet[[1]], "SetB")
     expect_equal(unlist(parsed$threshold$values), 5)
@@ -250,7 +238,7 @@ test_that("JSON round-trip preserves countWhen-form rule shape", {
 })
 
 
-# --- switchInstruction deprecation ---
+#switchInstruction deprecation
 
 test_that("switchInstruction: passing it emits .Deprecated warning", {
     expect_warning(

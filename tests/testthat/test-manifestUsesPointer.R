@@ -18,8 +18,7 @@ test_that("a mouse-driven trialType is flagged in the manifest's type section", 
   rpt <- buildQCEoutputFieldManifest(d, outFile = NULL)
   expect_true(any(grepl("# [numberline] is mouse-driven (usesPointer)", rpt,
                         fixed = TRUE)))
-  # A keyboard type carries no pointer note -- the flag means something only
-  # because it is absent where it does not apply.
+  #a keyboard type carries no pointer note
   expect_false(any(grepl("# [key] is mouse-driven", rpt, fixed = TRUE)))
 })
 

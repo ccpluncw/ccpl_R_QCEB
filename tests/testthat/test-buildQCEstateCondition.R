@@ -1,12 +1,11 @@
-# Tests for buildQCEstateCondition -- stateRef leaf for Phase 5
-# hook->state->showIf gating.
+#tests for buildQCEstateCondition
 
 test_that("value operator produces stateRef+operator+value leaf", {
     c <- buildQCEstateCondition("blockScore", "greaterThan", 0.8)
     expect_equal(c$stateRef, "blockScore")
     expect_equal(c$operator, "greaterThan")
     expect_equal(c$value, 0.8)
-    expect_null(c$field)  # stateRef leaves never carry a field
+    expect_null(c$field)
 })
 
 test_that("all seven value operators are accepted", {

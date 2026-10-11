@@ -1,7 +1,6 @@
-# Tests for the pages + cards builders, their writers, the group wiring, and the
-# output-field manifest scanner.
+#tests for the page and card builders, writers, group wiring and manifest
 
-# --- page fields -------------------------------------------------------------
+#page fields
 
 test_that("buildQCEpageField emits input/type/required and omits optional keys", {
     f <- buildQCEpageField("age")
@@ -31,7 +30,7 @@ test_that("buildQCEpageField rejects a bad requiredMessage and warns when it can
                  "non-empty string")
     expect_error(buildQCEpageField("age", required = TRUE, requiredMessage = c("a", "b")),
                  "takes one value")
-    # A message on an optional field is dead config, not an error.
+    #a message on an optional field is dead config, not an error
     expect_warning(buildQCEpageField("age", required = FALSE, requiredMessage = "hi"),
                    "never be shown")
 })
@@ -44,7 +43,7 @@ test_that("buildQCEpageField rejects bad input, type, and required", {
     expect_error(buildQCEpageField("x", as = ""), "non-empty string")
 })
 
-# --- page sidecar ------------------------------------------------------------
+#page sidecar
 
 test_that("buildQCEpageSidecar defaults to global scope and no fields", {
     s <- buildQCEpageSidecar()
@@ -65,7 +64,7 @@ test_that("page sidecar rejects two fields writing the same column", {
             buildQCEpageField("a", as = "Age"),
             buildQCEpageField("b", as = "Age"))),
         "already writes to")
-    # the same collision via the input fallback
+    #the same collision via the input fallback
     expect_error(
         buildQCEpageSidecar(fields = list(
             buildQCEpageField("Age"),
@@ -84,7 +83,7 @@ test_that("page sidecar fields serialize as a JSON array", {
     expect_true(grepl('"fields":\\[', js))
 })
 
-# --- page placement ----------------------------------------------------------
+#page placement
 
 test_that("addPageToQCEpagePlacement appends placements and preserves order", {
     p <- addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), "consent")
@@ -133,12 +132,12 @@ test_that("cards accept experimentStart as a mount/unmount point", {
 test_that("page placement rejects unknown anchors and extensioned filenames", {
     expect_error(addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), "consent.html"), "NOT carry an extension")
     expect_error(addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), ""), "non-empty string")
-    # The retired string form is named explicitly rather than failing obscurely.
+    #a string anchor is named explicitly rather than failing obscurely
     expect_error(addPageToQCEpagePlacement(NULL, "sessionStart", "pg"), "anchor option is a string")
     expect_error(QCEanchor("blockStart"), "unknown 'at' value")
 })
 
-# --- card fields -------------------------------------------------------------
+#card fields
 
 test_that("buildQCEcardField requires exactly one source", {
     expect_error(buildQCEcardField(), "either a 'formula'")
@@ -184,7 +183,7 @@ test_that("card field validates digits", {
     expect_equal(buildQCEcardField(bind = "x", digits = 2)$digits, 2)
 })
 
-# --- card sidecar ------------------------------------------------------------
+#card sidecar
 
 test_that("card sidecar needs something to draw", {
     expect_error(buildQCEcardSidecar(), "needs something to draw")
@@ -222,7 +221,7 @@ test_that("card sidecar validates refreshMs and position", {
     expect_equal(buildQCEcardSidecar(template = "x", refreshMs = 1000)$refreshMs, 1000)
 })
 
-# --- card placement ----------------------------------------------------------
+#card placement
 
 test_that("addCardToQCEcardPlacement builds an unnamed list with defaults", {
     c1 <- addCardToQCEcardPlacement(NULL, "progress")
@@ -262,7 +261,7 @@ test_that("several cards accumulate in order", {
     expect_equal(cs[[2]]$mount, QCEanchor("entry", session = "1", block = "test"))
 })
 
-# --- writers -----------------------------------------------------------------
+#writers
 
 test_that("saveQCEpageFiles writes the map and its sidecars", {
     d <- file.path(tempdir(), "pgtest"); dir.create(d, showWarnings = FALSE)
@@ -304,7 +303,7 @@ test_that("saveQCEcardFiles requires a sidecar for every placed card", {
     expect_true(file.exists(file.path(d, "progress.card.json")))
 })
 
-# --- group wiring ------------------------------------------------------------
+#group wiring
 
 test_that("group list omits pages/cards keys when not given (byte-identical)", {
     g <- addSessionListToQCEGroupList(NULL, list(a = 1), "grp")
@@ -323,19 +322,19 @@ test_that("group list validates pages/cards filenames", {
     expect_error(addSessionListToQCEGroupList(NULL, list(a = 1), "g", cards = c("a", "b")), "takes one value")
 })
 
-# --- registry outputColumns --------------------------------------------------
+#registry outputColumns
 
 test_that("core types declare the columns their extractors write", {
     expect_equal(QCEB:::.qcebTrialTypeOutputColumns("mcKeys"),
                  c("qid", "shownOrder", "pressedKey", "selectedLabel",
                    "selectedValue", "correctValue", "correct", "timedOut"))
     expect_equal(QCEB:::.qcebTrialTypeOutputColumns("key"), c("Key", "FeedBack", "Response"))
-    # survey derives its columns from question names, so it declares none
+    #survey derives its columns from question names, so it declares none
     expect_null(QCEB:::.qcebTrialTypeOutputColumns("survey"))
     expect_null(QCEB:::.qcebTrialTypeOutputColumns("nosuchtype"))
 })
 
-# --- the manifest scanner ----------------------------------------------------
+#the manifest scanner
 
 makeTestExp <- function(d, withHooks = FALSE) {
     dir.create(d, showWarnings = FALSE, recursive = TRUE)
@@ -361,12 +360,12 @@ test_that("the manifest finds trial types, outputVariables, feedback keys and pa
     out <- buildQCEoutputFieldManifest(d, outFile = NULL)
     txt <- paste(out, collapse = "\n")
     expect_true(grepl("this experiment uses \\(key, mcKeys\\)", txt))
-    expect_true("selectedValue" %in% out)   # from the mcKeys registry entry
-    expect_true("Response" %in% out)        # from the key registry entry
-    expect_true("myVar" %in% out)           # outputVariables
+    expect_true("selectedValue" %in% out)
+    expect_true("Response" %in% out)
+    expect_true("myVar" %in% out)
     #a feedback label is not a data column
     expect_false("fbKey" %in% out)
-    expect_true("Birth" %in% out)           # page field's `as` column
+    expect_true("Birth" %in% out)
     expect_true(grepl("WHITELIST", txt))
 })
 
@@ -403,7 +402,7 @@ test_that("the manifest diff names columns missing from fields.txt", {
     d <- makeTestExp(file.path(tempdir(), "mfdiff"))
     on.exit(unlink(d, recursive = TRUE), add = TRUE)
     ff <- file.path(d, "fields.txt")
-    writeLines(c("Exp_Name", "sn", "Trial"), ff)   # deliberately short
+    writeLines(c("Exp_Name", "sn", "Trial"), ff)
     txt <- paste(buildQCEoutputFieldManifest(d, outFile = NULL, fieldsFile = ff), collapse = "\n")
     expect_true(grepl("CHECK THIS! Expected columns MISSING", txt))
     expect_true(grepl("selectedValue", txt))
@@ -444,16 +443,15 @@ test_that("the manifest reads a survey's question names as columns", {
     on.exit(unlink(d, recursive = TRUE), add = TRUE)
     out <- buildQCEoutputFieldManifest(d, outFile = NULL)
     expect_true("MVS_goodCatch" %in% out)
-    expect_true("nested_q" %in% out)          # inside a panel
-    expect_false("blurb" %in% out)            # display-only html element
+    expect_true("nested_q" %in% out)
+    expect_false("blurb" %in% out)
 })
 
 test_that("the manifest expands a matrix into the per-item columns the data carries", {
     d <- makeSurveyExp(file.path(tempdir(), "mfmatrix"))
     on.exit(unlink(d, recursive = TRUE), add = TRUE)
     out <- buildQCEoutputFieldManifest(d, outFile = NULL)
-    # The trial type flattens {PANAS: {Alert: 3}} to PANAS_Alert, so reporting a
-    # bare "PANAS" would name a column that never appears in the data.
+    #the trial type flattens PANAS to PANAS_Alert, a bare PANAS never appears
     expect_true(all(c("PANAS_Alert", "PANAS_Upset") %in% out))
     expect_false("PANAS" %in% out)
 })
@@ -475,7 +473,7 @@ test_that("missingQCEoutputFields returns the gap as data, not prose", {
     expect_true(is.character(gaps))
     expect_true(all(c("Birth", "selectedValue") %in% gaps))
     expect_false(any(grepl("^#", gaps)))
-    # Columns already present must not be reported as gaps.
+    #columns already present are not gaps
     expect_false("Trial" %in% gaps)
 })
 
@@ -495,8 +493,7 @@ test_that("missingQCEoutputFields does not mistake the 'extra columns' list for 
     report <- buildQCEoutputFieldManifest(d, outFile = NULL)
     cols <- report[!grepl("^#", report) & nchar(report) > 0]
     ff <- file.path(d, "fields.txt")
-    # Complete, PLUS a hook-written column the scan cannot see. That lands in the
-    # report's second list, which must not be read back as missing.
+    #a hook-written column lands in the second list, not in the missing one
     writeLines(c(cols, "aHookColumn"), ff)
     expect_length(missingQCEoutputFields(d, ff), 0)
 })
@@ -515,7 +512,7 @@ test_that("an unset config field (serialized as {}) is not read as a declared sc
     on.exit(unlink(d, recursive = TRUE), add = TRUE)
     stim <- list(s1 = list(frame = list(`1` = list(trialType = "mcKeys"))))
     jsonlite::write_json(stim, file.path(d, "e_stimfile.json"), auto_unbox = FALSE)
-    # buildQCEexpDbFile emits NULL params as empty objects, not as absent keys.
+    #null params are emitted as empty objects, not as absent keys
     db <- list(expName = "x", getDemographicsFile = setNames(list(), character(0)),
                getGenderFile = setNames(list(), character(0)),
                customHooksFile = setNames(list(), character(0)))
@@ -523,15 +520,14 @@ test_that("an unset config field (serialized as {}) is not read as a declared sc
     txt <- paste(buildQCEoutputFieldManifest(d, outFile = NULL), collapse = "\n")
     expect_false(grepl("Birth", txt))
     expect_false(grepl("Gender", txt))
-    expect_false(grepl("CHECK THIS!", txt))   # no hooks declared
+    expect_false(grepl("CHECK THIS!", txt))
 })
 
 
-# --- ENG-010: an anchor must be able to say WHICH set it means ---------------
+#an anchor names which set it means
 
 test_that("a set anchor cannot be written without its block", {
-    # The defect: a bare set name addressed every block containing a set of that
-    # name, so one placement fired in all of them.
+    #a bare set name would address every block holding a set of that name
     expect_error(QCEanchor("entry", session = "1", set = "pref_main"), "names no block")
     expect_error(QCEanchor("exit", session = "1", set = "pref_main"), "names no block")
 })
@@ -544,7 +540,7 @@ test_that("unscoped anchors refuse block, set and (for experimentStart) session"
     expect_error(QCEanchor("sessionStart", block = "b"), "names no block or set")
     expect_error(QCEanchor("sessionEnd", set = "s"), "names no block or set")
     expect_error(QCEanchor("experimentStart", session = "1"), "names a session")
-    # sessionStart/sessionEnd DO take an optional session; absent means every one.
+    #sessionStart and sessionEnd take an optional session, absent is all
     expect_silent(QCEanchor("sessionStart", session = "2"))
     expect_silent(QCEanchor("sessionStart"))
 })
@@ -561,27 +557,26 @@ test_that("the same page file may be placed at several anchors", {
     expect_length(p$placements, 2)
     expect_equal(p$placements[[1]]$block, "b1")
     expect_equal(p$placements[[2]]$block, "b2")
-    # Each placement carries its own playOnce.
+    #each placement carries its own playOnce
     expect_false(p$placements[[1]]$playOnce)
     expect_true(p$placements[[2]]$playOnce)
 })
 
 test_that("card mount/unmount are rejected when they can coincide", {
-    # Not equality: an unmount naming no session covers the session the mount names.
+    #overlap not equality, an unmount with no session covers the mount's session
     expect_error(
         addCardToQCEcardPlacement(NULL, "c",
                                   mount = QCEanchor("sessionStart", session = "1"),
                                   unmount = QCEanchor("sessionStart")),
         "same moment")
-    # Different sessions cannot coincide, so this is allowed.
+    #different sessions cannot coincide, so this is allowed
     expect_silent(addCardToQCEcardPlacement(NULL, "c",
                                             mount = QCEanchor("sessionStart", session = "1"),
                                             unmount = QCEanchor("sessionStart", session = "2")))
 })
 
 test_that("saveQCEpageFiles finds placed pages in the placement list", {
-    # Regression: the orphan check iterated names(map), which says nothing about
-    # placed pages once the map is one named element holding a list.
+    #the orphan check iterates the placement list, not names of the map
     p <- addPageToQCEpagePlacement(NULL, QCEanchor("sessionStart"), "consent")
     dir <- withr::local_tempdir()
     expect_silent(saveQCEpageFiles(p, "pagesA.json", dir = dir,

@@ -1,5 +1,4 @@
-# Tests for saveCustomHooksTemplate (Phase 5). Writes into a temp dir so the
-# test never litters the working directory.
+#tests for saveCustomHooksTemplate, written into a temp dir
 
 test_that("writes a .js file that defines QCEPHooks with all five hooks", {
     tmp <- withr::local_tempdir()
@@ -14,7 +13,7 @@ test_that("writes a .js file that defines QCEPHooks with all five hooks", {
     for (h in c("onTrialStart", "onTrialFinish", "onSetEnd", "onBlockEnd", "onSessionEnd")) {
         expect_true(grepl(h, txt, fixed = TRUE), info = h)
     }
-    # documents the hook->state->showIf channel + ctx fields
+    #documents the hook to state to showIf channel and ctx fields
     expect_true(grepl("qceState.custom", txt, fixed = TRUE))
     expect_true(grepl("ctx.scenarios", txt, fixed = TRUE))
 })

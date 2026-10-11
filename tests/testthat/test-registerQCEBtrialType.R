@@ -1,4 +1,4 @@
-# Tests for the QCEB trialType registry (mirrors engine trialTypeRegistry.js).
+#tests for the QCEB trialType registry
 
 test_that("core types and survey are pre-registered", {
     expect_true(isRegisteredQCEBtrialType("key"))
@@ -21,7 +21,7 @@ test_that("unknown type is not registered", {
 
 test_that("registering a custom type makes it valid", {
     nm <- "customPluginTest1"
-    # guard against re-run pollution within a single session
+    #guard against re-run pollution within a session
     if (!isRegisteredQCEBtrialType(nm)) registerQCEBtrialType(nm, requiresKeymap = FALSE)
     expect_true(isRegisteredQCEBtrialType(nm))
     expect_true(nm %in% getRegisteredQCEBtrialTypes())
@@ -43,7 +43,7 @@ test_that("isRegisteredQCEBtrialType is robust to non-string input", {
     expect_false(isRegisteredQCEBtrialType(42))
 })
 
-# --- forceResp: mirrors the engine registry, drives the no-exit exemption ----
+#forceResp drives the no-exit exemption
 
 test_that("core types carry forceResp exactly as the engine registry does", {
     expect_false(QCEB:::.qcebTrialTypeForcesResponse("key"))

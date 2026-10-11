@@ -30,9 +30,7 @@ test_that("customHooksColumns is validated like the state keys", {
 })
 
 test_that("declared hook columns are checked against fields.txt", {
-  # The gap this closes: a hook column exists only inside JavaScript, so without
-  # a declaration nothing at build time can tell it is missing from the
-  # whitelist -- and a column missing from the whitelist is dropped at save.
+  #a hook column exists only in javascript, so a declaration is the only check
   d <- newDir()
   db <- buildQCEgroupDbFile(condName = "c", keyMap = km(),
                             customHooksFile = "h.js",
@@ -40,7 +38,8 @@ test_that("declared hook columns are checked against fields.txt", {
   jsonlite::write_json(db, file.path(d, "dbfile.json"), auto_unbox = FALSE)
 
   fields <- file.path(d, "fields.txt")
-  writeLines(c("Exp_Name", "sn", "accept"), fields)   # 'offer' deliberately absent
+  #offer is deliberately absent
+  writeLines(c("Exp_Name", "sn", "accept"), fields)
 
   gaps <- missingQCEoutputFields(d, fieldsFile = fields)
   expect_true("offer" %in% gaps)

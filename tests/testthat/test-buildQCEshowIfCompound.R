@@ -1,5 +1,4 @@
-# Tests for buildQCEshowIfCompound -- kind validation, conditions list shape,
-# nesting, and JSON round-trip.
+#tests for buildQCEshowIfCompound
 
 test_that("compound 'all' wraps conditions correctly", {
     c <- buildQCEshowIfCompound("all", list(
@@ -82,7 +81,7 @@ test_that("non-list child throws", {
 test_that("hand-rolled child missing operator is rejected", {
     expect_error(
         buildQCEshowIfCompound("all", list(
-            list(stimRef = "x")  # missing operator
+            list(stimRef = "x")
         )),
         "is not a valid showIf condition",
         fixed = TRUE

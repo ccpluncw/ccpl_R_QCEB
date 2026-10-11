@@ -1,5 +1,4 @@
-# Tests for buildQCEshowIfCondition -- operator validation, value/field
-# requirements, warning behavior, and JSON round-trip.
+#tests for buildQCEshowIfCondition
 
 test_that("value-op condition produces 4-key list", {
     c <- buildQCEshowIfCondition("smoker", "equals", "Yes", "Response")
@@ -93,7 +92,7 @@ test_that("JSON round-trip preserves value-op condition shape", {
     c <- buildQCEshowIfCondition("smoker", "equals", "Yes", "Response")
     json <- jsonlite::toJSON(c, auto_unbox = FALSE)
     parsed <- jsonlite::fromJSON(json, simplifyVector = FALSE)
-    # jsonlite wraps scalars as length-1 arrays per QCEP convention
+    #jsonlite wraps scalars as length-1 arrays
     expect_equal(parsed$stimRef[[1]], "smoker")
     expect_equal(parsed$operator[[1]], "equals")
     expect_equal(parsed$value[[1]], "Yes")

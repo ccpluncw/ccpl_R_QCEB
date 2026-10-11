@@ -1,4 +1,4 @@
-# Tests for buildQCEkeyMapEntry -- map validation, optional-fields, JSON shape.
+#tests for buildQCEkeyMapEntry
 
 test_that("minimal entry: map only -- defaults randomize=FALSE, no optional fields", {
     km <- buildKeyMap(data.frame(Yes = "y", No = "n"))
