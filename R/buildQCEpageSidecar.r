@@ -55,9 +55,7 @@ buildQCEpageSidecar <- function(fields = NULL, contBtn = NULL, dataScope = "glob
     if (!is.list(fields) || length(fields) == 0) {
       stop("fields option must be a non-empty list of buildQCEpageField() results, or NULL.")
     }
-    # An unnamed list, so it serializes as a JSON ARRAY -- the engine tests
-    # `sidecar.fields.length` and would not see a named object. This is the one
-    # place pages and cards differ structurally: card fields are a named object.
+    #an unnamed list, so it serializes as an array
     if (!is.null(names(fields))) {
       stop("fields option must be an UNNAMED list (the engine expects a JSON array). ",
            "Use list(field1, field2), not list(a = field1, b = field2).")

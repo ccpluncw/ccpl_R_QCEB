@@ -60,18 +60,15 @@ buildQCEkeyMapEntry <- function(map, randomize = FALSE,
                                  instructionFile = NULL) {
   .qcebOneValueArgs("buildQCEkeyMapEntry", c("randomize", "instructionFile"))
 
-  # map: required, non-empty named list (the QCEkeyMap shape)
   if (missing(map) || is.null(map) || !is.list(map) || length(map) == 0) {
     stop("map option is required and must be a non-empty QCEkeyMap ",
          "(use buildKeyMap or addKeyToKeyMap to construct one).")
   }
 
-  # randomize: single boolean
   if (!is.logical(randomize) || length(randomize) != 1 || is.na(randomize)) {
     stop("randomize option must be a single boolean (TRUE or FALSE).")
   }
 
-  # presentAfterTrials: optional numeric vector
   if (!is.null(presentAfterTrials)) {
     if (!is.numeric(presentAfterTrials) || any(is.na(presentAfterTrials))) {
       stop("presentAfterTrials option must be a numeric vector when present ",
@@ -80,16 +77,13 @@ buildQCEkeyMapEntry <- function(map, randomize = FALSE,
     }
   }
 
-  # instructionFile: optional non-empty .html filename
   if (!is.null(instructionFile)) {
     if (!isValidFilename(instructionFile, "html")) {
       stop("instructionFile option must be a single .html filename when present.")
     }
   }
 
-  # Build the entry. Only include optional fields when set so the JSON shape
-  # matches what the engine expects (NULL defaults omitted, byte-identical
-  # to a hand-rolled minimal entry).
+  #optional fields are included only when set
   entry <- list(map = map, randomize = randomize)
   if (!is.null(presentAfterTrials)) entry$presentAfterTrials <- presentAfterTrials
   if (!is.null(instructionFile))    entry$instructionFile    <- instructionFile

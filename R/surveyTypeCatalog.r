@@ -44,7 +44,6 @@
 surveyTypeCatalog <- function() {
   u <- function(slug) paste0(.surveyDocBase, slug)
   list(
-    # --- single-value text inputs -----------------------------------------
     text = list(
       desc = "A single-line input; inputType picks text/number/email/date/etc.",
       required = character(0),
@@ -78,7 +77,6 @@ surveyTypeCatalog <- function() {
       ),
       docUrl = u("comment-field-model")),
 
-    # --- choice-based (need `choices`) ------------------------------------
     radiogroup = list(
       desc = "Single-select radio buttons.",
       required = "choices",
@@ -180,7 +178,6 @@ surveyTypeCatalog <- function() {
       ),
       docUrl = u("image-picker-question-model")),
 
-    # --- scales / booleans ------------------------------------------------
     rating = list(
       desc = "A 1..N rating scale; rateValues for custom labeled points.",
       required = character(0),
@@ -212,7 +209,6 @@ surveyTypeCatalog <- function() {
       ),
       docUrl = u("boolean-question-model")),
 
-    # --- matrices ---------------------------------------------------------
     matrix = list(
       desc = "Single-select grid: one radio choice per row (records {row: col}).",
       required = c("columns", "rows"),
@@ -264,7 +260,6 @@ surveyTypeCatalog <- function() {
       ),
       docUrl = u("dynamic-matrix-table-question-model")),
 
-    # --- composite / container --------------------------------------------
     multipletext = list(
       desc = "Several labeled single-line inputs as one question (records a nested object).",
       required = "items",
@@ -308,7 +303,6 @@ surveyTypeCatalog <- function() {
       ),
       docUrl = u("dynamic-panel-model")),
 
-    # --- file / signature -------------------------------------------------
     file = list(
       desc = "File upload.",
       required = character(0),
@@ -341,7 +335,6 @@ surveyTypeCatalog <- function() {
       ),
       docUrl = u("signature-pad-model")),
 
-    # --- display-only (no response) ---------------------------------------
     html = list(
       desc = "Static HTML; collects no response.",
       required = "html",
@@ -429,15 +422,10 @@ surveyUniversalProperties <- function() {
   )
 }
 
-# Base URL for all SurveyJS API-reference pages (verified against the live site,
-# June 2026). Each catalog entry's docUrl is this base + the type's slug.
+#docUrl of each catalog entry is this base plus the type's slug
 .surveyDocBase <- "https://surveyjs.io/form-library/documentation/api-reference/"
 
-# Internal (not exported): soft-validate one question list against the catalog.
-# NEVER stops -- only warns. An unknown type, or a known type missing a
-# required prop, warns once and passes through unchanged. This keeps QCEB
-# schema-agnostic (all SurveyJS types work, including future ones) while still
-# catching the most common authoring slips.
+#soft check of one question, it only warns so any surveyjs type passes
 .validateSurveyQuestion <- function(q) {
   if (is.null(q$type) || !isSingleString(q$type)) {
     warning("surveyQuestion: 'type' is missing or not a single string; ",
@@ -453,7 +441,7 @@ surveyUniversalProperties <- function() {
             paste(names(catalog), collapse = ", "), ".")
     return(invisible(FALSE))
   }
-  # Display-only types do not need a name; input types should have one.
+  #display-only types need no name
   displayOnly <- c("html", "image", "expression")
   if (!(q$type %in% displayOnly) && (is.null(q$name) || !isSingleString(q$name) || nchar(q$name) == 0)) {
     warning("surveyQuestion(type='", q$type, "'): 'name' is missing. The name ",

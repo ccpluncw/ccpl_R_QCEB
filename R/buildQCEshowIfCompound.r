@@ -50,10 +50,7 @@ buildQCEshowIfCompound <- function(kind, conditions) {
     stop("conditions option must contain at least one condition.")
   }
 
-  # Shape-validate each child via the canonical validateShowIfShape helper
-  # in QCEButils.r. Phase 3.5 Chunk G (2026-05-24) updated that helper to
-  # accept blockRef leaves alongside stimRef leaves; delegating here keeps
-  # the compound builder in lockstep with whatever the validator accepts.
+  #each child is shape-checked by validateShowIfShape
   for (i in seq_along(conditions)) {
     child <- conditions[[i]]
     if (!is.list(child)) {

@@ -28,10 +28,7 @@ savePluginManifestLocal <- function (plugins, filename = "pluginManifest.local.j
     if (!is.list(entry) || is.null(entry$register)) {
       stop(paste0("plugin '", n, "' has no register script -- build entries with buildQCElocalPluginEntry()"))
     }
-    # Files may be written later in the build; absence is a warning here and a
-    # hard failure at preflight. An asset with neither key is a structural
-    # mistake (only reachable with a hand-built entry) and must fail with a
-    # message naming it, not with vapply's length-zero error.
+    #a missing file warns here and fails at preflight
     paths <- c(entry$register,
                vapply(seq_along(entry$assets), function (i) {
                  a <- entry$assets[[i]]

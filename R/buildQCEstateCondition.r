@@ -82,8 +82,7 @@ buildQCEstateCondition <- function(stateRef, operator, value = NULL) {
     return(list(stateRef = stateRef, operator = operator, value = value))
   }
 
-  # presenceOps: surface the conceptual mistake if value was passed, but don't
-  # break the call -- drop it and warn.
+  #value means nothing for presence ops, so drop it and warn
   if (!is.null(value)) {
     warning(paste0("Operator '", operator, "' ignores 'value' (it only checks whether the hook has set this key). ",
                    "You passed a value; it is being dropped. ",

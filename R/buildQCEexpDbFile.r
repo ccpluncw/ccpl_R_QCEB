@@ -116,12 +116,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
 
   tmpList <- list (expName = expName, addQualtricsCode = addQualtricsCode, instructionFile = instructionFile, getConsentFile = getConsentFile, getDemographicsFile = getDemographicsFile, getGenderFile = getGenderFile, welcomeMsg = welcomeMsg, endOfSessionMsg = endOfSessionMsg, endOfExpMsg = endOfExpMsg, saveMsg= saveMsg, closeBrowserMsg = closeBrowserMsg, fullscreenMsg = fullscreenMsg, fullscreenBtn = fullscreenBtn, completionRedirect = completionRedirect, saveDataEveryNTrials = saveDataEveryNTrials)
 
-  # Experiment-wide completion gate -- emit only when supplied, so legacy dbfiles
-  # are byte-identical and the redirect fires unconditionally as before. Exactly
-  # one form: a non-empty `formula` list (flat aggregate criteria over the whole-run
-  # data) OR a `gateFn` string (escape hatch). Mirrors the engine's config-time
-  # validation so a bad gate fails here at BUILD time, not only at experiment start.
-  # The engine evaluates it once after all sessions.
+  #completionGate is a formula list or a gateFn string, checked at build time
   if (!is.null(completionGate)) {
     if (!is.list(completionGate)) {
       stop("completionGate must be a named list (formula | gateFn, plus optional noCreditMsg).")
@@ -139,9 +134,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
         stop("completionGate$gateFn must be a single string naming a global JS function.")
       }
     } else {
-      # Vocabulary and the shared aggregator/where checks live in QCEButils.r so
-      # the gate and card fields cannot drift apart. The op/value rules below are
-      # the gate's own: a card field displays a number, it does not compare one.
+      #shared aggregator and where checks live in QCEButils.r
       validOps <- .qcebValidCompareOps
       for (i in seq_along(completionGate$formula)) {
         f <- completionGate$formula[[i]]
@@ -167,26 +160,17 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
       }
     }
 
-    # ⚠ ATTEMPTS APPLY TO BOTH FORMS. The engine validates them after the shape
-    # check, whichever form the gate took, so a gateFn gate offers retries on
-    # exactly the same terms as a formula gate. Validating inside the formula
-    # branch would leave the escape hatch unchecked.
+    #attempts apply to both gate forms
     validateQCEattemptsPolicy(completionGate)
 
-    # Who scores the run. The engine accepts exactly two values and refuses
-    # anything else at session start, so a wrong value here is refused at
-    # build time instead of in front of a participant.
+    #the engine accepts two scoredBy values, a wrong one is refused here
     if (!is.null(completionGate$scoredBy) &&
         (!isSingleString(completionGate$scoredBy) ||
          !(completionGate$scoredBy %in% c("server", "client")))) {
       stop("completionGate$scoredBy must be \"server\" or \"client\", or absent (client-scored).")
     }
 
-    # Participant-facing messages. None is required -- the engine supplies a
-    # default for each except creditMsg, whose absence means no grant screen at
-    # all -- but an EMPTY one is a different thing from an absent one: it
-    # reaches the participant as a blank screen at the moment they are being
-    # told what happened to their credit.
+    #an empty message would show as a blank screen, so it is refused
     for (m in c("creditMsg", "noCreditMsg", "unscoredMsg",
                 "supersededMsg", "duplicateMsg")) {
       if (!is.null(completionGate[[m]]) &&
@@ -196,14 +180,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
       }
     }
 
-    # ⚠⚠ THE ONE MISTAKE NOTHING ELSE CATCHES. A misspelled key is not rejected
-    # anywhere -- it is simply dropped, and the gate then runs under a policy
-    # nobody wrote. `attemptsAllowd` alone leaves the engine's cross-check to
-    # notice the orphaned retryPrompt, but misspell BOTH keys and the gate
-    # silently becomes a one-attempt gate that never offers a retry, which is
-    # exactly the failure the retry feature exists to prevent. Warn rather than
-    # stop: a newer engine may define a key this version of QCEB has not heard of,
-    # and refusing would make the package the reason a valid study cannot build.
+    #warn on unknown gate keys, a misspelled key is dropped silently
     unknown <- setdiff(names(completionGate), .qcebGateKeys)
     if (length(unknown) > 0) {
       warning("completionGate has unrecognized entries, which the engine will ignore: ",
@@ -215,9 +192,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
     tmpList$completionGate <- completionGate
   }
 
-  # Whole-experiment hard deadline (minutes) -- emit only when supplied; absent
-  # means uncapped (legacy). The engine stamps the wall-clock end-time once at
-  # experiment start and skips remaining stimuli once past it.
+  #absent maxExperimentMinutes means uncapped
   if (!is.null(maxExperimentMinutes)) {
     if (!is.numeric(maxExperimentMinutes) || length(maxExperimentMinutes) != 1 || maxExperimentMinutes <= 0) {
       stop("maxExperimentMinutes must be a single positive number of minutes.")
@@ -225,12 +200,8 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
     tmpList$maxExperimentMinutes <- maxExperimentMinutes
   }
 
-  # Save-resilience knobs -- all optional, emitted only when supplied so legacy
-  # dbfiles stay byte-identical and the engine's own defaults apply when absent.
 
-  # Per-request save timeout (ms). A save that neither resolves nor rejects
-  # within this window is treated as a failure so the serialized save chain is
-  # not blocked behind one hung request.
+  #a save that neither resolves nor rejects in this window counts as failed
   if (!is.null(saveTimeoutMs)) {
     if (!is.numeric(saveTimeoutMs) || length(saveTimeoutMs) != 1 || saveTimeoutMs <= 0) {
       stop("saveTimeoutMs must be a single positive number of milliseconds.")
@@ -238,9 +209,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
     tmpList$saveTimeoutMs <- saveTimeoutMs
   }
 
-  # Start-of-run save canary. FALSE opts a run out of the pre-timeline
-  # writability probe that otherwise halts a participant before any work when
-  # the save path is down.
+  #a FALSE skips the writability probe run before the timeline starts
   if (!is.null(saveCanary)) {
     if (!is.logical(saveCanary) || length(saveCanary) != 1 || is.na(saveCanary)) {
       stop("saveCanary must be a single Boolean (TRUE or FALSE).")
@@ -248,7 +217,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
     tmpList$saveCanary <- saveCanary
   }
 
-  # Message for the terminal halt screen shown when the canary fails.
+  #message for the halt screen shown when the canary fails
   if (!is.null(saveUnavailableMsg)) {
     if (!isSingleString(saveUnavailableMsg)) {
       stop("saveUnavailableMsg must be a single string composed in html or NULL.")
@@ -256,16 +225,9 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
     tmpList$saveUnavailableMsg <- saveUnavailableMsg
   }
 
-  # Run-integrity knobs -- also optional and also emitted only when supplied, so
-  # a config that does not mention them produces the same JSON it always did and
-  # takes the engine's own default. Both are read by the engine as flags, which
-  # tolerates the string spellings of a Boolean because dbfiles are hand-authored
-  # too; this builder does not. A string here is a mistake in R code, and passing
-  # it through would emit a value whose meaning depends on a coercion table
-  # rather than on what was written.
+  #flags are Booleans only, a string would depend on the engine's coercion
 
-  # Leave-the-page guard. FALSE opts a run out of the browser confirmation the
-  # engine otherwise arms for the duration of the timeline.
+  #a FALSE turns off the confirmation shown when the participant leaves
   if (!is.null(warnOnLeave)) {
     if (!is.logical(warnOnLeave) || length(warnOnLeave) != 1 || is.na(warnOnLeave)) {
       stop("warnOnLeave must be a single Boolean (TRUE or FALSE).")
@@ -273,9 +235,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
     tmpList$warnOnLeave <- warnOnLeave
   }
 
-  # Group-assignment strictness. TRUE refuses to start a multi-group run whose
-  # server assignment could not be obtained, rather than drawing a group in the
-  # browser and leaving the choice unrecorded.
+  #a TRUE refuses to start a multi-group run without a server assignment
   if (!is.null(strictGroupAssignment)) {
     if (!is.logical(strictGroupAssignment) || length(strictGroupAssignment) != 1 ||
         is.na(strictGroupAssignment)) {
@@ -284,18 +244,7 @@ buildQCEexpDbFile <- function (expName = "defaultExpName", addQualtricsCode = FA
     tmpList$strictGroupAssignment <- strictGroupAssignment
   }
 
-  # Timeout on the credit claim -- the single request that writes the credit
-  # record and returns the grant-or-deny verdict at the end of a gated run.
-  #
-  # ⚠⚠ THE FLOOR AND THE TYPE CHECK ARE BOTH LOAD-BEARING, in opposite directions.
-  # The browser's timeout field is an unsigned integer in which ZERO MEANS NO
-  # LIMIT, so a value it cannot use -- a string, or a plain 0 written meaning "do
-  # not time out" -- removes the timeout instead of relaxing it, and a server that
-  # accepts the connection and never answers then leaves the participant on a
-  # blank screen with the final save unrun. A value of a few milliseconds fails
-  # the opposite way: every claim fails, and the claim FAILS OPEN, so credit is
-  # granted with no record written. Absent is the safe state; a stated value is
-  # checked.
+  #a zero or non-numeric timeout means no limit in the browser, so it is checked
   if (!is.null(creditClaimTimeoutMs)) {
     if (!is.numeric(creditClaimTimeoutMs) || length(creditClaimTimeoutMs) != 1 ||
         !is.finite(creditClaimTimeoutMs) || creditClaimTimeoutMs < 1000) {

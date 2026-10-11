@@ -99,7 +99,7 @@ buildQCEswitchRule <- function(threshold,
                                 switchToSet = NULL, switchInstruction = NULL) {
   .qcebOneValueArgs("buildQCEswitchRule", c("countResponse", "switchToSet"))
 
-  # XOR validation: exactly one of countResponse or countWhen
+  #exactly one of countResponse or countWhen
   hasResp <- !is.null(countResponse)
   hasWhen <- !is.null(countWhen)
 
@@ -113,26 +113,22 @@ buildQCEswitchRule <- function(threshold,
          "is sugar for countWhen=list(field='Key', operator='equals', value=<x>).")
   }
 
-  # countResponse shape
   if (hasResp) {
     if (!isSingleString(countResponse) || nchar(countResponse) == 0) {
       stop("countResponse option must be a non-empty single string.")
     }
   }
 
-  # countWhen shape (delegates to internal validator in QCEButils.r)
   if (hasWhen) {
     validateSwitchCountWhenShape(countWhen, "countWhen")
   }
 
-  # threshold required + shape-checked
   if (missing(threshold) || is.null(threshold)) {
     stop("threshold option is required. Use buildQCEswitchThreshold(values, rule) ",
          "to construct one, or pass a list(values, rule) directly.")
   }
   validateSwitchThresholdShape(threshold, "threshold")
 
-  # switchToSet optional non-empty string
   if (!is.null(switchToSet)) {
     if (!isSingleString(switchToSet) || nchar(switchToSet) == 0) {
       stop("switchToSet option must be a non-empty single string when present ",
@@ -140,10 +136,7 @@ buildQCEswitchRule <- function(threshold,
     }
   }
 
-  # switchInstruction: DEPRECATED.
-  # Engine no longer reads rule.switchInstruction; emit .Deprecated() and
-  # drop the value from the output rule. Researcher should migrate to
-  # destination-set entryInstruction.
+  #switchInstruction is not read by the engine, so it is warned and dropped
   if (!is.null(switchInstruction)) {
     .Deprecated(
       new = "addSetToQCEsetInfoList(..., entryInstruction = ...)",
@@ -158,12 +151,9 @@ buildQCEswitchRule <- function(threshold,
         "from the output rule (the engine would silently ignore it anyway)."
       )
     )
-    # Drop the value -- do NOT include it in the output rule.
   }
 
-  # Build the rule list -- only include supplied fields so the JSON shape
-  # exactly matches what the engine expects (NULL defaults omitted).
-  # switchInstruction intentionally NOT serialized.
+  #only supplied fields are included
   rule <- list(threshold = threshold)
   if (hasResp) rule$countResponse <- countResponse
   if (hasWhen) rule$countWhen     <- countWhen

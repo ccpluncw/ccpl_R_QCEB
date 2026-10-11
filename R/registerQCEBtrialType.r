@@ -87,11 +87,7 @@ getRegisteredQCEBtrialTypes <- function() {
   sort(ls(envir = .qcebTrialTypeRegistry))
 }
 
-# Does this trialType's plugin always give the participant a way to respond,
-# regardless of `choices`? Internal; reads the registry's optional forceResp
-# field so no builder has to name specific trialTypes. An unregistered or
-# unannotated type answers FALSE, which is the conservative direction: it keeps
-# the frame subject to the no-exit check rather than silently exempting it.
+#true when the type's plugin always lets the participant respond
 .qcebTrialTypeForcesResponse <- function(name) {
   .seedCoreQCEBtrialTypes()
   if (!isSingleString(name) ||
@@ -101,11 +97,7 @@ getRegisteredQCEBtrialTypes <- function() {
   isTRUE(get(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)$forceResp)
 }
 
-# Does this trialType need the pointer on screen? Internal; read by
-# addFrameToQCEframeList to warn about a frame that hides the cursor a
-# mouse-driven plugin depends on. An unregistered or undeclared type answers
-# FALSE, so a custom plugin that says nothing is treated as keyboard-driven and
-# is never warned about.
+#true when the type needs the pointer on screen, unregistered means FALSE
 .qcebTrialTypeUsesPointer <- function(name) {
   .seedCoreQCEBtrialTypes()
   if (!isSingleString(name) ||
@@ -115,11 +107,7 @@ getRegisteredQCEBtrialTypes <- function() {
   isTRUE(get(name, envir = .qcebTrialTypeRegistry, inherits = FALSE)$usesPointer)
 }
 
-# The data columns this trialType's extractor contributes, or NULL when the type
-# has not declared any. Internal; read by buildQCEoutputFieldManifest. NULL and
-# character(0) mean different things: NULL is "this type never said", which the
-# manifest reports so the researcher knows to look it up, while character(0)
-# would be a type that genuinely writes no columns.
+#output columns the type declares, NULL when it never said
 .qcebTrialTypeOutputColumns <- function(name) {
   .seedCoreQCEBtrialTypes()
   if (!isSingleString(name) ||
@@ -131,43 +119,12 @@ getRegisteredQCEBtrialTypes <- function() {
   as.character(cols)
 }
 
-# --- internal registry store ------------------------------------------------
-# Package-level mutable environment. Created once when the namespace loads.
-# Seeded lazily (see .seedCoreQCEBtrialTypes) so the accessors are
-# order-independent and work under both devtools::load_all and an installed
-# package without needing an .onLoad hook.
+#registry store, created when the namespace loads and seeded lazily
 .qcebTrialTypeRegistry <- new.env(parent = emptyenv())
 
-# Seed the built-in types if they are not already present. Idempotent.
-#   key / textbox / numberline / angleline -- engine CORE types.
-#   survey                                 -- the bundled survey plugin
-#                                             (surveyTrialType.js). Pre-seeded so
-#                                             addSurveyFrameToQCEframeList works
-#                                             out of the box; the plugin is still
-#                                             only LOADED if the session lists it
-#                                             in plugins=.
-#   mcKeys                                  -- the bundled keyboard multiple-choice
-#                                             plugin (jspsychMcKeys.js). Pre-seeded;
-#                                             loaded unconditionally by the engine
-#                                             (a core script, no plugins= opt-in).
-#                                             Content goes in the frame stimulus as
-#                                             an mc_spec { stem, choices, correctValue }.
+#seed the built-in types if absent
 .seedCoreQCEBtrialTypes <- function() {
-  # usesPointer mirrors the same field in the engine's trialTypeRegistry.js and is
-  # the counterpart of requiresKeymap: it declares that the participant answers
-  # this type with the mouse, so the pointer must be on screen. It is NOT implied
-  # by forceResp -- textbox and mcKeys both bring their own response surface and
-  # neither needs a pointer -- so the two are declared independently.
-  # forceResp mirrors the same field in the engine's trialTypeRegistry.js. Every
-  # core type except "key" brings its own response surface and so can always be
-  # ended by the participant; "key" can only be ended by a key in `choices`.
-  # outputColumns names the data columns each type's extractor contributes, so
-  # buildQCEoutputFieldManifest can report them without hard-coding a per-type
-  # list of its own. Mirrors each dataExtractor's return keys in the engine.
-  # The survey type is absent on purpose: its columns are derived from the
-  # question names in each survey model, so they are read from the config
-  # instead. Types that declare nothing are reported as undeclared rather than
-  # silently contributing no columns.
+  #forceResp and usesPointer mirror the engine, survey columns come from models
   core <- list(
     key        = list(name = "key",        requiresKeymap = TRUE,
                       outputColumns = c("Key", "FeedBack", "Response")),

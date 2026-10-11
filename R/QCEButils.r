@@ -78,19 +78,7 @@ isValidFilename <- function (filename, extension) {
 }
 
 
-# Internal helper (not exported): shape-validate a showIf condition.
-# Used by addScenarioToQCEscenarioList, addSetToQCEsetInfoList, and
-# addBlockToQCETrialStructureList to reject malformed hand-rolled lists.
-# Same shape rule buildQCEshowIfCompound applies to its children.
-#
-# Phase 3.5 Decision G (2026-05-24): blockRef+operator leaf added as a
-# second valid single-condition shape, alongside the original stimRef+
-# operator leaf. A leaf is one OR the other, never both. Compound (all/any)
-# groups can contain a mix.
-#
-# Phase 5 (2026-06-01): stateRef+operator leaf added as a third valid single-
-# condition shape (the hook->state->showIf channel; built by
-# buildQCEstateCondition). Still XOR per leaf; compound groups can mix all three.
+#showIf leaf: stimRef, blockRef or stateRef plus operator, exactly one kind
 validateShowIfShape <- function(x, paramName = "showIf") {
   if (!is.list(x)) {
     stop(paramName, " must be a list (output of buildQCEshowIfCondition, ",
@@ -113,11 +101,7 @@ validateShowIfShape <- function(x, paramName = "showIf") {
 }
 
 
-# Internal helper (not exported): shape-validate a switch-rule countWhen
-# condition. Mirrors the engine's countWhen validation in
-# dynamicEngine.js::validateSwitchRules. wasShown / wasNotShown are excluded
-# (countWhen evaluates against a single just-completed trial's data row,
-# whereas wasShown/wasNotShown is a state check across the dataIndex).
+#countWhen tests one just-completed row, so wasShown and wasNotShown are out
 validateSwitchCountWhenShape <- function(x, paramName = "countWhen") {
   validOps <- c("equals", "notEquals", "greaterThan", "lessThan",
                 "greaterThanOrEqual", "lessThanOrEqual", "contains")
@@ -137,8 +121,7 @@ validateSwitchCountWhenShape <- function(x, paramName = "countWhen") {
 }
 
 
-# Internal helper (not exported): shape-validate a switch-rule threshold spec.
-# Mirrors resolveThreshold + validateSwitchRules in dynamicEngine.js.
+#mirrors the engine's threshold resolution and switch rule validation
 validateSwitchThresholdShape <- function(x, paramName = "threshold") {
   validRules <- c("fixed", "randomFromList", "randomIntBetween")
   if (!is.list(x)) {
@@ -161,10 +144,7 @@ validateSwitchThresholdShape <- function(x, paramName = "threshold") {
 }
 
 
-# Internal helper (not exported): shape-validate a list of switch rules
-# attached to a block. Reused by addBlockToQCETrialStructureList. Each rule
-# must look like a buildQCEswitchRule output: XOR on countResponse vs
-# countWhen, threshold present and well-shaped.
+#each rule has countResponse xor countWhen plus a well-shaped threshold
 validateSwitchRulesShape <- function(rules, paramName = "switchRules") {
   if (!is.list(rules)) {
     stop(paramName, " must be a list of switch-rule lists (each from buildQCEswitchRule).")
@@ -216,15 +196,7 @@ validateSwitchRulesShape <- function(rules, paramName = "switchRules") {
 }
 
 
-# Internal helper (not exported): shape-validate a list of BLOCK-to-BLOCK
-# switch rules (Phase 4 Step 2). Reused by
-# addBlockSwitchRulesToQCETrialStructureList. Mirrors validateSwitchRulesShape
-# but for the block-scope schema: each rule must name a watchBlock and may
-# carry a switchToBlock (instead of the set-level switchToSet /
-# switchInstruction). Cross-references (block existence, forward-only,
-# blockIterator.N == 1) are NOT checked here -- the engine's
-# validateSessionSwitchRules enforces them at session start, where the full
-# trial structure is available.
+#block rules name a watchBlock, the engine checks block references at start
 validateBlockSwitchRulesShape <- function(rules, paramName = "switchRules") {
   if (!is.list(rules)) {
     stop(paramName, " must be a list of block-switch-rule lists (each from buildQCEblockSwitchRule).")
@@ -238,8 +210,7 @@ validateBlockSwitchRulesShape <- function(rules, paramName = "switchRules") {
     if (!is.list(rule)) {
       stop(label, " must be a list (output of buildQCEblockSwitchRule).")
     }
-    # watchBlock required -- this is the field that distinguishes a block rule
-    # from a set rule (set rules have no watchBlock; association is positional).
+    #watchBlock tells a block rule from a set rule
     if (is.null(rule$watchBlock)) {
       stop(label, " missing watchBlock. Block-to-block rules must name the ",
            "block they count within. Did you forget to wrap with ",
@@ -280,30 +251,17 @@ validateBlockSwitchRulesShape <- function(rules, paramName = "switchRules") {
   invisible(TRUE)
 }
 
-# --- Shared vocabulary for the completion gate, card fields, pages ------------
 
-# The aggregators the engine's qcepComputeAggregate implements, and the
-# comparison operators its evaluator accepts. Named once so the completion gate,
-# card fields, and any future consumer cannot drift apart.
+#aggregators and comparison operators the engine evaluates
 .qcebValidAggregateFns <- c("mean", "median", "proportion", "count", "sum", "min", "max", "sd")
 .qcebValidCompareOps   <- c(">=", "<=", ">", "<", "==", "!=")
 
-# The five events at which a page may be played or a card mounted/unmounted.
-# Pages and cards share one vocabulary; naming it once is what stops the two
-# from drifting apart, as they previously did over "experimentStart".
+#events at which a page plays or a card mounts or unmounts
 .qcebAnchorEvents       <- c("experimentStart", "sessionStart", "sessionEnd", "entry", "exit")
-# The events that name a block boundary, and so require a session and a block.
+#events that name a block boundary and so need a session and a block
 .qcebAnchorScopedEvents <- c("entry", "exit")
 
-# Why `x` is not a usable anchor, or NULL when it is. Returns the message rather
-# than stopping so each caller can prefix it with its own argument name.
-#
-# An anchor is a LIST of fields, not a string: list(at=, session=, block=, set=).
-# A string grammar would need delimiters, and block and set names are
-# unconstrained free text, so a parsed form would impose a character restriction
-# on a namespace nothing else restricts. Level -- block boundary versus set
-# boundary -- is carried by whether `set` is present, so it cannot contradict a
-# separate level field.
+#reason x is not a usable anchor, or NULL, anchor is a list of fields
 qcebAnchorProblem <- function(x) {
   if (!is.list(x) || is.null(x$at)) {
     return(paste0("must be an anchor list built by QCEanchor(), e.g. ",
@@ -353,10 +311,7 @@ qcebAnchorProblem <- function(x) {
 
 isValidQCEanchor <- function(x) is.null(qcebAnchorProblem(x))
 
-# Can two anchors ever fire at the same moment? Used to reject a card whose
-# mount and unmount coincide. Equality is the wrong test: an optional `session`
-# means an anchor with none and one naming session 3 both fire at session 3's
-# boundary without being equal, and field order would defeat identical().
+#overlap not equality, an absent session matches every session
 qcebAnchorsOverlap <- function(a, b) {
   if (!identical(a$at, b$at)) return(FALSE)
   if (!identical(a$block, b$block)) return(FALSE)
@@ -364,11 +319,7 @@ qcebAnchorsOverlap <- function(a, b) {
   is.null(a$session) || is.null(b$session) || identical(a$session, b$session)
 }
 
-# Validate the aggregator half of a formula -- the parts a completion-gate
-# formula and a card-field formula have in common. `label` prefixes every
-# message so each caller keeps its own phrasing. Gate-only concerns (op, value)
-# stay with the caller, since a card field displays a number rather than
-# comparing one.
+#aggregator checks shared by completion gate and card field formulas
 validateQCEaggregateFn <- function(f, label) {
   if (!(f$fn %in% .qcebValidAggregateFns)) {
     stop(sprintf("%s has invalid fn '%s'. Valid: %s.",
@@ -380,8 +331,7 @@ validateQCEaggregateFn <- function(f, label) {
   invisible(TRUE)
 }
 
-# Validate a `where` row filter: a named list whose entries are either a bare
-# scalar (loose equality) or a list(op, value).
+#where entries are a bare scalar or list(op, value)
 validateQCEwhereFilter <- function(where, label) {
   if (is.null(where)) return(invisible(TRUE))
   if (!is.list(where) || is.null(names(where)) || any(names(where) == "")) {
@@ -392,9 +342,7 @@ validateQCEwhereFilter <- function(where, label) {
     if (is.list(spec) && !is.null(spec$op) && !(spec$op %in% .qcebValidCompareOps)) {
       stop(sprintf("%s 'where$%s' has invalid op '%s'.", label, wc, as.character(spec$op)))
     }
-    # An ordering op compares numerically, so a non-numeric bound can never match
-    # a row -- it would silently filter the sample to empty at run time. Rejected
-    # here as well as in the engine.
+    #an ordering op compares numerically, so a non-numeric bound never matches
     if (is.list(spec) && !is.null(spec$op) && !(spec$op %in% c("==", "!="))) {
       if (is.null(spec$value)) {
         stop(sprintf("%s 'where$%s' is missing a 'value'.", label, wc))
@@ -409,38 +357,13 @@ validateQCEwhereFilter <- function(where, label) {
   invisible(TRUE)
 }
 
-# The keys a completionGate may carry. Anything else is almost certainly a
-# misspelling, and a misspelled key is DROPPED SILENTLY -- the gate then runs
-# with a policy nobody wrote. Kept as data so the check cannot drift from the
-# validators beside it.
-#
-# ⚠ THIS LIST MUST TRACK THE ENGINE, or the warning it feeds accuses valid
-# configs: a key the engine reads but this list omits is reported as one "the
-# engine will ignore", and a builder who believes that removes a working part
-# of their gate. That happened -- creditMsg, unscoredMsg and scoredBy were
-# all engine-read and all missing here.
+#keys a completionGate may carry, kept in step with the engine's reads
 .qcebGateKeys <- c("formula", "gateFn", "combinator", "scoredBy",
                    "creditMsg", "noCreditMsg", "unscoredMsg",
                    "attemptsAllowed", "retryPrompt", "supersededMsg",
                    "duplicateMsg")
 
-# Validate the attempts half of a completion gate: how many tries the
-# participant gets, and the question that offers the next one.
-#
-# ⚠ ABSENT MEANS ONE. A gate that says nothing about attempts gets a single
-# attempt, matching what the engine and the assignment endpoint both do when the
-# key is missing. So `attemptsAllowed` is never required -- but a value that IS
-# written and is not a whole number of 1 or more is broken rather than silent,
-# and is refused rather than rounded into something plausible.
-#
-# The two cross-checks exist because the two keys are only meaningful together:
-# a gate that allows a second attempt and never asks for one can never grant it,
-# and a gate that asks while allowing one promises the participant something it
-# cannot deliver, at the moment they have just been told they failed.
-#
-# This mirrors the engine's own check, which runs at experiment start. Running it
-# here as well moves the diagnosis to build time, where no participant is waiting
-# on it -- the same reason the formula validators are duplicated.
+#attempts half of a completion gate, absent attemptsAllowed means one
 validateQCEattemptsPolicy <- function(cfg, label = "completionGate") {
   if (is.null(cfg) || !is.list(cfg)) return(invisible(TRUE))
 
@@ -467,10 +390,7 @@ validateQCEattemptsPolicy <- function(cfg, label = "completionGate") {
                         "attemptsAllowed to 1."), label, format(n)))
   }
   if (n == 1 && hasPrompt) {
-    # Two different mistakes arrive here and they need different advice. A gate
-    # that WROTE 1 meant one attempt and should drop the prompt; a gate that
-    # wrote nothing probably meant to allow a second and forgot the key. Naming
-    # the wrong one sends the researcher to the wrong edit.
+    #a written 1 and a missing key need different advice
     stop(sprintf(paste0("%s declares a 'retryPrompt' but %s, so the participant would be ",
                         "offered a second attempt that cannot be granted. %s"),
                  label,

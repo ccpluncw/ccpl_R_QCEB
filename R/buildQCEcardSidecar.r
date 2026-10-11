@@ -72,9 +72,7 @@ buildQCEcardSidecar <- function(template = NULL, fields = NULL, refreshMs = NULL
   }
 
   if (!is.null(fields)) {
-    # A NAMED list, so it serializes as a JSON object keyed by field name -- that
-    # is what the template's {placeholders} resolve against. This is the one place
-    # cards and pages differ structurally: page fields are an unnamed array.
+    #a named list, so it serializes as an object the placeholders resolve
     if (!is.list(fields) || length(fields) == 0) {
       stop("fields option must be a non-empty NAMED list of buildQCEcardField() results, or NULL.")
     }
@@ -91,13 +89,11 @@ buildQCEcardSidecar <- function(template = NULL, fields = NULL, refreshMs = NULL
       }
     }
 
-    # A placeholder with no field behind it renders empty at run time, which is a
-    # silent hole in the display rather than an error. Caught here instead.
+    #a placeholder with no field behind it renders empty at run time
     if (!is.null(template)) {
       used <- regmatches(template, gregexpr("\\{[^{}[:space:]]+\\}", template))[[1]]
       used <- gsub("^\\{|\\}$", "", used)
-      # deadlineRemaining is injected by the card engine; hook-written keys cannot
-      # be known here, so only warn rather than fail.
+      #deadlineRemaining comes from the card engine, hook keys are unknown here
       unknown <- setdiff(used, c(nms, "deadlineRemaining"))
       if (length(unknown) > 0) {
         warning("card template refers to {", paste(unknown, collapse = "}, {"),

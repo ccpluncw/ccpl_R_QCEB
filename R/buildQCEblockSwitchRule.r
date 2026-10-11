@@ -108,7 +108,6 @@ buildQCEblockSwitchRule <- function(threshold, watchBlock,
                                      switchToBlock = NULL) {
   .qcebOneValueArgs("buildQCEblockSwitchRule", c("watchBlock", "countResponse", "switchToBlock"))
 
-  # watchBlock required non-empty string
   if (missing(watchBlock) || is.null(watchBlock)) {
     stop("watchBlock option is required -- the name of the block this rule ",
          "counts responses within (must match a blockName declared via ",
@@ -118,7 +117,7 @@ buildQCEblockSwitchRule <- function(threshold, watchBlock,
     stop("watchBlock option must be a non-empty single string.")
   }
 
-  # XOR validation: exactly one of countResponse or countWhen
+  #exactly one of countResponse or countWhen
   hasResp <- !is.null(countResponse)
   hasWhen <- !is.null(countWhen)
 
@@ -132,26 +131,23 @@ buildQCEblockSwitchRule <- function(threshold, watchBlock,
          "is sugar for countWhen=list(field='Key', operator='equals', value=<x>).")
   }
 
-  # countResponse shape
   if (hasResp) {
     if (!isSingleString(countResponse) || nchar(countResponse) == 0) {
       stop("countResponse option must be a non-empty single string.")
     }
   }
 
-  # countWhen shape (delegates to internal validator in QCEButils.r)
   if (hasWhen) {
     validateSwitchCountWhenShape(countWhen, "countWhen")
   }
 
-  # threshold required + shape-checked
   if (missing(threshold) || is.null(threshold)) {
     stop("threshold option is required. Use buildQCEswitchThreshold(values, rule) ",
          "to construct one, or pass a list(values, rule) directly.")
   }
   validateSwitchThresholdShape(threshold, "threshold")
 
-  # switchToBlock optional non-empty string (NULL = end session sequence)
+  #a NULL switchToBlock ends the session sequence
   if (!is.null(switchToBlock)) {
     if (!isSingleString(switchToBlock) || nchar(switchToBlock) == 0) {
       stop("switchToBlock option must be a non-empty single string when present ",
@@ -160,8 +156,7 @@ buildQCEblockSwitchRule <- function(threshold, watchBlock,
     }
   }
 
-  # Build the rule list -- only include supplied fields so the JSON shape
-  # exactly matches what the engine expects (NULL defaults omitted).
+  #only supplied fields are included
   rule <- list(watchBlock = watchBlock, threshold = threshold)
   if (hasResp) rule$countResponse <- countResponse
   if (hasWhen) rule$countWhen     <- countWhen

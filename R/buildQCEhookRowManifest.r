@@ -1,21 +1,9 @@
-# Shared scanner behind buildQCEhookRowManifest() and promotedQCEhookRows().
-#
-# Both entry points need the same answer, so the scan lives here once and each
-# returns a different view of it. Keeping the machine-readable half a view of a
-# structure -- rather than a re-parse of the report text -- means a wording
-# change to the report cannot quietly change what a build script fails on.
-#
-# Returns a list:
-#   hooksFiles  character vector of customHooksFile values found (may be empty)
-#   atRisk      list of records: file, scenario, nFrames, lastFrame
-#   scanned     number of scenarios examined
+#shared scan behind the manifest and the promoted rows views
 .qcebScanHookRows <- function(dir) {
 
   u <- function(x) if (is.list(x) && length(x) >= 1) x[[1]] else x
 
-  # A flag arrives as a JSON boolean wrapped in a one-element array, but a
-  # hand-edited config may carry the string form instead. Accept both rather
-  # than silently reading "TRUE" as not-true.
+  #a flag is a json boolean in a list of one, or its string form
   isTrueFlag <- function(v) {
     v <- u(v)
     if (is.null(v) || length(v) == 0) return(FALSE)
@@ -23,8 +11,7 @@
     toupper(as.character(v)[1]) %in% c("TRUE", "T", "1", "YES")
   }
 
-  # An unset config field serializes as an empty object/array rather than being
-  # absent, so "declared" means non-empty, not merely non-NULL.
+  #an unset field serializes as empty, so declared means non-empty
   isSet <- function(v) !is.null(v) && length(unlist(v)) > 0 &&
                        any(nzchar(as.character(unlist(v))))
 
@@ -33,10 +20,7 @@
              error = function(e) NULL)
   }
 
-  # Frames are keyed "1", "2", ... Sorting those as text puts "10" before "2",
-  # which would pick the wrong last frame on any scenario with ten or more
-  # frames. Order numerically when the keys are numeric, and fall back to the
-  # file's own order when they are not.
+  #frame keys sort numerically when numeric, so "10" follows "9"
   frameOrder <- function(fr) {
     nms <- names(fr)
     if (is.null(nms)) return(seq_along(fr))
@@ -52,11 +36,7 @@
     j <- readJson(p)
     if (is.null(j) || !is.list(j)) next
 
-    # Hooks are declared on a group dbfile, scenarios live in a stimfile, and
-    # both sit in the same directory. Any group declaring a hooks file makes the
-    # check apply: pairing each group to the scenarios it actually plays would
-    # need the trial structure too, and the reachable extra precision does not
-    # change the advice.
+    #any group declaring a hooks file makes the check apply to the directory
     if (isSet(j$customHooksFile)) {
       hooksFiles <- c(hooksFiles, as.character(u(j$customHooksFile)))
     }
@@ -65,20 +45,14 @@
       sc <- j[[nm]]
       if (!is.list(sc) || is.null(sc$frame) || !is.list(sc$frame)) next
       fr <- sc$frame
-      if (length(fr) < 2) next          # single-frame scenarios cannot hit this
+      if (length(fr) < 2) next
       scanned <- scanned + 1L
 
       ord  <- frameOrder(fr)
       outs <- vapply(ord, function(k) isTrueFlag(fr[[k]]$output),
                      logical(1), USE.NAMES = FALSE)
 
-      # Scenarios that keep NO frame. A hook annotating one of these has no row
-      # to write to, so the engine keeps the last frame's row to carry the
-      # values -- that scenario records a row the config did not ask for.
-      #
-      # Scenarios that keep SOME frame are not reported at any position of the
-      # kept frames: the engine routes annotations to the last kept row, so
-      # ending on a discarded fixation costs nothing.
+      #a scenario keeping no frame leaves a hook no row, the last carries it
       if (!any(outs)) {
         atRisk[[length(atRisk) + 1L]] <- list(
           file      = basename(p),

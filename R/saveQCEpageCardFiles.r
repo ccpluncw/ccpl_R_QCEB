@@ -43,11 +43,7 @@ saveQCEpageFiles <- function(QCEpagePlacement, pagesFile, sidecars = NULL, dir =
     stop("dir option must be a single string naming a directory.")
   }
 
-  # Every page named in the map, so a sidecar for a page that is never placed can
-  # be caught -- almost always a typo in one name or the other.
-  # Iterate the placement LIST, not the map's names: the map is one named
-  # element holding an unnamed list of entries, so names() says nothing about
-  # which pages were placed.
+  #iterate the placement list, names() of the map say nothing about placement
   placed <- character(0)
   for (p in QCEpagePlacement$placements) {
     placed <- c(placed, as.character(p$file))

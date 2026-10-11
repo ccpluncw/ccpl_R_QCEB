@@ -71,8 +71,7 @@ buildQCEshowIfCondition <- function(stimRef, operator, value = NULL, field = NUL
     return(list(stimRef = stimRef, operator = operator, value = value, field = field))
   }
 
-  # shownOps: surface the conceptual mistake if value/field were passed,
-  # but don't break the call -- drop them and warn.
+  #value and field mean nothing for shown ops, so drop them and warn
   if (!is.null(value) || !is.null(field)) {
     warning(paste0("Operator '", operator, "' ignores 'value' and 'field' (it only checks whether the stimRef has been shown). ",
                    "You passed one or both; they are being dropped. ",

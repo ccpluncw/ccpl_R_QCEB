@@ -155,22 +155,12 @@ surveyModel <- function(..., showQuestionNumbers = "off", modelProps = NULL) {
   model
 }
 
-# --- serialization ----------------------------------------------------------
-# Properties whose VALUE must always serialize as a JSON array, even when it
-# holds a single element. jsonlite::toJSON(auto_unbox = TRUE) collapses a
-# length-1 atomic vector to a scalar -- which would turn a single-choice list
-# (choices = "Yes") into "Yes" and break SurveyJS. We coerce these to R lists
-# before serializing so they always render as arrays. The set is intentionally
-# broad and applies at ANY depth (a matrixdropdown column can carry its own
-# choices). Genuine scalars (title, name, rateMax, ...) are untouched and unbox
-# normally.
+#array keys serialize as arrays at any depth, even with one element
 .surveyArrayKeys <- c("pages", "elements", "choices", "columns", "rows",
                       "rateValues", "items", "templateElements", "cells",
                       "validators", "triggers", "calculatedValues")
 
-# Recursively walk a model, coercing atomic vectors found under an array-key
-# into lists so auto_unbox keeps them as arrays. Lists (objects / already-arrays)
-# are recursed into and left as lists.
+#coerce atomic vectors under an array key to lists so they stay arrays
 .coerceSurveyArrays <- function(x, keyName = NULL) {
   if (is.list(x)) {
     nms <- names(x)
@@ -182,16 +172,12 @@ surveyModel <- function(..., showQuestionNumbers = "off", modelProps = NULL) {
   }
   if (!is.null(keyName) && nzchar(keyName) && keyName %in% .surveyArrayKeys &&
       is.atomic(x) && !is.null(x) && length(x) >= 1) {
-    # length-1 atomic -> list(of 1) -> JSON array of 1 after auto_unbox.
     return(as.list(x))
   }
   x
 }
 
-# Internal (not exported): serialize a survey model list to a JSON STRING,
-# array-forcing collection keys. This string is what the survey frame's
-# `stimulus` carries (shape (A) in surveyTrialType.js -- a pre-serialized JSON
-# string, the unambiguous form).
+#serialize a survey model to the json string a survey frame carries
 .serializeSurveyModel <- function(model) {
   as.character(.qcebToJson(.qcebWhole(.coerceSurveyArrays(model)), pretty = FALSE))
 }

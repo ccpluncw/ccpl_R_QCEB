@@ -61,14 +61,7 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
     }
   }
 
-  # "default" was a sentinel meaning "generate the screen for me". The engine
-  # removed it, because an experiment whose keymap page is genuinely NAMED
-  # default became silently unusable -- the file would be ignored as though
-  # nothing were set. Absence is now carried out of band (NULL), so no real
-  # filename can collide with it. Rejected rather than quietly mapped back to
-  # NULL: the value sits in configs built by older versions of this package and
-  # in researchers' scripts, and it fails far from its cause -- in a browser,
-  # after a deploy, as a 404 on a file nobody asked for.
+  #the sentinel "default" is rejected, absence is NULL
   if(!is.null(keyMapInstructionFile)){
     if(isSingleString(keyMapInstructionFile) && keyMapInstructionFile == "default") {
         stop("keyMapInstructionFile = \"default\" is no longer supported.  The engine reads this option as a literal filename, so it would request a file named 'default' and fail.  Use NULL (the default) to have the engine build the key map instruction screen for you, or give the name of an actual '.html' file.")
@@ -109,17 +102,12 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
 
   tmpList <- list (condName= condName, keyMap = keyMap, randomizeKeyMap = randomizeKeyMap, presentKeyMapAfterTrialNumbers=presentKeyMapAfterTrialNumbers, restTrials = restTrials, speedFeedbackParams = speedFeedbackParams, instructionFile = instructionFile, keyMapInstructionFile = keyMapInstructionFile, restMsg = restMsg, friendlyReminderMsg = friendlyReminderMsg, remindMsg = remindMsg, proceedMsg = proceedMsg)
 
-  # Phase 1.5 -- emit the `triggers` block only when enabled, so non-fNIRS
-  # experiments produce byte-identical JSON to pre-Phase-1.5 output. The
-  # engine reads mydB.triggers in do_a_session.runSession() from the JSON
-  # this function produces.
+  #triggers block is emitted only when enabled
   if (isTRUE(enableTriggers)) {
     tmpList$triggers <- list(enabled = TRUE, relayPort = as.integer(triggerRelayPort))
   }
 
-  # Phase 2 C.5 -- emit rest extension fields only when set, so non-using
-  # experiments produce byte-identical JSON. The engine reads these in
-  # dynamicEngine.js::shouldFireRest at runtime.
+  #rest extension fields are emitted only when set
   if (!is.null(restEveryNMinutes)) {
     tmpList$restEveryNMinutes <- restEveryNMinutes
   }
@@ -127,11 +115,7 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
     tmpList$restMaxTrial <- as.integer(restMaxTrial)
   }
 
-  # Phase 3.5 -- emit `keyMaps` only when at least one named keyMap is
-  # supplied, so legacy experiments produce byte-identical JSON. The engine
-  # reads mydB.keyMaps in do_a_session.runSession() at session init.
-  # Delegates per-entry to addKeyMapToDbfile so validation + duplicate-name
-  # handling are consistent with the incremental path.
+  #keyMaps is emitted only when supplied, each entry validated as on add
   if (!is.null(keyMaps)) {
     if (!is.list(keyMaps) || is.null(names(keyMaps)) || any(names(keyMaps) == "")) {
       stop("keyMaps option must be a named list of keyMap entries when present ",
@@ -143,12 +127,7 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
     }
   }
 
-  # Phase 5 -- emit `customHooksFile` (+ `customHooksStateKeys`) only when a
-  # hooks file is supplied, so legacy experiments produce byte-identical JSON
-  # and take the engine's no-hooks code path. Delegates to
-  # addHooksToQCEgroupDbFile so validation is consistent with the incremental
-  # path. customHooksStateKeys without customHooksFile is a no-op (the keys
-  # have nothing to validate against) -- warn so the researcher notices.
+  #hooks file and state keys are emitted only when supplied, keys alone warn
   if (!is.null(customHooksFile)) {
     tmpList <- addHooksToQCEgroupDbFile(tmpList, customHooksFile, customHooksStateKeys,
                                        customHooksColumns)
@@ -157,11 +136,6 @@ buildQCEgroupDbFile <- function (condName="defaultCond", keyMap = NULL, randomiz
             "(state keys only matter when a hooks file is declared).")
   }
 
-  # NOTE: completionGate and the whole-run deadline are EXPERIMENT-WIDE, not
-  # per-group -- completion means "finished the study" and the run clock spans the
-  # whole experiment. They now live on the experiment dbfile (buildQCEexpDbFile:
-  # completionGate + maxExperimentMinutes), beside completionRedirect. They were
-  # removed from this per-group builder.
 
   return(tmpList)
 

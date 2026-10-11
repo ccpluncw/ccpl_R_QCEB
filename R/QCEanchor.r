@@ -69,9 +69,7 @@ QCEanchor <- function(at, session = NULL, block = NULL, set = NULL) {
     stop("at option must be a single string: ", paste(.qcebAnchorEvents, collapse = ", "), ".")
   }
 
-  # Field order is fixed here rather than left to the caller so that two anchors
-  # meaning the same thing are also structurally identical -- comparisons and
-  # emitted JSON stay stable regardless of the order arguments were supplied in.
+  #fixed field order keeps equal anchors identical and the json stable
   anchor <- list(at = at)
   if (!is.null(session)) anchor$session <- session
   if (!is.null(block))   anchor$block   <- block

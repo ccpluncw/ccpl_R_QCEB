@@ -59,15 +59,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
              error = function(e) NULL)
   }
 
-  # Question names from a survey model. `html` elements are display-only and
-  # produce no column; every other element writes one under its own name. Nested
-  # panels are walked, since a panel holds elements rather than being one.
-  #
-  # A question whose answer is itself a set of answers -- a matrix (one row per
-  # item) or a multipletext (one box per item) -- records a NESTED object, which
-  # the trial type flattens to "<question>_<item>". Expanding those here is the
-  # difference between reporting one column called PANAS and reporting the 36
-  # columns the data will actually carry.
+  #question names from a survey model, nested answers expand to question_item
   .qcebSurveyItemNames <- function(el) {
     items <- if (!is.null(el$rows)) el$rows else el$items
     if (is.null(items) || length(items) == 0) return(character(0))
@@ -111,10 +103,8 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
 
   jsonFiles <- list.files(dir, pattern = "\\.json$", full.names = TRUE)
 
-  # --- columns written server-side, once per session ------------------------
   serverCols <- c("Exp_Name", "Group", "sn", "Cond_Name", "Sess_Name")
 
-  # --- columns the engine stamps on every row -------------------------------
   engineCols <- c("BlockName", "BlockNum", "BlockIt", "Trial", "TrialInSession",
                   "TrialinBlock", "trial_index", "trial_type", "StimNum", "FrameNum",
                   "FrameName", "respType", "posttgap", "stim_dur", "rt", "Set",
@@ -122,12 +112,10 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   #identity columns a study keeps only by listing them in fields.txt
   optionalEngineCols <- c("SessionKey", "BlockKey")
 
-  # --- scan the stimfiles: trial types used, outputVariables, feedback keys --
   typesUsed <- character(0)
   outputVars <- character(0)
   feedbackLabels <- character(0)
   surveyCols <- character(0)
-  # --- scan for hooks + demographics ----------------------------------------
   hooksFiles <- character(0)
   hookCols   <- character(0)
   demographicCols <- character(0)
@@ -136,7 +124,6 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
     j <- readJson(p)
     if (is.null(j) || !is.list(j)) next
 
-    # A stimfile is a map of scenarios, each with a `frame` map.
     for (nm in names(j)) {
       sc <- j[[nm]]
       if (!is.list(sc)) next
@@ -144,10 +131,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
         for (fr in sc$frame) {
           if (is.list(fr) && !is.null(fr$trialType)) {
             typesUsed <- c(typesUsed, as.character(u(fr$trialType)))
-            # A survey frame's columns are its question names, which live inside
-            # the model carried as a JSON string in `stimulus`. They are per-config
-            # rather than per-plugin, so no registry entry can list them -- read
-            # them here or the manifest reports a whole questionnaire as missing.
+            #survey columns are the question names inside the model in stimulus
             if (identical(as.character(u(fr$trialType)), "survey")) {
               surveyCols <- c(surveyCols, .qcebSurveyQuestionNames(u(fr$stimulus)))
             }
@@ -163,23 +147,17 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
       }
     }
 
-    # An unset config field serializes as an empty object/array rather than
-    # being absent, so "declared" means non-empty, not merely non-NULL. Testing
-    # only for NULL reports screens the engine will in fact skip.
+    #an unset field serializes as empty, so declared means non-empty
     isSet <- function(v) !is.null(v) && length(unlist(v)) > 0 &&
                          any(nzchar(as.character(unlist(v))))
 
-    # Hooks are declared on a group dbfile.
     if (isSet(j$customHooksFile)) {
       hooksFiles <- c(hooksFiles, as.character(u(j$customHooksFile)))
-      # Columns the hooks promise to write. Nothing else in the config files can
-      # reveal them -- they exist only inside JavaScript -- so a declared list is
-      # the one way they can be checked against fields.txt at build time.
+      #declared hook columns are the only way to check them against fields.txt
       if (isSet(j$customHooksColumns)) {
         hookCols <- c(hookCols, as.character(unlist(j$customHooksColumns)))
       }
     }
-    # The legacy intake screens the engine renders itself.
     if (isSet(j$getDemographicsFile)) demographicCols <- c(demographicCols, "Birth", "Ethnicity")
     if (isSet(j$getGenderFile))       demographicCols <- c(demographicCols, "Gender", "Sex")
   }
@@ -192,7 +170,6 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   hookCols     <- sort(unique(hookCols))
   demographicCols <- sort(unique(demographicCols))
 
-  # --- scan the page sidecars for their output columns ----------------------
   pageCols <- character(0)
   for (p in list.files(dir, pattern = "\\.page\\.json$", full.names = TRUE)) {
     j <- readJson(p)
@@ -205,24 +182,18 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   }
   pageCols <- sort(unique(pageCols))
 
-  # --- per-trialType columns, from the registry -----------------------------
   typeLines <- character(0)
   typeCols <- character(0)
   undeclared <- character(0)
   for (tt in typesUsed) {
     cols <- .qcebTrialTypeOutputColumns(tt)
-    # usesPointer is not a column, but it rides along here so the manifest
-    # reflects the whole registry entry for each type in use: a mouse-driven
-    # type is one whose frames must not hide the cursor (see cursorVisible on
-    # addFrameToQCEframeList). Comment-only, so it can never enter the
-    # fields.txt comparison.
+    #usesPointer is reported for each type in use but is not a column
     if (.qcebTrialTypeUsesPointer(tt)) {
       typeLines <- c(typeLines,
                      sprintf("# [%s] is mouse-driven (usesPointer) -- the pointer is shown on its frames unless cursorVisible overrides", tt))
     }
     if (is.null(cols) && identical(tt, "survey") && length(surveyCols) > 0) {
-      # Not undeclared, just not declarable: the columns are the question names,
-      # listed under "survey questions" below.
+      #survey columns are listed under survey questions below
       typeLines <- c(typeLines,
                      "# [survey] columns are its question names -- see 'survey questions' below")
     } else if (is.null(cols)) {
@@ -236,7 +207,6 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
   }
   typeCols <- unique(typeCols)
 
-  # --- assemble --------------------------------------------------------------
   out <- c(
     "# Output field manifest -- ADVISORY, generated by QCEB.",
     "#",
@@ -274,8 +244,7 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
              "# ============================================================",
              sprintf("# Custom hooks are in use (%s).", paste(hooksFiles, collapse = ", ")))
     if (length(hookCols) > 0) {
-      # Declared columns are treated exactly like any other expected column
-      # below, so the fields.txt diff covers them.
+      #declared columns are compared like any other expected column
       out <- c(out,
                "# The dbfile declares the columns they write (customHooksColumns), so",
                "# they are included above and checked against fields.txt like the rest:",
@@ -296,7 +265,6 @@ buildQCEoutputFieldManifest <- function(dir, outFile = "output_fields_manifest.t
            "# separate files with fixed schemas. They do NOT come from fields.txt, so",
            "# nothing needs adding here for them.")
 
-  # --- optional diff against an existing fields.txt --------------------------
   if (!is.null(fieldsFile)) {
     if (!file.exists(fieldsFile)) {
       stop("fieldsFile '", fieldsFile, "' does not exist.")
@@ -356,9 +324,7 @@ missingQCEoutputFields <- function(dir, fieldsFile = file.path(dir, "fields.txt"
   report <- buildQCEoutputFieldManifest(dir, outFile = NULL, fieldsFile = fieldsFile)
   hdr <- which(grepl("Expected columns MISSING", report, fixed = TRUE))
   if (length(hdr) == 0) return(character(0))
-  # The named columns are the run of "#   <name>" lines that follows the header
-  # and its explanatory second line; the run ends at the first line of any other
-  # shape, which keeps the later "in fields.txt but not expected" list out.
+  #names are the run of column lines after the header
   rest <- report[seq(hdr[1] + 1L, length(report))]
   start <- match(TRUE, grepl("^#   ", rest))
   if (is.na(start)) return(character(0))
