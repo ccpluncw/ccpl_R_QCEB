@@ -351,7 +351,7 @@ entries and writes the file through the same writer as every other file.
 
 <!-- BEGIN GENERATED API — do not edit by hand; run tools/generate_api_reference.R -->
 
-*Generated from `man/` on 2026-10-10 — 65 exported functions (65 current, 0 deprecated).*
+*Generated from `man/` on 2026-10-11 — 65 exported functions (65 current, 0 deprecated).*
 
 ## Stimfile — scenarios and frames
 
@@ -2077,17 +2077,22 @@ runs and no row can be added.
 
 ### `readQCEBjsonFileToList`
 
-This function is used to read a QCEB json file and returns it in the form of a list
+Read a QCEB JSON file into a list
 
 ```r
 readQCEBjsonFileToList(filename)
 ```
 
-Function that reads a QCEB json file and returns it in the form of a list
+Reads a JSON file and returns its contents as `jsonlite::fromJSON`
+returns them. The file may be plain JSON, as every file QCEB writes is, or a
+file whose first line declares a JavaScript variable (`var scenarios =`)
+with the JSON on the lines after it; that first line is left out of the read.
+To read a settings file back and save it again, use `readQCEjsonFile`,
+which keeps a list of one a list.
 
-- `filename` — A string specifying the name of the QCEB json file.
+- `filename` — A string, the path of the JSON file.
 
-**Returns.** the json data in a list structure
+**Returns.** The file's contents: a named list for a JSON object, with arrays simplified to vectors, matrices or data frames as `jsonlite::fromJSON` simplifies them by default.
 
 ### `readQCEjsonFile`
 
