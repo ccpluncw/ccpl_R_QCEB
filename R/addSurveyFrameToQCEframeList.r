@@ -57,8 +57,7 @@ addSurveyFrameToQCEframeList <- function(QCEframeList = NULL, surveyModel, frame
   .qcebOneValueArgs("addSurveyFrameToQCEframeList", c("frameName", "stimulus_duration",
     "post_trial_gap", "background", "cursorVisible", "output"))
 
-  # "survey" must be a registered trialType (it is, by default). This guard
-  # keeps the R-side error friendly and consistent with addFrameToQCEframeList.
+  #survey must be a registered trialType
   if (!isRegisteredQCEBtrialType("survey")) {
     stop("addSurveyFrameToQCEframeList: trialType 'survey' is not registered. ",
          "This is unexpected -- 'survey' is seeded by default. ",
@@ -92,9 +91,7 @@ addSurveyFrameToQCEframeList <- function(QCEframeList = NULL, surveyModel, frame
 
   modelStr <- .serializeSurveyModel(surveyModel)
 
-  # Empty atomic vectors serialize as JSON [] (matches the engine's
-  # expectations for a no-key, no-duration frame). choices is always [] for a
-  # survey -- the survey plugin uses its own submit button, not the keymap.
+  #empty vectors serialize as [] and a survey takes no keys
   if (is.null(stimulus_duration)) stimulus_duration <- numeric()
 
   tmpList <- list(trialType = "survey", frameName = frameName, stimulus = modelStr,

@@ -38,38 +38,32 @@ addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL
     stop("setName option must be a single string -- call this function once per set.")
   }
 
-  # Validate selectionType
   validSelectionTypes <- c("randomWithoutReplacement", "randomWithReplacement", "fixed")
   if (!(selectionType %in% validSelectionTypes)) {
     stop(paste("selectionType option must take on one of the following values: ",
                paste(validSelectionTypes, collapse = " ")))
   }
 
-  # Validate setName against QCEScenarioList
   validSetNames <- getSetnamesFromScenarioList(QCEScenarioList)
   if (!(setName %in% validSetNames)) {
     stop(paste0("setName '", setName, "' is not declared on any scenario in QCEScenarioList. ",
                 "Valid setNames are: ", paste(validSetNames, collapse = ", ")))
   }
 
-  # Validate numberOfTrialsPerSet
   if (!isSingleNumeric(numberOfTrialsPerSet)) {
     stop("numberOfTrialsPerSet option must be a single integer.")
   }
 
-  # Validate showIf shape
   if (!is.null(showIf)) {
     validateShowIfShape(showIf, "showIf")
   }
 
-  # Validate excludePreviouslyPresented (Phase 3 Decision 6 / Semantic C)
   if (!is.null(excludePreviouslyPresented)) {
     if (!is.logical(excludePreviouslyPresented) || length(excludePreviouslyPresented) != 1 || is.na(excludePreviouslyPresented)) {
       stop("excludePreviouslyPresented option must be a single boolean (TRUE or FALSE) when provided.")
     }
   }
 
-  # Phase 3.5 Decision D / Decision 7 close-out -- set-level entryInstruction
   if (!is.null(entryInstruction)) {
     if (!is.character(entryInstruction) || length(entryInstruction) == 0) {
       stop("entryInstruction option must be a character vector of .html ",
@@ -83,7 +77,6 @@ addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL
     }
   }
 
-  # Build the entry
   entry <- list(N = numberOfTrialsPerSet, selection = selectionType)
   if (!is.null(trigger)) {
     entry$trigger <- trigger
@@ -98,7 +91,6 @@ addSetToQCEsetInfoList <- function(QCEsetInfoList = NULL, QCEScenarioList = NULL
     entry$entryInstruction <- entryInstruction
   }
 
-  # Append to QCEsetInfoList
   if (is.null(QCEsetInfoList)) {
     QCEsetInfoList <- list()
   }

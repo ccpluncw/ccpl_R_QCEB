@@ -54,12 +54,7 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
     "post_trial_gap", "response_ends_trial", "background", "cursorVisible", "output",
     "trial_duration"))
 
-  # trialType is validated against the QCEB trialType registry (mirrors the
-  # engine's trialTypeRegistry.js), NOT a hard-coded list, so custom/third-party
-  # plugins are accepted once registered with registerQCEBtrialType(). The core
-  # types (key/textbox/numberline/angleline) and the bundled "survey" plugin are
-  # pre-registered. For surveys, prefer addSurveyFrameToQCEframeList(), which
-  # serializes a SurveyJS model into the stimulus for you.
+  #trialType is checked against the registry, so registered plugins pass
   if(!isRegisteredQCEBtrialType(trialType)) {
     stop("trialType '", trialType, "' is not registered. Registered types: ",
          paste(getRegisteredQCEBtrialTypes(), collapse = ", "),
@@ -90,8 +85,7 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
     stop("post_trial_gap option must be a single integer.")
   }
 
-  # trial_duration is three-state: NULL (inherit stimulus_duration), the
-  # sentinel "NO_LIMIT" (no timer at all), or a positive number of milliseconds.
+  #trial_duration is NULL, "NO_LIMIT" or a positive number of ms
   isNoLimitDuration <- is.character(trial_duration) && length(trial_duration) == 1 &&
                        toupper(trial_duration) == "NO_LIMIT"
   if(!is.null(trial_duration) && !isNoLimitDuration &&
@@ -103,27 +97,18 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
     stop("choices option must be a vector of charactors representing allowable keys or NULL.")
   }
 
-  # Does anything end this frame on a clock? "NO_LIMIT" says no; an explicit
-  # number says yes; NULL defers to stimulus_duration.
+  #timer: none for NO_LIMIT, yes for a number, NULL follows stimulus_duration
   frameHasTimer <- if (isNoLimitDuration) FALSE
                    else if (!is.null(trial_duration)) TRUE
                    else !is.null(stimulus_duration)
 
-  # Can the participant end it instead? Plugins that bring their own response
-  # surface always can (registry forceResp). A keyboard frame can only when a
-  # response ends the trial AND some key is actually accepted -- an empty or
-  # absent choices vector disables the keyboard path, and "NO_KEYS" tells
-  # jsPsych to accept nothing.
+  #own-surface plugins always end on response, keyboard frames need a key
   frameCanEndOnResponse <-
     .qcebTrialTypeForcesResponse(trialType) ||
     (response_ends_trial == TRUE && !is.null(choices) && length(choices) > 0 &&
      !(length(choices) == 1 && toupper(choices) == "NO_KEYS"))
 
-  # No-exit guard. A frame with neither a clock nor a response path strands the
-  # participant on a screen that never advances, which in the browser presents
-  # as a frozen experiment with nothing in the log. Caught here instead. This
-  # supersedes the narrower response_ends_trial/stimulus_duration pairing, and
-  # additionally covers the case where choices alone removes the only exit.
+  #a frame with no timer and no response exit would freeze the experiment
   if(!frameHasTimer && !frameCanEndOnResponse) {
     stop("This frame can never end: it has no time limit (trial_duration is \"NO_LIMIT\", ",
          "or neither duration is set) and no way to respond (response_ends_trial = ",
@@ -135,19 +120,13 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
     stop("background option must be a valid color.")
   }
 
-  # cursorVisible is three-state (see the emit site below for why NULL is not
-  # simply FALSE). Only the two stated forms are accepted; anything else is a
-  # mistake worth naming rather than coercing.
+  #cursorVisible is NULL, TRUE or FALSE, anything else is named not coerced
   if(!is.null(cursorVisible) &&
      !(is.logical(cursorVisible) && length(cursorVisible) == 1 && !is.na(cursorVisible))) {
     stop("cursorVisible option must be NULL (let the trialType decide), TRUE, or FALSE.")
   }
 
-  # A pointer-driven type answered with the pointer hidden is a screen the
-  # participant cannot complete, and nothing downstream can detect it: the frame
-  # is valid, the plugin loads, and the trial simply never ends. Warn rather than
-  # stop, because a deliberate FALSE is legitimate for a plugin that draws its
-  # own cursor.
+  #warn when a pointer type hides the pointer, a plugin may draw its own
   if(isTRUE(!is.null(cursorVisible) && cursorVisible == FALSE) &&
      .qcebTrialTypeUsesPointer(trialType)) {
     warning("Frame '", frameName, "' sets cursorVisible = FALSE on trialType '", trialType,
@@ -158,10 +137,7 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
   if(is.null(choices)) {
     choices <- character()
   } else if(length(choices) == 1 && choices %in% c("ALL_KEYS", "NO_KEYS")) {
-    # jsPsych v8 expects "ALL_KEYS"/"NO_KEYS" as JSON scalar strings, not as
-    # 1-element arrays. R wraps length-1 vectors as `["ALL_KEYS"]` by default,
-    # which jsPsych interprets as a literal one-key list. Box explicitly so
-    # the magic strings round-trip correctly. Real key vectors are unaffected.
+    #jsPsych wants ALL_KEYS and NO_KEYS as scalar strings, so box them
     choices <- jsonlite::unbox(choices)
   }
   if(is.null(stimulus)) {
@@ -170,15 +146,8 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
   if(is.null(stimulus_duration)) {
     stimulus_duration <- numeric()
   }
-  # No such normalizer for post_trial_gap: it is validated above as a required
-  # single number, so it can never be NULL here. Every frame therefore states
-  # its own inter-trial gap, and 0 is how you say "none".
 
-  # Plugin-specific parameters. The QCEP engine (post-2026-04-19 refactor)
-  # expects plugin-specific fields to live inside pluginParams, NOT at frame
-  # top level. For textbox trials, `kind` is automatically merged in. Non-
-  # textbox frames don't carry kind metadata at all (it has no meaning).
-  # Passing `kind` twice (as a named arg AND inside pluginParams) is an error.
+  #plugin parameters go in pluginParams, kind is merged for textbox
   if (!is.null(pluginParams) && "kind" %in% names(pluginParams)) {
     stop("Do not pass 'kind' both as a named argument AND inside pluginParams. Use only one.")
   }
@@ -188,23 +157,12 @@ addFrameToQCEframeList <- function (QCEframeList = NULL, trialType = "key", fram
   }
 
   tmpList <- list (trialType = trialType, frameName = frameName, stimulus = stimulus,	stimulus_duration = stimulus_duration, post_trial_gap = post_trial_gap, response_ends_trial = response_ends_trial, choices = choices, background = background, output = output)
-  # cursorVisible is emitted ONLY when the researcher set it, for the same reason
-  # trial_duration is: omitting the key is how a frame says "not specified", and
-  # the engine answers that from the trialType's own declaration. Writing a
-  # default here instead would put a literal FALSE on every frame, which OUTRANKS
-  # the engine's answer -- so a mouse-driven frame would ship with its pointer
-  # hidden unless the researcher remembered a key they had no reason to think
-  # about. The key is placed where it has always sat, before `output`, so a frame
-  # that does state it produces the shape it always has.
+  #cursorVisible is emitted only when set, a default would outrank the engine
   if (!is.null(cursorVisible)) {
     tmpList <- append(tmpList, list(cursorVisible = cursorVisible),
                       after = which(names(tmpList) == "background"))
   }
-  # trial_duration is emitted ONLY when the researcher set it. Omitting the key
-  # is what tells the engine "not specified -- inherit stimulus_duration", so a
-  # frame that never mentions it produces exactly the JSON it always has. The
-  # sentinel is boxed for the same reason "ALL_KEYS"/"NO_KEYS" are: it must
-  # arrive as a JSON string, not as a one-element array.
+  #trial_duration is emitted only when set, the sentinel is boxed as a string
   if (!is.null(trial_duration)) {
     tmpList$trial_duration <- if (isNoLimitDuration) jsonlite::unbox(toupper(trial_duration))
                               else trial_duration

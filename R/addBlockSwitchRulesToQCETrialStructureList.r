@@ -65,15 +65,14 @@ addBlockSwitchRulesToQCETrialStructureList <- function(QCETrialStructureList, sw
          "via addBlockToQCETrialStructureList before attaching switch rules.")
   }
 
-  # Guard against attaching twice / attaching before blocks are present:
-  # there must be at least one actual block entry (not just a switchRules key).
+  #need at least one block entry besides switchRules
   blockKeys <- setdiff(names(QCETrialStructureList), "switchRules")
   if (length(blockKeys) < 1) {
     stop("QCETrialStructureList has no blocks to watch. Add at least one block ",
          "via addBlockToQCETrialStructureList before attaching switch rules.")
   }
 
-  # Shape validation (cross-references deferred to the engine).
+  #cross-references are left to the engine
   validateBlockSwitchRulesShape(switchRules, "switchRules")
 
   QCETrialStructureList$switchRules <- switchRules

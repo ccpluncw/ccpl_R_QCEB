@@ -66,10 +66,7 @@ addCardToQCEcardPlacement <- function(QCEcardPlacement = NULL, card,
     if (!is.null(argProblem)) stop(argName, " option ", argProblem)
   }
 
-  # A card removed at the moment it is added is never seen. OVERLAP is the test,
-  # not equality: an unmount that names no session covers every session, so it
-  # meets a session-specific mount without being identical to it. Equality would
-  # also be defeated by field order, which the author does not control.
+  #overlap not equality, an unmount with no session meets any session mount
   if (qcebAnchorsOverlap(mount, unmount)) {
     stop("mount and unmount can fire at the same moment, so the card would be ",
          "removed as soon as it appeared and never be seen. Use anchors that ",
@@ -96,8 +93,7 @@ addCardToQCEcardPlacement <- function(QCEcardPlacement = NULL, card,
     entry$position <- position
   }
 
-  # Appended to an UNNAMED list so the file serializes as a JSON array, which is
-  # what the engine's card loader expects (pages, by contrast, use a keyed map).
+  #unnamed list so the file serializes as a json array
   QCEcardPlacement <- c(QCEcardPlacement, list(entry))
 
   return(QCEcardPlacement)

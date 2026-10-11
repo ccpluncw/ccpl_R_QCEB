@@ -58,9 +58,7 @@ addSessionListToQCEGroupList <- function (QCEGroupList = NULL, QCEsessionList, g
 
   tmpList <- list(sessions = QCEsessionList, groupName = groupName)
 
-  # Emitted only when set, so a group that declares neither produces exactly the
-  # JSON it always has. The engine treats an absent key as "no pages/cards" and
-  # degrades to legacy behavior.
+  #pages and cards are emitted only when set
   if (!is.null(pages)) {
     tmpList$pages <- pages
   }

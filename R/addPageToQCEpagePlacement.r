@@ -83,15 +83,10 @@ addPageToQCEpagePlacement <- function(QCEpagePlacement = NULL, anchor, file,
     stop("QCEpagePlacement option must be a placement map (output of this function) or NULL.")
   }
 
-  # Anchor fields sit BESIDE the page's own fields in one flat entry rather than
-  # nested under a key, so the emitted JSON reads as a list of placements and the
-  # engine matches an entry without unpacking it first.
+  #anchor fields sit beside the page's own fields in one flat entry
   entry <- c(anchor, list(file = file, playOnce = playOnce))
 
-  # The map is a single named element holding an UNNAMED list, so it serializes
-  # as {"placements": [ ... ]} -- an array even when only one page is placed.
-  # List order is the order pages were added, which is the order they play at a
-  # shared anchor.
+  #placements is an unnamed list so one page still serializes as an array
   if (is.null(QCEpagePlacement$placements)) {
     QCEpagePlacement$placements <- list(entry)
   } else {

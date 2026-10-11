@@ -58,15 +58,12 @@ addKeyMapToDbfile <- function(QCEdbfile, name, entry) {
     stop("entry option must be a keyMap entry (output of buildQCEkeyMapEntry).")
   }
 
-  # Initialize the keyMaps slot on first add. Legacy dbfiles built before
-  # Phase 3.5 have no $keyMaps field; adding the slot here keeps JSON
-  # byte-identical for dbfiles that never receive a keyMap (no $keyMaps
-  # field = no `keyMaps` key in the output JSON).
+  #create the keyMaps slot on first add
   if (is.null(QCEdbfile$keyMaps)) {
     QCEdbfile$keyMaps <- list()
   }
 
-  # Duplicate-name warning. Catches researcher typos and copy-paste errors.
+  #warn on a duplicate name
   if (!is.null(QCEdbfile$keyMaps[[name]])) {
     warning(sprintf(
       "keyMap '%s' already defined on dbfile; overwriting with new entry.",

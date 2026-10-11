@@ -53,9 +53,7 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
     validateSwitchRulesShape(switchRules, "switchRules")
   }
 
-  # Phase 3.5 -- new optional block-level fields. Validate shape; the engine
-  # cross-references keyMapName against mydB.keyMaps at session start, and
-  # the validator catches malformed entryInstruction filenames.
+  #keyMapName and entryInstruction are shape-checked, the engine resolves them
   if (!is.null(keyMapName)) {
     if (!isSingleString(keyMapName) || nchar(keyMapName) == 0) {
       stop("keyMapName option must be a non-empty single string when present ",
@@ -80,9 +78,7 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
       stop("excludePreviouslyPresented option must be a single boolean (TRUE or FALSE) when provided.")
     }
   }
-  # showKeyMapInstruction: accept the three string modes, or boolean
-  # TRUE/FALSE as aliases for "always"/"never". Normalize to the string form
-  # the engine reads so the emitted JSON is self-documenting.
+  #booleans become "always" or "never", the string form the engine reads
   if (!is.null(showKeyMapInstruction)) {
     if (is.logical(showKeyMapInstruction) && length(showKeyMapInstruction) == 1 && !is.na(showKeyMapInstruction)) {
       showKeyMapInstruction <- if (showKeyMapInstruction) "always" else "never"
@@ -97,18 +93,7 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
     }
   }
 
-  # randomizeAllTrials shuffles every trial in the block, ignoring set
-  # boundaries. selectionType = "fixed" states the opposite for the sets it is
-  # applied to: take the pool entries in order and keep that order. A block
-  # asking for both is asking for a trial order and for that order to be
-  # destroyed.
-  #
-  # Neither createBlockIteratorList nor addSetToQCEsetInfoList can catch this --
-  # each sees only its own half, and both calls are individually legal. This is
-  # the first function that holds both, so it is the first place the pair can be
-  # compared. The engine rejects the same combination at session start; catching
-  # it here reports it against the call that built it rather than against a JSON
-  # file, and before any participant is admitted.
+  #randomizeAllTrials contradicts a fixed selectionType in any set
   if (isTRUE(unlist(QCEblockIteratorList$randomizeAllTrials)[1])) {
     fixedSets <- names(QCEsetInfoList)[vapply(QCEsetInfoList, function (s) {
       identical(unlist(s$selection)[1], "fixed")
@@ -124,26 +109,7 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
     }
   }
 
-  # A set-level entryInstruction is a screen shown at the moment a set begins.
-  # randomizeAllTrials interleaves every set's trials into one sequence, so no
-  # such moment exists and the screen has nowhere to go: the engine runs the
-  # block without it.
-  #
-  # Only at TWO OR MORE sets. A single-set block keeps its boundaries under
-  # randomizeAllTrials -- the set's extent is the block's, and there is no
-  # cross-set boundary for shuffling to erase -- so it keeps its entry screen
-  # and must not be refused here.
-  #
-  # As with the check above, neither builder can see this on its own:
-  # addSetToQCEsetInfoList holds the instruction and createBlockIteratorList
-  # holds the shuffle. This is the first function holding both.
-  #
-  # The engine refuses the same combination at session start, along with the
-  # other set-boundary features it can see there (boundary-anchored pages and
-  # cards, and a set-end hook). Those three are declared outside this function
-  # and cannot be checked from here, so this is a partial mirror by design: it
-  # catches the one half that is expressible at build time and the engine
-  # remains the authority on the rest.
+  #a set entryInstruction has no place when randomizeAllTrials mixes 2+ sets
   if (isTRUE(unlist(QCEblockIteratorList$randomizeAllTrials)[1]) &&
       length(QCEsetInfoList) > 1) {
     entrySets <- names(QCEsetInfoList)[vapply(QCEsetInfoList, function (s) {
@@ -171,8 +137,7 @@ addBlockToQCETrialStructureList <- function (QCETrialStructureList = NULL, QCEse
   if (!is.null(switchRules)) {
     tmpList$switchRules <- switchRules
   }
-  # Phase 3.5 -- emit new fields only when set, so legacy callers produce
-  # byte-identical JSON (no field = no key in JSON output).
+  #new fields are emitted only when set
   if (!is.null(keyMapName)) {
     tmpList$keyMapName <- keyMapName
   }

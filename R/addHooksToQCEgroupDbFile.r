@@ -76,10 +76,7 @@ addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStat
          "experiment directory).")
   }
 
-  # customHooksStateKeys, when supplied, must be a non-empty character vector
-  # of non-empty names. These are the keys the hooks promise to write to
-  # qceState.custom; the engine validates stateRef showIf conditions against
-  # them. Reject NA / empty-string entries -- they would defeat the typo check.
+  #state keys are non-empty names, NA or "" would defeat the typo check
   if (!is.null(customHooksStateKeys)) {
     if (!is.character(customHooksStateKeys) || length(customHooksStateKeys) < 1 ||
         any(is.na(customHooksStateKeys)) || any(nchar(customHooksStateKeys) == 0)) {
@@ -92,9 +89,7 @@ addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStat
     }
   }
 
-  # customHooksColumns takes the same shape as customHooksStateKeys: a
-  # non-empty character vector of non-empty names. An NA or "" entry would
-  # become a column nothing can match, defeating the check it exists for.
+  #columns follow the same shape rule as the state keys
   if (!is.null(customHooksColumns)) {
     if (!is.character(customHooksColumns) || length(customHooksColumns) < 1 ||
         any(is.na(customHooksColumns)) || any(nchar(customHooksColumns) == 0)) {
@@ -107,8 +102,7 @@ addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStat
     }
   }
 
-  # Duplicate-declaration warning. Catches a copy-pasted dbfile that wasn't
-  # fully edited, mirroring addKeyMapToDbfile's footgun guard.
+  #warn on a second hooks declaration, a copy-paste footgun
   if (!is.null(QCEdbfile$customHooksFile)) {
     warning(sprintf(
       "customHooksFile already declared on dbfile ('%s'); overwriting with '%s'.",
@@ -117,8 +111,7 @@ addHooksToQCEgroupDbFile <- function(QCEdbfile, customHooksFile, customHooksStat
 
   QCEdbfile$customHooksFile <- customHooksFile
 
-  # Emit customHooksStateKeys only when supplied, so a hooks-but-no-stateKeys
-  # dbfile omits the key entirely (engine treats absence as "no declared keys").
+  #state keys are emitted only when supplied
   if (!is.null(customHooksStateKeys)) {
     QCEdbfile$customHooksStateKeys <- customHooksStateKeys
   }

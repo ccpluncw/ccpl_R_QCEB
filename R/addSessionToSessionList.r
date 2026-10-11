@@ -32,7 +32,7 @@ addSessionToSessionList <- function (QCEsessionList = NULL, sessionOrder = -1, s
   }
 
   tmpList <- list(sessionOrder = sessionOrder, sessionName = sessionName, dbFile = dbFile, tsFile = tsFile, stimFile = stimFile)
-  # Emit plugins only when set, so legacy callers produce byte-identical JSON.
+  #plugins are emitted only when set
   if (!is.null(plugins)) {
     tmpList$plugins <- plugins
   }

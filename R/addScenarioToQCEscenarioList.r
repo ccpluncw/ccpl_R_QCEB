@@ -40,9 +40,7 @@ addScenarioToQCEscenarioList <- function(QCEScenarioList, QCEframeList, QCEfeeba
     if (!isSingleString(stimRef)) {
       stop("stimRef option must be a single string or NULL.")
     }
-    # Warn if this stimRef is already used by another scenario in this list.
-    # Engine semantic for duplicate stimRef is last-writer-wins in dataIndex,
-    # which is almost always a bug rather than a feature.
+    #warn on a repeated stimRef, the engine keeps the last one
     if (!is.null(QCEScenarioList)) {
       existingRefs <- vapply(QCEScenarioList, function(sc) {
         if (is.null(sc$stimRef)) NA_character_ else as.character(sc$stimRef)
