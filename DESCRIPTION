@@ -1,6 +1,6 @@
 Package: QCEB
 Title: These are functions that build the necessary files for the QCE experiment presenting program
-Version: 0.1.3
+Version: 0.1.4
 Authors@R:
     person(given = "First",
            family = "Last",
